@@ -1090,6 +1090,48 @@
       opacity: 0.7;
     }
 
+
+    /* MODAL PREVIEW VÀ COPY ẢNH */
+    .image-preview-modal-box {
+      max-width: 900px;
+      width: 95%;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .image-copy-tip-banner {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #166534;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      line-height: 1.45;
+    }
+    .image-preview-viewport {
+      flex: 1;
+      overflow: auto;
+      max-height: 58vh;
+      border: 1.5px solid #fde68a;
+      border-radius: var(--radius-md);
+      background: #fefce8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+    .image-preview-viewport img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      display: block;
+    }
+
   </style>
 </head>
 <body>
@@ -1542,6 +1584,48 @@
   <!-- TOAST NOTIFICATION -->
   <div class="toast-container" id="toastContainer"></div>
 
+  <!-- MODAL XEM TRƯỚC VÀ TỰ ĐỘNG COPY ẢNH XUẤT HD -->
+  <div class="modal-overlay" id="imagePreviewModal" style="display:none;">
+    <div class="modal-box image-preview-modal-box">
+      <div class="modal-title">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-camera"></i>
+          <span>Xem Trước Ảnh Xuất HD</span>
+          <span class="rule-pill-badge" style="background:#dcfce7; color:#166534; border:1px solid #86efac;">
+            <i class="fa-solid fa-check"></i> Đã Auto Copy
+          </span>
+        </div>
+        <button class="btn-icon" id="btnClosePreviewModal" style="width:28px;height:28px;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="image-copy-tip-banner">
+        <i class="fa-solid fa-circle-check" style="font-size:18px; color:#10b981; flex-shrink:0;"></i>
+        <div>
+          <strong>Ảnh đã được tự động sao chép vào bộ nhớ tạm (Clipboard)!</strong><br>
+          Bạn chỉ cần mở Zalo hoặc ứng dụng chat và nhấn <strong>Ctrl + V</strong> (hoặc chọn <em>Dán</em>) để gửi ngay.
+        </div>
+      </div>
+
+      <div class="image-preview-viewport">
+        <img id="previewModalImageEl" src="" alt="Ảnh Xuất HD" />
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-primary" id="btnCopyImageAgain">
+            <i class="fa-solid fa-copy"></i> Sao Chép Lại Ảnh
+          </button>
+          <button class="btn btn-secondary" id="btnDownloadImageManually">
+            <i class="fa-solid fa-download"></i> Tải Về Máy
+          </button>
+        </div>
+        <button class="btn btn-secondary" id="btnClosePreviewModalBtn">Đóng</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL CẤU HÌNH WEB APP URL -->
   <div class="modal-overlay" id="configModal">
     <div class="modal-box">
@@ -1845,20 +1929,92 @@
       });
     }
 
-    // NÚT XUẤT ẢNH HD
+    let currentExportBlob = null;
+    let currentExportDataUrl = "";
+
+    // NÚT XUẤT ẢNH HD: KHÔNG AUTO TẢI VỀ, HIỂN THỊ POPUP VÀ AUTO COPY
     document.getElementById('btnExportImage').addEventListener('click', () => {
-      showToast('📸 Đang tạo ảnh HD sơ đồ mặt bằng...');
-      const target = state.activeTab === 'floorMapTab' ? document.getElementById('floorPlanExportTarget') : (state.activeTab === 'rulesTab' ? document.getElementById('rulesExportTarget') : document.getElementById('appMainContainer'));
+      showToast('📸 Đang kết xuất ảnh HD...');
+      const target = state.activeTab === 'floorMapTab' 
+        ? document.getElementById('floorPlanExportTarget') 
+        : (state.activeTab === 'rulesTab' 
+          ? document.getElementById('rulesExportTarget') 
+          : document.getElementById('appMainContainer'));
+
       if (typeof html2canvas !== 'undefined') {
-        html2canvas(target, { scale: 2, backgroundColor: '#fffdf5', useCORS: true }).then(canvas => {
-          const a = document.createElement('a');
-          a.download = `SoDo_VeSinh_1841_${Date.now()}.png`;
-          a.href = canvas.toDataURL('image/png');
-          a.click();
-          showToast('✅ Đã tải file ảnh HD thành công!');
+        html2canvas(target, { 
+          scale: 2, 
+          backgroundColor: '#fffdf5', 
+          useCORS: true 
+        }).then(canvas => {
+          currentExportDataUrl = canvas.toDataURL('image/png');
+          
+          canvas.toBlob(blob => {
+            currentExportBlob = blob;
+            
+            // Auto copy vào Clipboard
+            if (navigator.clipboard && window.ClipboardItem && blob) {
+              try {
+                const item = new ClipboardItem({ 'image/png': blob });
+                navigator.clipboard.write([item]).then(() => {
+                  showToast('📋 Đã tự động sao chép ảnh vào Clipboard! (Bấm Ctrl+V để dán)');
+                }).catch(err => {
+                  console.warn('Clipboard write error:', err);
+                });
+              } catch(e) {}
+            }
+
+            // Hiển thị modal popup xem trước
+            const modal = document.getElementById('imagePreviewModal');
+            const imgEl = document.getElementById('previewModalImageEl');
+            imgEl.src = currentExportDataUrl;
+            modal.style.display = 'flex';
+
+            showToast('✅ Đã xuất ảnh HD và sẵn sàng!');
+          }, 'image/png');
+
         }).catch(e => showToast('❌ Lỗi xuất ảnh: ' + e.message));
       }
     });
+
+    // Nút sao chép lại ảnh trong modal
+    document.getElementById('btnCopyImageAgain').addEventListener('click', () => {
+      if (currentExportBlob && navigator.clipboard && window.ClipboardItem) {
+        try {
+          const item = new ClipboardItem({ 'image/png': currentExportBlob });
+          navigator.clipboard.write([item]).then(() => {
+            showToast('📋 Đã sao chép lại ảnh vào Clipboard! Bấm Ctrl+V dán vào Zalo');
+          }).catch(() => {
+            showToast('⚠️ Không thể ghi vào Clipboard tự động');
+          });
+        } catch(e) {
+          showToast('⚠️ Không thể sao chép trực tiếp');
+        }
+      } else {
+        showToast('⚠️ Trình duyệt không hỗ trợ sao chép ảnh trực tiếp');
+      }
+    });
+
+    // Nút tải về máy thủ công (khi người dùng chủ động muốn tải)
+    document.getElementById('btnDownloadImageManually').addEventListener('click', () => {
+      if (currentExportDataUrl) {
+        const a = document.createElement('a');
+        a.download = `SoDo_VeSinh_1841_${Date.now()}.png`;
+        a.href = currentExportDataUrl;
+        a.click();
+        showToast('💾 Đang tải ảnh về máy...');
+      }
+    });
+
+    // Đóng modal xem trước ảnh
+    const closePreviewModal = () => {
+      document.getElementById('imagePreviewModal').style.display = 'none';
+    };
+    document.getElementById('btnClosePreviewModal').onclick = closePreviewModal;
+    document.getElementById('btnClosePreviewModalBtn').onclick = closePreviewModal;
+    document.getElementById('imagePreviewModal').onclick = (e) => {
+      if (e.target.id === 'imagePreviewModal') closePreviewModal();
+    };
 
     // LÀM MỚI TRANG
     document.getElementById('btnReloadPage').addEventListener('click', () => {
