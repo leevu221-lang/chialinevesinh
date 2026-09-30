@@ -3,21 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Hệ Thống Phân Công Trực & Vệ Sinh Siêu Thị 1841 - Tone Tím Pastel</title>
+  <title>Sơ Đồ Vệ Sinh & Phân Công Trực Siêu Thị 1841 - Tone Vàng Pastel</title>
   
-  <!-- SEO & Social Meta -->
-  <meta name="description" content="Hệ thống phân công trực & sơ đồ vệ sinh siêu thị 1841 tự động, kết nối trực tiếp Google Sheets, đồng bộ thời gian thực đa trình duyệt, tone tím pastel hiện đại.">
+  <meta name="description" content="Sơ đồ phân công trực và vệ sinh siêu thị 1841 chuẩn mặt bằng, tone vàng pastel dịu mắt, dễ nhìn, đồng bộ tức thì đa trình duyệt và lưu về Google Sheets.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧹</text></svg>">
 
   <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- MQTT Realtime Client (Đồng bộ tức thì đa trình duyệt 20ms - 50ms) -->
+  <!-- MQTT Realtime Client (Đồng bộ tức thì đa trình duyệt < 50ms) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/5.5.0/mqtt.min.js"></script>
 
   <!-- html2canvas for High Resolution Image Export -->
@@ -25,46 +24,62 @@
 
   <style>
     /* ==========================================================================
-       HỆ THỐNG PHÂN CÔNG VỆ SINH 1841 - DESIGN SYSTEM: PASTEL PURPLE AESTHETIC
+       DESIGN SYSTEM: TONE VÀNG PASTEL (WARM BUTTER & SUNFLOWER PASTEL AESTHETIC)
        ========================================================================== */
     :root {
-      /* Palette Tím Pastel (Lavender / Lilac / Amethyst) */
-      --bg-main: #f5f3ff;
-      --bg-gradient: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 45%, #faf5ff 100%);
+      --bg-main: #fffdf5;
+      --bg-gradient: linear-gradient(135deg, #fffdf2 0%, #fefce8 50%, #fef9c3 100%);
       
-      --primary: #8b5cf6;
-      --primary-hover: #7c3aed;
-      --primary-dark: #6d28d9;
-      --primary-light: #ede9fe;
-      --primary-subtle: #f5f3ff;
-      --primary-border: #ddd6fe;
-      --primary-gradient: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #7c3aed 100%);
+      --primary: #d97706;
+      --primary-hover: #b45309;
+      --primary-dark: #92400e;
+      --primary-light: #fef3c7;
+      --primary-subtle: #fffbeb;
+      --primary-border: #fde68a;
+      --primary-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
 
-      --accent-lilac: #c084fc;
-      --accent-purple: #9333ea;
-      --accent-pink-pastel: #fbcfe8;
+      /* Palette phân khu theo hình mẫu */
+      --zone-yellow-bg: #fef08a;
+      --zone-yellow-border: #eab308;
+      --zone-yellow-text: #854d0e;
+
+      --zone-green-bg: #dcfce7;
+      --zone-green-border: #86efac;
+      --zone-green-text: #166534;
+
+      --zone-blue-bg: #dbeafe;
+      --zone-blue-border: #93c5fd;
+      --zone-blue-text: #1e40af;
+
+      --zone-purple-bg: #f3e8ff;
+      --zone-purple-border: #d8b4fe;
+      --zone-purple-text: #6b21a8;
+
+      --zone-orange-bg: #ffedd5;
+      --zone-orange-border: #fed7aa;
+      --zone-orange-text: #9a3412;
+
+      --zone-pink-bg: #ffe4e6;
+      --zone-pink-border: #fecdd3;
+      --zone-pink-text: #9f1239;
+
+      --zone-gray-bg: #f5f5f4;
+      --zone-gray-border: #e7e5e4;
+      --zone-gray-text: #44403c;
+
+      --text-main: #1c1917;
+      --text-muted: #57534e;
+      --text-light: #78716c;
       
-      --success: #10b981;
-      --success-light: #d1fae5;
-      --success-dark: #059669;
-      --warning: #f59e0b;
-      --warning-light: #fef3c7;
-      --danger: #ef4444;
-      --danger-light: #fee2e2;
+      --card-bg: #ffffff;
+      --card-border: #fef08a;
+      --card-shadow: 0 4px 20px -2px rgba(217, 119, 6, 0.07), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+      --card-shadow-hover: 0 10px 25px -4px rgba(217, 119, 6, 0.15), 0 4px 10px -2px rgba(0, 0, 0, 0.06);
 
-      /* Neutral Text & Grays */
-      --text-main: #1e1b4b;
-      --text-muted: #6b7280;
-      --text-light: #9ca3af;
-      --card-bg: rgba(255, 255, 255, 0.96);
-      --card-border: #e9d5ff;
-      --card-shadow: 0 10px 30px -5px rgba(139, 92, 246, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-      --card-shadow-hover: 0 20px 35px -5px rgba(139, 92, 246, 0.16), 0 8px 12px -3px rgba(0, 0, 0, 0.05);
-
-      --radius-sm: 8px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
-      --radius-xl: 26px;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
       --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
@@ -80,118 +95,106 @@
       font-family: var(--font-sans);
       background-color: var(--bg-main);
       background-image: 
-        radial-gradient(circle at 10% 15%, rgba(237, 233, 254, 0.8) 0%, transparent 45%),
-        radial-gradient(circle at 90% 85%, rgba(221, 214, 254, 0.6) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(245, 243, 255, 0.95) 0%, #faf5ff 100%);
+        radial-gradient(circle at 10% 15%, rgba(254, 240, 138, 0.45) 0%, transparent 45%),
+        radial-gradient(circle at 90% 85%, rgba(253, 230, 138, 0.35) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(255, 253, 245, 0.95) 0%, #fffbeb 100%);
       background-attachment: fixed;
       color: var(--text-main);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      line-height: 1.5;
+      line-height: 1.45;
     }
 
-    /* Container bao bọc toàn bộ ứng dụng */
     .app-container {
       width: 100%;
-      max-width: 1360px;
+      max-width: 1520px;
       margin: 0 auto;
-      padding: 16px 18px 40px;
+      padding: 14px 16px 40px;
       flex: 1;
     }
 
-    /* ==========================================================================
-       HEADER: TONE TÍM PASTEL CAO CẤP
-       ========================================================================== */
+    /* HEADER */
     .app-header {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border: 1.5px solid var(--primary-border);
       border-radius: var(--radius-xl);
-      padding: 18px 24px;
-      margin-bottom: 20px;
+      padding: 14px 20px;
+      margin-bottom: 16px;
       box-shadow: var(--card-shadow);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
+      gap: 14px;
       flex-wrap: wrap;
-      transition: all 0.25s ease;
     }
 
-    .brand-box {
+    .header-branding {
       display: flex;
       align-items: center;
       gap: 14px;
     }
 
-    .brand-icon-wrap {
-      width: 52px;
-      height: 52px;
-      border-radius: var(--radius-md);
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
       background: var(--primary-gradient);
-      color: #ffffff;
+      color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 4px 14px rgba(139, 92, 246, 0.35);
-      flex-shrink: 0;
+      font-size: 22px;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
     }
 
-    .brand-info h1 {
-      font-size: 19px;
+    .brand-title h1 {
+      font-size: 20px;
       font-weight: 800;
-      color: #4c1d95;
-      letter-spacing: -0.01em;
+      color: #92400e;
+      letter-spacing: -0.3px;
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .brand-title .badge-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      border: 1px solid var(--primary-border);
     }
 
     .brand-subtitle {
       font-size: 12.5px;
       color: var(--text-muted);
       margin-top: 2px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
+      font-weight: 500;
     }
 
-    .sheet-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: #ede9fe;
-      color: #6d28d9;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 11.5px;
-    }
-
-    /* Live status badge */
-    .header-right-actions {
+    .header-actions {
       display: flex;
       align-items: center;
       gap: 10px;
       flex-wrap: wrap;
     }
 
-    .live-pill {
+    .live-status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      background: #ffffff;
-      border: 1px solid #ddd6fe;
-      padding: 6px 14px;
-      border-radius: 9999px;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
       font-size: 12px;
-      font-weight: 700;
-      color: #5b21b6;
-      box-shadow: 0 2px 6px rgba(139, 92, 246, 0.08);
+      font-weight: 600;
     }
 
     .live-dot {
@@ -199,1658 +202,1348 @@
       height: 8px;
       border-radius: 50%;
       background: #10b981;
-      display: inline-block;
-      animation: pulseGreen 1.8s infinite;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+      animation: pulseDot 1.8s infinite;
     }
 
-    @keyframes pulseGreen {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      70% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.7; }
     }
 
-    .clock-badge {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 700;
-      color: #6d28d9;
-      background: #faf5ff;
-      border: 1px solid #e9d5ff;
-      padding: 6px 12px;
-      border-radius: 9999px;
-    }
-
-    /* Button styles */
-    .btn-action {
+    .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 7px;
       padding: 8px 14px;
       border-radius: var(--radius-md);
-      font-size: 12.5px;
-      font-weight: 700;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.2s ease;
       border: none;
       outline: none;
-      white-space: nowrap;
+      text-decoration: none;
     }
 
     .btn-primary {
       background: var(--primary-gradient);
-      color: #ffffff;
-      box-shadow: 0 3px 10px rgba(139, 92, 246, 0.28);
+      color: white;
+      box-shadow: 0 3px 10px rgba(217, 119, 6, 0.28);
     }
-
     .btn-primary:hover {
-      filter: brightness(1.08);
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
       transform: translateY(-1px);
-      box-shadow: 0 5px 14px rgba(139, 92, 246, 0.38);
+      box-shadow: 0 5px 14px rgba(217, 119, 6, 0.35);
     }
 
     .btn-secondary {
       background: #ffffff;
-      border: 1.5px solid var(--primary-border);
-      color: #6d28d9;
+      color: var(--text-main);
+      border: 1px solid var(--primary-border);
     }
-
     .btn-secondary:hover {
-      background: #f5f3ff;
-      border-color: #c4b5fd;
-      transform: translateY(-1px);
+      background: var(--primary-subtle);
+      border-color: #f59e0b;
+      color: var(--primary-dark);
     }
 
-    .btn-icon-square {
+    .btn-icon {
       width: 38px;
       height: 38px;
       padding: 0;
       border-radius: var(--radius-md);
-      font-size: 15px;
+      background: #ffffff;
+      border: 1px solid var(--primary-border);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-icon:hover {
+      background: var(--primary-subtle);
+      color: var(--primary-dark);
+      border-color: #f59e0b;
     }
 
-    /* ==========================================================================
-       TABS NAVIGATION: TONE TÍM PASTEL
-       ========================================================================== */
-    .tab-bar-container {
+    /* NAVIGATION TABS & SEARCH */
+    .nav-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       flex-wrap: wrap;
     }
 
-    .nav-tabs-pill {
-      display: inline-flex;
-      align-items: center;
+    .nav-tabs {
+      display: flex;
       background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(10px);
       border: 1.5px solid var(--primary-border);
-      border-radius: 9999px;
-      padding: 5px;
+      padding: 4px;
+      border-radius: var(--radius-lg);
       gap: 4px;
-      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.06);
+      box-shadow: 0 2px 6px rgba(217, 119, 6, 0.04);
     }
 
-    .tab-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 18px;
-      border-radius: 9999px;
+    .nav-tab-btn {
+      padding: 7px 15px;
+      border-radius: var(--radius-md);
       border: none;
       background: transparent;
       color: var(--text-muted);
       font-size: 13px;
-      font-weight: 700;
+      font-weight: 600;
       cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       transition: all 0.2s ease;
     }
-
-    .tab-btn:hover {
+    .nav-tab-btn:hover {
       color: var(--primary-dark);
-      background: rgba(237, 233, 254, 0.5);
+      background: var(--primary-subtle);
     }
-
-    .tab-btn.active {
+    .nav-tab-btn.active {
       background: var(--primary-gradient);
-      color: #ffffff;
-      box-shadow: 0 3px 10px rgba(139, 92, 246, 0.32);
+      color: white;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.28);
     }
-
-    .tab-badge {
+    .nav-tab-btn .tab-badge {
+      padding: 1px 7px;
+      border-radius: 12px;
       font-size: 11px;
-      padding: 2px 7px;
-      border-radius: 9999px;
       background: rgba(255, 255, 255, 0.25);
-      font-weight: 800;
+    }
+    .nav-tab-btn:not(.active) .tab-badge {
+      background: var(--primary-light);
+      color: var(--primary-dark);
     }
 
-    .tab-btn:not(.active) .tab-badge {
-      background: #ede9fe;
-      color: #6d28d9;
-    }
-
-    .search-filter-box {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-      max-width: 420px;
-      min-width: 260px;
-    }
-
-    .search-input-wrap {
+    .search-box-wrap {
       position: relative;
-      width: 100%;
+      flex: 1;
+      max-width: 380px;
+      min-width: 240px;
     }
-
-    .search-input-wrap i {
+    .search-box-wrap i {
       position: absolute;
-      left: 14px;
+      left: 12px;
       top: 50%;
       transform: translateY(-50%);
-      color: #a78bfa;
+      color: #b45309;
       font-size: 14px;
     }
-
     .search-input {
       width: 100%;
-      padding: 10px 14px 10px 38px;
-      background: #ffffff;
+      padding: 8px 12px 8px 36px;
+      border-radius: var(--radius-lg);
       border: 1.5px solid var(--primary-border);
-      border-radius: var(--radius-md);
+      background: #ffffff;
+      font-family: var(--font-sans);
       font-size: 13px;
       color: var(--text-main);
       outline: none;
       transition: all 0.2s ease;
     }
-
     .search-input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+      border-color: #d97706;
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15);
     }
 
-    /* ==========================================================================
-       TAB 1: BẢNG PHÂN CÔNG NHÂN VIÊN TRỰC (15 VỊ TRÍ)
-       ========================================================================== */
-    .shifts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+    /* FLOOR MAP CONTAINER */
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .shift-card {
-      background: var(--card-bg);
-      border: 1.5px solid var(--card-border);
-      border-radius: var(--radius-lg);
+    /* SƠ ĐỒ MẶT BẰNG CHUẨN HÌNH MẪU */
+    .floorplan-card {
+      background: #ffffff;
+      border: 1.5px solid var(--primary-border);
+      border-radius: var(--radius-xl);
       padding: 16px;
       box-shadow: var(--card-shadow);
-      transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      overflow: hidden;
+      margin-bottom: 20px;
+      overflow-x: auto;
     }
 
-    .shift-card:hover {
-      border-color: #c084fc;
-      transform: translateY(-2px);
-      box-shadow: var(--card-shadow-hover);
-    }
-
-    .shift-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 4px;
-      background: var(--primary-gradient);
-      opacity: 0.85;
-    }
-
-    .shift-header {
+    .floorplan-header-strip {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-bottom: 12px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .floorplan-legend {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .legend-box {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid rgba(0,0,0,0.1);
     }
 
+    /* GRID MẶT BẰNG */
+    .store-layout-grid {
+      display: grid;
+      grid-template-columns: 140px 1.4fr 1.6fr 2.8fr;
+      gap: 10px;
+      min-width: 1200px;
+      background: #fefce8;
+      padding: 12px;
+      border-radius: var(--radius-lg);
+      border: 1.5px solid #fde047;
+    }
+
+    /* CỘT ĐỈNH (TOP BANNER) */
+    .top-barrier-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: 80px 1fr 1fr 1fr 120px 2.2fr;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    /* MAP CELL STYLES */
+    .map-cell {
+      border-radius: var(--radius-sm);
+      padding: 6px 8px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s ease;
+      cursor: pointer;
+      user-select: none;
+      min-height: 38px;
+      line-height: 1.25;
+      border: 1px solid transparent;
+      position: relative;
+    }
+    .map-cell:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+      filter: brightness(1.02);
+      z-index: 5;
+    }
+    .map-cell.highlight-target {
+      outline: 2.5px solid #d97706 !important;
+      animation: pulseHighlight 1s infinite alternate;
+      z-index: 10;
+    }
+    @keyframes pulseHighlight {
+      from { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.7); }
+      to { box-shadow: 0 0 0 8px rgba(217, 119, 6, 0); }
+    }
+
+    .cell-title {
+      font-weight: 800;
+      letter-spacing: -0.1px;
+    }
+    .cell-staff {
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 2px;
+      opacity: 0.92;
+    }
+
+    /* MÀU SẮC PHÂN KHU CHUẨN THEO ẢNH */
+    .bg-green-wall {
+      background: #dcfce7;
+      border-color: #86efac;
+      color: #166534;
+    }
+    .bg-door-red {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #991b1b;
+      font-weight: 800;
+    }
+    .bg-storage-red {
+      background: #ffe4e6;
+      border-color: #fda4af;
+      color: #9f1239;
+    }
+    .bg-yellow-ict {
+      background: #fef08a;
+      border-color: #eab308;
+      color: #854d0e;
+    }
+    .bg-yellow-dark {
+      background: #facc15;
+      border-color: #ca8a04;
+      color: #713f12;
+      font-weight: 800;
+    }
+    .bg-orange-fridge {
+      background: #ffedd5;
+      border-color: #fdba74;
+      color: #9a3412;
+    }
+    .bg-purple-fridge {
+      background: #f3e8ff;
+      border-color: #d8b4fe;
+      color: #6b21a8;
+    }
+    .bg-blue-wash {
+      background: #dbeafe;
+      border-color: #93c5fd;
+      color: #1e40af;
+    }
+    .bg-cream-appliance {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #78350f;
+    }
+    .bg-pink-service {
+      background: #ffe4e6;
+      border-color: #fca5a5;
+      color: #9f1239;
+    }
+    .bg-gray-divider {
+      background: #f5f5f4;
+      border-color: #d6d3d1;
+      color: #44403c;
+    }
+
+    /* BẢNG VẬN HÀNH */
+    .van-hanh-box {
+      grid-column: 6;
+      grid-row: 1 / 8;
+      background: #fffbeb;
+      border: 2px solid #f59e0b;
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #78350f;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.1);
+    }
+    .van-hanh-title {
+      font-size: 14px;
+      font-weight: 900;
+      color: #b45309;
+      text-align: center;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1.5px solid #fde68a;
+      padding-bottom: 4px;
+    }
+    .van-hanh-content {
+      color: #991b1b;
+      font-weight: 600;
+    }
+    .van-hanh-content p {
+      margin-bottom: 4px;
+    }
+    .van-hanh-rules {
+      color: #78350f;
+      margin-top: 4px;
+      padding-left: 14px;
+    }
+
+    /* KHỐI ICT GRID BÊN DƯỚI */
+    .ict-subgrid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    /* CARDS VIEW (TAB 2) */
+    .shifts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 16px;
+    }
+
+    .shift-card {
+      background: #ffffff;
+      border: 1.5px solid var(--primary-border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--card-shadow);
+      transition: all 0.22s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .shift-card:hover {
+      border-color: #f59e0b;
+      box-shadow: var(--card-shadow-hover);
+      transform: translateY(-2px);
+    }
+    .shift-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px dashed var(--primary-border);
+      padding-bottom: 8px;
+    }
     .shift-stt-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      background: #ede9fe;
-      color: #6d28d9;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--primary-light);
+      color: var(--primary-dark);
       font-size: 12px;
       font-weight: 800;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      border: 1px solid #ddd6fe;
+      border: 1px solid var(--primary-border);
     }
-
     .shift-status-tag {
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
       padding: 3px 9px;
-      border-radius: 6px;
+      border-radius: 12px;
     }
-
-    .status-assigned {
-      background: #ecfdf5;
-      color: #059669;
-      border: 1px solid #a7f3d0;
+    .shift-status-tag.assigned {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
     }
-
-    .status-empty {
-      background: #fef3c7;
-      color: #b45309;
-      border: 1px solid #fde68a;
+    .shift-status-tag.empty {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
     }
 
     .shift-field-group {
-      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
-
-    .field-label {
-      font-size: 11px;
+    .shift-field-label {
+      font-size: 11.5px;
       font-weight: 700;
-      color: #6b7280;
+      color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.03em;
-      margin-bottom: 4px;
+      letter-spacing: 0.3px;
       display: flex;
       align-items: center;
       gap: 5px;
     }
-
-    .field-select, .field-input {
+    .shift-field-select, .shift-field-input {
       width: 100%;
-      padding: 8px 12px;
-      background: #faf5ff;
-      border: 1px solid #e9d5ff;
+      padding: 8px 10px;
       border-radius: var(--radius-sm);
+      border: 1px solid #e7e5e4;
+      background: #fafaf9;
+      font-family: var(--font-sans);
       font-size: 13px;
       font-weight: 600;
       color: var(--text-main);
       outline: none;
-      transition: all 0.15s ease;
-    }
-
-    .field-select:focus, .field-input:focus {
-      background: #ffffff;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 2.5px rgba(139, 92, 246, 0.15);
-    }
-
-    .field-select option {
-      background: #ffffff;
-      color: #1e1b4b;
-    }
-
-    .pg-badge-cell {
-      background: #fdf4ff;
-      border: 1px dashed #f0abfc;
-      border-radius: var(--radius-sm);
-      padding: 7px 10px;
-      font-size: 12px;
-      color: #a21caf;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-
-    .shift-card-footer {
-      margin-top: auto;
-      padding-top: 10px;
-      border-top: 1px dashed #e9d5ff;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 11.5px;
-      color: var(--text-muted);
-    }
-
-    /* ==========================================================================
-       TAB 2: SƠ ĐỒ MẶT BẰNG SIÊU THỊ 1841 (INTERACTIVE MAP)
-       ========================================================================== */
-    .map-card-container {
-      background: var(--card-bg);
-      border: 1.5px solid var(--card-border);
-      border-radius: var(--radius-xl);
-      padding: 20px;
-      box-shadow: var(--card-shadow);
-      margin-bottom: 24px;
-    }
-
-    .map-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .map-title {
-      font-size: 17px;
-      font-weight: 800;
-      color: #4c1d95;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .map-legend {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    .legend-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .legend-color {
-      width: 12px;
-      height: 12px;
-      border-radius: 4px;
-    }
-
-    /* Layout sơ đồ kiến trúc mặt bằng */
-    .store-floor-plan {
-      background: #faf5ff;
-      border: 2px dashed #ddd6fe;
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      overflow-x: auto;
-      min-width: 860px;
-    }
-
-    .floor-row {
-      display: flex;
-      gap: 12px;
-      align-items: stretch;
-      width: 100%;
-    }
-
-    .zone-box {
-      background: #ffffff;
-      border: 1.5px solid #e9d5ff;
-      border-radius: var(--radius-md);
-      padding: 12px 14px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      min-height: 72px;
-      box-shadow: 0 2px 6px rgba(139, 92, 246, 0.04);
-      cursor: pointer;
       transition: all 0.2s ease;
-      position: relative;
+    }
+    .shift-field-select:focus, .shift-field-input:focus {
+      border-color: #d97706;
+      background: #ffffff;
+      box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15);
     }
 
-    .zone-box:hover {
-      border-color: #8b5cf6;
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(139, 92, 246, 0.16);
-    }
-
-    .zone-box.highlight {
-      background: #ede9fe;
-      border-color: #7c3aed;
-      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.25);
-    }
-
-    .zone-name {
-      font-size: 12px;
-      font-weight: 800;
-      color: #3b0764;
-      line-height: 1.3;
-    }
-
-    .zone-assignee {
-      margin-top: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #6d28d9;
-      background: #f5f3ff;
-      padding: 2px 7px;
-      border-radius: 4px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      width: fit-content;
-    }
-
-    /* Màu sắc đặc trưng từng phân khu */
-    .zone-entrance {
-      background: #f0fdf4;
-      border-color: #bbf7d0;
-      color: #166534;
-      text-align: center;
-      justify-content: center;
-    }
-    .zone-ict {
-      background: #eff6ff;
-      border-color: #bfdbfe;
-    }
-    .zone-ict .zone-name { color: #1e40af; }
-    
-    .zone-tivi {
-      background: #fff7ed;
-      border-color: #fed7aa;
-    }
-    .zone-tivi .zone-name { color: #9a3412; }
-
-    .zone-washing {
-      background: #f0fdfa;
-      border-color: #99f6e4;
-    }
-    .zone-washing .zone-name { color: #115e59; }
-
-    .zone-fridge {
-      background: #f0f9ff;
-      border-color: #bae6fd;
-    }
-    .zone-fridge .zone-name { color: #075985; }
-
-    .zone-appliance {
-      background: #fdf2f8;
-      border-color: #fbcfe8;
-    }
-    .zone-appliance .zone-name { color: #9d174d; }
-
-    .zone-storage {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-      color: #475569;
-    }
-
-    /* ==========================================================================
-       TAB 3: ĐIỂM DANH 26 NHÂN VIÊN SIÊU THỊ
-       ========================================================================== */
-    .employee-stats-bar {
+    /* EMPLOYEES LIST (TAB 3) */
+    .employees-stats-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
     }
-
     .stat-card {
-      background: var(--card-bg);
-      border: 1.5px solid var(--card-border);
-      border-radius: var(--radius-lg);
-      padding: 16px;
+      background: #ffffff;
+      border: 1.5px solid var(--primary-border);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
       display: flex;
       align-items: center;
       gap: 14px;
       box-shadow: var(--card-shadow);
     }
-
     .stat-icon {
-      width: 46px;
-      height: 46px;
-      border-radius: var(--radius-md);
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 20px;
-      color: #ffffff;
+      color: white;
     }
-
-    .stat-number {
+    .stat-value {
       font-size: 22px;
       font-weight: 800;
       color: var(--text-main);
-      font-family: var(--font-mono);
       line-height: 1;
     }
-
     .stat-label {
       font-size: 12px;
-      font-weight: 600;
       color: var(--text-muted);
+      font-weight: 600;
       margin-top: 3px;
     }
 
-    .emp-list-grid {
+    .employees-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
       gap: 12px;
     }
-
-    .emp-item-card {
-      background: var(--card-bg);
-      border: 1.5px solid var(--card-border);
+    .employee-card {
+      background: #ffffff;
+      border: 1.5px solid #fef08a;
       border-radius: var(--radius-md);
       padding: 12px 14px;
+      box-shadow: var(--card-shadow);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      box-shadow: var(--card-shadow);
-      transition: all 0.18s ease;
+      transition: all 0.2s ease;
     }
-
-    .emp-item-card:hover {
-      border-color: #c084fc;
+    .employee-card:hover {
+      border-color: #f59e0b;
       transform: translateY(-1px);
     }
-
-    .emp-item-card.is-active {
-      background: #faf5ff;
-      border-color: #a855f7;
+    .employee-card.present {
+      background: #f0fdf4;
+      border-color: #86efac;
     }
-
     .emp-info {
       display: flex;
       align-items: center;
       gap: 10px;
     }
-
     .emp-stt {
-      font-size: 11px;
-      font-weight: 800;
-      color: #7c3aed;
-      background: #ede9fe;
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 800;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-
     .emp-name {
       font-size: 13.5px;
       font-weight: 700;
       color: var(--text-main);
     }
-
-    .emp-assign-tag {
+    .btn-toggle-attend {
+      padding: 5px 10px;
+      border-radius: 20px;
       font-size: 11px;
-      color: #6d28d9;
-      background: #ede9fe;
-      padding: 1px 6px;
-      border-radius: 4px;
-      margin-top: 2px;
-      display: inline-block;
-      max-width: 150px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .btn-toggle-att {
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 11.5px;
       font-weight: 700;
       cursor: pointer;
-      border: none;
-      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .btn-toggle-attend.checked {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #86efac;
+    }
+    .btn-toggle-attend.unchecked {
+      background: #f5f5f4;
+      color: #78716c;
+      border-color: #e7e5e4;
     }
 
-    .att-active {
-      background: #d1fae5;
-      color: #065f46;
-      border: 1px solid #a7f3d0;
-    }
-
-    .att-inactive {
-      background: #f1f5f9;
-      color: #64748b;
-      border: 1px solid #e2e8f0;
-    }
-
-    /* Toast Notification */
-    .toast-box {
+    /* TOAST */
+    .toast-container {
       position: fixed;
       bottom: 24px;
       right: 24px;
-      background: #1e1b4b;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast-msg {
+      background: #1c1917;
       color: #ffffff;
-      padding: 12px 20px;
+      padding: 10px 16px;
       border-radius: var(--radius-md);
       font-size: 13px;
-      font-weight: 700;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      z-index: 9999;
-      animation: slideUp 0.25s ease forwards;
-      border-left: 4px solid #a855f7;
-    }
-
-    @keyframes slideUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    /* Modal dialog */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 9999;
-    }
-
-    .modal-card {
-      background: #ffffff;
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      max-width: 480px;
-      width: 100%;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
-      border: 1.5px solid var(--primary-border);
-    }
-
-    .modal-card h3 {
-      font-size: 17px;
-      font-weight: 800;
-      color: #4c1d95;
-      margin-bottom: 12px;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
       display: flex;
       align-items: center;
       gap: 8px;
+      animation: toastIn 0.25s ease;
+      pointer-events: auto;
+    }
+    @keyframes toastIn {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
     }
 
-    /* Responsive */
+    /* MODAL */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-box {
+      background: #ffffff;
+      border-radius: var(--radius-xl);
+      border: 1.5px solid var(--primary-border);
+      width: 100%;
+      max-width: 480px;
+      padding: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+    }
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #92400e;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
     @media (max-width: 768px) {
-      .app-container { padding: 12px 12px 30px; }
-      .app-header { padding: 14px 16px; border-radius: var(--radius-lg); }
-      .brand-info h1 { font-size: 16px; }
-      .nav-tabs-pill { width: 100%; justify-content: space-between; }
-      .tab-btn { padding: 7px 12px; font-size: 12px; }
-      .search-filter-box { max-width: 100%; }
-      .shifts-grid { grid-template-columns: 1fr; }
+      .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .header-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .nav-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .search-box-wrap {
+        max-width: 100%;
+      }
     }
   </style>
 </head>
 <body>
-
   <div class="app-container" id="appMainContainer">
-
-    <!-- ================= HEADER CHÍNH TONE TÍM PASTEL ================= -->
+    <!-- HEADER -->
     <header class="app-header">
-      <div class="brand-box">
-        <div class="brand-icon-wrap">
+      <div class="header-branding">
+        <div class="brand-icon">
           <i class="fa-solid fa-broom"></i>
         </div>
-        <div class="brand-info">
-          <h1>HỆ THỐNG PHÂN CÔNG TRỰC & VỆ SINH</h1>
-          <p class="brand-subtitle">
-            <span class="sheet-tag"><i class="fa-solid fa-store"></i> Siêu thị 1841</span>
-            <span>•</span>
-            <span class="sheet-badge"><i class="fa-solid fa-table-cells"></i> 1841 - VỆ SINH ÁP DỤNG 1/7/2026</span>
-          </p>
+        <div class="brand-title">
+          <h1>
+            PHÂN CÔNG VỆ SINH 1841
+            <span class="badge-tag">Tone Vàng Pastel</span>
+          </h1>
+          <div class="brand-subtitle">
+            <i class="fa-solid fa-store"></i> Siêu thị 1841 • Sơ đồ chuẩn mặt bằng vận hành
+          </div>
         </div>
       </div>
 
-      <div class="header-right-actions">
-        <!-- Live status dot -->
-        <div class="live-pill" id="realtimeLiveBadge">
+      <div class="header-actions">
+        <div class="live-status-pill" id="realtimeStatusPill">
           <span class="live-dot"></span>
-          <span id="syncText">Đồng bộ tức thì (Realtime)</span>
+          <span id="realtimeStatusText">Realtime Live</span>
         </div>
-
-        <!-- Realtime Clock -->
-        <div class="clock-badge" id="clockDisplay">--:--:-- --/--/----</div>
-
-        <!-- Quick actions -->
-        <button type="button" class="btn-action btn-secondary" id="btnExportImage" title="Xuất file ảnh HD gửi Zalo">
-          <i class="fa-solid fa-camera"></i>
-          <span>Xuất Ảnh HD</span>
+        <button class="btn btn-primary" id="btnExportImage" title="Xuất ảnh sơ đồ chất lượng cao gửi Zalo">
+          <i class="fa-solid fa-camera"></i> Xuất Ảnh HD
         </button>
-
-        <button type="button" class="btn-action btn-primary" id="btnSaveToSheetMain" title="Lưu toàn bộ lên Google Sheet">
-          <i class="fa-solid fa-cloud-arrow-up"></i>
-          <span id="saveBtnMainText">Lưu Về Sheet</span>
+        <button class="btn btn-secondary" id="btnSaveToSheetMain" title="Lưu ngay về Google Sheet">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Lưu Về Sheet
         </button>
-
-        <button type="button" class="btn-action btn-secondary btn-icon-square" id="btnReloadPage" title="Làm mới trang hiện tại">
-          <i class="fa-solid fa-rotate"></i>
+        <button class="btn-icon" id="btnReloadPage" title="Làm mới trang">
+          <i class="fa-solid fa-rotate-right"></i>
         </button>
-
-        <button type="button" class="btn-action btn-secondary btn-icon-square" id="btnOpenConfigModal" title="Cấu hình Google Apps Script">
+        <button class="btn-icon" id="btnOpenConfigModal" title="Cài đặt kết nối">
           <i class="fa-solid fa-gear"></i>
         </button>
       </div>
     </header>
 
-    <!-- ================= THANH ĐIỀU HƯỚNG TABS ================= -->
-    <div class="tab-bar-container">
-      <div class="nav-tabs-pill">
-        <button type="button" class="tab-btn active" data-tab="shiftsTab">
-          <i class="fa-solid fa-clipboard-list"></i>
-          <span>Phân Công Trực</span>
-          <span class="tab-badge" id="badgeShiftCount">15 Vị trí</span>
+    <!-- NAVIGATION TOOLBAR -->
+    <div class="nav-toolbar">
+      <div class="nav-tabs">
+        <button class="nav-tab-btn active" data-tab="floorMapTab">
+          <i class="fa-solid fa-map-location-dot"></i> Sơ Đồ Mặt Bằng
         </button>
-        <button type="button" class="tab-btn" data-tab="floorMapTab">
-          <i class="fa-solid fa-map-location-dot"></i>
-          <span>Sơ Đồ Mặt Bằng</span>
+        <button class="nav-tab-btn" data-tab="shiftsTab">
+          <i class="fa-solid fa-clipboard-list"></i> Phân Ca (15 Vị Trí)
+          <span class="tab-badge" id="badgeShiftCount">15/15</span>
         </button>
-        <button type="button" class="tab-btn" data-tab="employeesTab">
-          <i class="fa-solid fa-users"></i>
-          <span>Điểm Danh Nhân Viên</span>
+        <button class="nav-tab-btn" data-tab="employeesTab">
+          <i class="fa-solid fa-users"></i> Điểm Danh Nhân Viên
           <span class="tab-badge" id="badgeEmpCount">26 NV</span>
         </button>
       </div>
 
-      <div class="search-filter-box">
-        <div class="search-input-wrap">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm nhân viên, khu vực trực, PG..." autocomplete="off">
+      <div class="search-box-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" class="search-input" id="globalSearchInput" placeholder="Tìm nhân viên, khu vực (gõ để sáng vị trí trên bản đồ)...">
+      </div>
+    </div>
+
+    <!-- TAB 1: SƠ ĐỒ MẶT BẰNG CHUẨN THEO ẢNH -->
+    <div class="tab-content active" id="floorMapTab">
+      <div class="floorplan-card" id="floorPlanExportTarget">
+        <div class="floorplan-header-strip">
+          <h2 style="font-size: 15px; font-weight: 800; color: #92400e;">
+            <i class="fa-solid fa-layer-group"></i> SƠ ĐỒ MẶT BẰNG BỐ TRÍ VỆ SINH SIÊU THỊ 1841
+          </h2>
+          <div class="floorplan-legend">
+            <span class="legend-item"><span class="legend-box" style="background:#dcfce7;border-color:#86efac;"></span> Vách Tủ Lạnh</span>
+            <span class="legend-item"><span class="legend-box" style="background:#ffedd5;border-color:#fdba74;"></span> Tủ Lạnh / Gia Dụng</span>
+            <span class="legend-item"><span class="legend-box" style="background:#dbeafe;border-color:#93c5fd;"></span> Máy Giặt</span>
+            <span class="legend-item"><span class="legend-box" style="background:#fef08a;border-color:#eab308;"></span> Khu ICT / Điện Thoại</span>
+            <span class="legend-item"><span class="legend-box" style="background:#ffe4e6;border-color:#fca5a5;"></span> Thu Ngân / HTKT</span>
+          </div>
+        </div>
+
+        <!-- BẢN ĐỒ MẶT BẰNG CHUẨN HÌNH MẪU -->
+        <div class="store-layout-grid">
+          <!-- HÀNG ĐỈNH (TOP BARRIER) -->
+          <div class="top-barrier-row">
+            <div class="map-cell bg-door-red">
+              <span class="cell-title">CỬA</span>
+            </div>
+            <div class="map-cell bg-green-wall" data-staff="XUYÊN">
+              <span class="cell-title">VÁCH TỦ LẠNH HITACHI</span>
+              <span class="cell-staff">XUYÊN</span>
+            </div>
+            <div class="map-cell bg-green-wall" data-staff="XUYÊN">
+              <span class="cell-title">VÁCH TỦ LẠNH AQUA</span>
+              <span class="cell-staff">XUYÊN</span>
+            </div>
+            <div class="map-cell bg-green-wall" data-staff="OANH">
+              <span class="cell-title">VÁCH TỦ LẠNH LG</span>
+              <span class="cell-staff">OANH</span>
+            </div>
+            <div class="map-cell bg-storage-red">
+              <span class="cell-title">CỬA KHO</span>
+            </div>
+            <!-- BẢNG VẬN HÀNH -->
+            <div class="van-hanh-box">
+              <div class="van-hanh-title">VẬN HÀNH</div>
+              <div class="van-hanh-content">
+                <p><strong>LƯU Ý:</strong> VỆ SINH NỀN NHÀ - TRÁCH NHIỆM VỆ SINH, KIỂM TRA ĐÚNG 8NTT, GỬI HÌNH TRỰC TIẾP LÊN ROOM 8NTT (KO TẠO ALBUM, KO TẠO GHI CHÚ). CUỐI CA CHECK LẠI TRƯỚC KHI VỀ.</p>
+                <p>2/ ƯU TIÊN SỐ 1 PHỤC VỤ HỔ TRỢ KHÁCH HÀNG, XỬ LÝ CV XONG THÌ HOÀN TẤT BÁO CÁO.</p>
+                <p>3/ BẮT BUỘC HOÀN TẤT BÁO CÁO MỖI NGÀY LÀM VIỆC.</p>
+                <p>4/ PHÁT SINH SAI PHẠM XỬ LÝ THEO TRIỂN KHAI ĐÃ THỐNG NHẤT :</p>
+                <div class="van-hanh-rules">
+                  - LẦN 1 : NHẮC NHỞ MIỆNG.<br>
+                  - LẦN 2 TRONG THÁNG : BB XLKL KHIỂN TRÁCH BẰNG MIỆNG.<br>
+                  - LẦN 3 TRONG THÁNG : BB XLKL ÚP HRM KHIỂN TRÁCH BẰNG VĂN BẢN
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CỘT 1: VÁCH TƯỜNG TRÁI -->
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div class="map-cell bg-green-wall" data-staff="TRANG"><span class="cell-title">VÁCH TỦ LẠNH SHARP</span><span class="cell-staff">TRANG</span></div>
+            <div class="map-cell bg-green-wall" data-staff="TRANG"><span class="cell-title">VÁCH TỦ LẠNH TOSHIBA</span><span class="cell-staff">TRANG</span></div>
+            <div class="map-cell bg-orange-fridge" data-staff="MY"><span class="cell-title">VÁCH BẾP ĐIỆN, BẾP GAS</span><span class="cell-staff">MY</span></div>
+            <div class="map-cell bg-orange-fridge" style="min-height:50px;" data-staff="MY"><span class="cell-title">VÁCH HÃNG: JUNGER, HAFALE, SUNHOUSE...</span><span class="cell-staff">MY</span></div>
+            <div class="map-cell bg-green-wall" data-staff="TÍN"><span class="cell-title">VÁCH HÃNG TOSHIBA</span><span class="cell-staff">TÍN</span></div>
+            <div class="map-cell bg-green-wall" data-staff="OANH"><span class="cell-title">VÁCH HÃNG LG</span><span class="cell-staff">OANH</span></div>
+            <div class="map-cell bg-green-wall" data-staff="TÍN"><span class="cell-title">VÁCH HÃNG SAMSUNG</span><span class="cell-staff">TÍN</span></div>
+          </div>
+
+          <!-- CỘT 2: TỦ LẠNH & GIA DỤNG -->
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-orange-fridge" data-staff="Ý"><span class="cell-title">BỤC TỦ LẠNH</span><span class="cell-staff">Ý</span></div>
+              <div class="map-cell bg-orange-fridge" data-staff="XUYÊN"><span class="cell-title">TỦ LẠNH AQUA</span><span class="cell-staff">XUYÊN</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-orange-fridge" data-staff="Ý"><span class="cell-title">BỤC TỦ LẠNH</span><span class="cell-staff">Ý</span></div>
+              <div class="map-cell bg-orange-fridge" data-staff="TRANG"><span class="cell-title">TỦ LẠNH TOSHIBA</span><span class="cell-staff">TRANG</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-orange-fridge" data-staff="Ý"><span class="cell-title">TỦ LẠNH PANASONIC</span><span class="cell-staff">Ý</span></div>
+              <div class="map-cell bg-orange-fridge" data-staff="XUYÊN"><span class="cell-title">TỦ LẠNH HAIER</span><span class="cell-staff">XUYÊN</span></div>
+            </div>
+
+            <!-- GIA DỤNG 7..1 -->
+            <div class="map-cell bg-cream-appliance" data-staff="THẮM"><span class="cell-title">GIA DỤNG 07</span><span class="cell-staff">THẮM</span></div>
+            <div class="map-cell bg-cream-appliance" data-staff="THẠCH VŨ"><span class="cell-title">GIA DỤNG 06</span><span class="cell-staff">THẠCH VŨ</span></div>
+            <div class="map-cell bg-cream-appliance" data-staff="KHANG HI"><span class="cell-title">GIA DỤNG 05</span><span class="cell-staff">KHANG HI</span></div>
+            <div class="map-cell bg-cream-appliance" data-staff="NHẠN"><span class="cell-title">GIA DỤNG 04</span><span class="cell-staff">NHẠN</span></div>
+            <div class="map-cell bg-cream-appliance" data-staff="MI"><span class="cell-title">GIA DỤNG 03</span><span class="cell-staff">MI</span></div>
+            <div class="map-cell bg-cream-appliance" data-staff="ĐẠI"><span class="cell-title">GIA DỤNG 02</span><span class="cell-staff">ĐẠI</span></div>
+            <div class="map-cell bg-cream-appliance" data-staff="BĂNG BLUESTONE"><span class="cell-title">GIA DỤNG 01</span><span class="cell-staff">BĂNG BLUESTONE</span></div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-cream-appliance" data-staff="TRANG"><span class="cell-title">GIA DỤNG KANGAROO</span><span class="cell-staff">TRANG</span></div>
+              <div class="map-cell bg-cream-appliance" data-staff="TRANG"><span class="cell-title">GIA DỤNG TOSHIBA</span><span class="cell-staff">TRANG</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-cream-appliance" data-staff="TRINH"><span class="cell-title">KỆ GIA DỤNG</span><span class="cell-staff">TRINH</span></div>
+              <div class="map-cell bg-cream-appliance" data-staff="TRINH"><span class="cell-title">GIA DỤNG SUNHOUSE</span><span class="cell-staff">TRINH</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-cream-appliance" data-staff="TRINH"><span class="cell-title">ROBOT</span><span class="cell-staff">TRINH</span></div>
+              <div class="map-cell bg-cream-appliance" data-staff="TRINH"><span class="cell-title">MLN SUNHOUSE</span><span class="cell-staff">TRINH</span></div>
+            </div>
+
+            <!-- MLN HÀNG NGANG -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;">
+              <div class="map-cell bg-green-wall" data-staff="HI"><span class="cell-title">MLN MUTOSI</span><span class="cell-staff">HI</span></div>
+              <div class="map-cell bg-green-wall" data-staff="TRANG"><span class="cell-title">MLN TOSHIBA</span><span class="cell-staff">TRANG</span></div>
+              <div class="map-cell bg-green-wall" data-staff="HI"><span class="cell-title">MLN HOÀ PHÁT</span><span class="cell-staff">HI</span></div>
+            </div>
+
+            <div class="map-cell bg-orange-fridge" data-staff="TÍN"><span class="cell-title">KỆ LOA KARAOKE</span><span class="cell-staff">TÍN</span></div>
+            <div class="map-cell bg-orange-fridge" data-staff="XUYÊN"><span class="cell-title">BỤC HÃNG HAIER</span><span class="cell-staff">XUYÊN</span></div>
+            <div class="map-cell bg-orange-fridge" data-staff="XUYÊN"><span class="cell-title">BỤC HÃNG AQUA</span><span class="cell-staff">XUYÊN</span></div>
+            <div class="map-cell bg-orange-fridge" data-staff="TÍN"><span class="cell-title">BỤC HÃNG XIAOMI</span><span class="cell-staff">TÍN</span></div>
+            <div class="map-cell bg-orange-fridge" data-staff="OANH"><span class="cell-title">BỤC HÃNG SAMSUNG</span><span class="cell-staff">OANH</span></div>
+          </div>
+
+          <!-- CỘT 3: TỦ ĐÔNG, MÁY GIẶT & THU NGÂN -->
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div class="map-cell bg-purple-fridge" data-staff="PHÚC"><span class="cell-title">TỦ LẠNH SAMSUNG</span><span class="cell-staff">PHÚC</span></div>
+            <div class="map-cell bg-purple-fridge" data-staff="PHÚC"><span class="cell-title">TỦ ĐÔNG 02</span><span class="cell-staff">PHÚC</span></div>
+            <div class="map-cell bg-purple-fridge" data-staff="PHÚC"><span class="cell-title">TỦ ĐÔNG 03</span><span class="cell-staff">PHÚC</span></div>
+            <div class="map-cell bg-blue-wash" data-staff="PHÚC"><span class="cell-title">BỤC MÁY GIẶT</span><span class="cell-staff">PHÚC</span></div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-blue-wash" data-staff="ĐƯỢC"><span class="cell-title">MÁY GIẶT ELECTROLUX</span><span class="cell-staff">ĐƯỢC</span></div>
+              <div class="map-cell bg-blue-wash" data-staff="ĐƯỢC"><span class="cell-title">MÁY GIẶT HISENSE</span><span class="cell-staff">ĐƯỢC</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-blue-wash" data-staff="ĐƯỢC"><span class="cell-title">MÁY GIẶT SAMSUNG</span><span class="cell-staff">ĐƯỢC</span></div>
+              <div class="map-cell bg-blue-wash" data-staff="ĐƯỢC"><span class="cell-title">MÁY GIẶT PANASONIC</span><span class="cell-staff">ĐƯỢC</span></div>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-blue-wash" data-staff="XUYÊN"><span class="cell-title">MÁY GIẶT AQUA</span><span class="cell-staff">XUYÊN</span></div>
+              <div class="map-cell bg-blue-wash" data-staff="XUYÊN"><span class="cell-title">MÁY GIẶT HAIER</span><span class="cell-staff">XUYÊN</span></div>
+            </div>
+            <div class="map-cell bg-blue-wash" data-staff="TRANG"><span class="cell-title">MÁY GIẶT TOSHIBA</span><span class="cell-staff">TRANG</span></div>
+            <div class="map-cell bg-blue-wash" data-staff="OANH"><span class="cell-title">MÁY GIẶT LG</span><span class="cell-staff">OANH</span></div>
+
+            <!-- KHỐI TIẾP ĐÓN & THU NGÂN HỒNG PHẤN -->
+            <div style="display:grid; grid-template-columns:1.5fr 1fr 1fr 1fr; gap:6px; background:#ffe4e6; padding:8px; border-radius:8px; border:1px solid #fca5a5;">
+              <div class="map-cell bg-pink-service" style="min-height:55px;"><span class="cell-title">KHU TIẾP ĐÓN KHÁCH HÀNG</span></div>
+              <div class="map-cell bg-pink-service"><span class="cell-title">BÀN GIAO HÀNG</span></div>
+              <div class="map-cell bg-pink-service"><span class="cell-title">HTKT</span></div>
+              <div class="map-cell bg-pink-service"><span class="cell-title">QUẦY THU NGÂN</span></div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+              <div class="map-cell bg-green-wall" data-staff="LAM"><span class="cell-title">MLN KAROFI</span><span class="cell-staff">LAM</span></div>
+              <div class="map-cell bg-green-wall" data-staff="LAM"><span class="cell-title">MLN KANGAROO</span><span class="cell-staff">LAM</span></div>
+            </div>
+
+            <div class="map-cell bg-blue-wash" data-staff="TÍN"><span class="cell-title">BỤC HÃNG HESENSI</span><span class="cell-staff">TÍN</span></div>
+            <div class="map-cell bg-blue-wash" data-staff="TÍN"><span class="cell-title">BỤC HÃNG TOSHIBA</span><span class="cell-staff">TÍN</span></div>
+            <div class="map-cell bg-blue-wash" data-staff="TÍN"><span class="cell-title">BỤC HÃNG TCL</span><span class="cell-staff">TÍN</span></div>
+            <div class="map-cell bg-blue-wash" data-staff="OANH"><span class="cell-title">BỤC HÃNG LG</span><span class="cell-staff">OANH</span></div>
+
+            <!-- BÀN TRẢI NGHIỆM 1..4 -->
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px;">
+              <div class="map-cell bg-yellow-dark"><span class="cell-title">BTV 1</span></div>
+              <div class="map-cell bg-yellow-dark"><span class="cell-title">BTV 2</span></div>
+              <div class="map-cell bg-yellow-dark"><span class="cell-title">BTV 3</span></div>
+              <div class="map-cell bg-yellow-dark"><span class="cell-title">BTV 4</span></div>
+            </div>
+          </div>
+
+          <!-- CỘT 4: VÁCH PHÂN CÁCH & KHỐI ICT TONE VÀNG PASTEL -->
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <!-- VÁCH PHÂN CÁCH -->
+            <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:6px;">
+              <div class="map-cell bg-orange-fridge" data-staff="MẠNH"><span class="cell-title">VÁCH TL PANASONIC</span><span class="cell-staff">MẠNH</span></div>
+              <div class="map-cell bg-orange-fridge" data-staff="MẠNH"><span class="cell-title">VÁCH TL SAMSUNG</span><span class="cell-staff">MẠNH</span></div>
+              <div class="map-cell bg-orange-fridge" data-staff="MẠNH"><span class="cell-title">VÁCH MÁY LẠNH</span><span class="cell-staff">MẠNH</span></div>
+              <div class="map-cell bg-yellow-dark" data-staff="MỸ"><span class="cell-title">VÁCH LOA</span><span class="cell-staff">MỸ</span></div>
+              <div class="map-cell bg-yellow-dark" data-staff="MỸ"><span class="cell-title">VÁCH PHỤ KIỆN</span><span class="cell-staff">MỸ</span></div>
+            </div>
+
+            <!-- TOÀN BỘ KHU VỰC ICT MÀU VÀNG PASTEL -->
+            <div style="background:#fef08a; border:2px solid #eab308; border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:6px;">
+              <div style="font-size:12px; font-weight:900; color:#854d0e; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-mobile-screen"></i> KHU VỰC ĐIỆN THOẠI - LAPTOP - ICT
+              </div>
+
+              <!-- HÀNG 1 -->
+              <div class="ict-subgrid">
+                <div class="map-cell bg-yellow-dark" data-staff="N.ANH"><span class="cell-title">VÁCH PK</span><span class="cell-staff">N.ANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="N.ANH"><span class="cell-title">VÁCH PK</span><span class="cell-staff">N.ANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="N.ANH"><span class="cell-title">LAPTOP 1</span><span class="cell-staff">N.ANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="N.ANH"><span class="cell-title">LAPTOP 2</span><span class="cell-staff">N.ANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="TRÂM"><span class="cell-title">SMARTPHONE</span><span class="cell-staff">TRÂM</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="TRÂM"><span class="cell-title">MOTOROLA</span><span class="cell-staff">TRÂM</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="TRÂM"><span class="cell-title">REALME</span><span class="cell-staff">TRÂM</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="ÁI"><span class="cell-title">VIVO</span><span class="cell-staff">ÁI</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THANH"><span class="cell-title">XIAOMI</span><span class="cell-staff">THANH</span></div>
+              </div>
+
+              <!-- HÀNG 2 -->
+              <div class="ict-subgrid">
+                <div class="map-cell bg-yellow-dark" data-staff="MỸ"><span class="cell-title">PK BASEUS</span><span class="cell-staff">MỸ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="MỸ"><span class="cell-title">PK ANKER</span><span class="cell-staff">MỸ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="MỸ"><span class="cell-title">CAMERA</span><span class="cell-staff">MỸ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="N.ANH"><span class="cell-title">LAPTOP 3</span><span class="cell-staff">N.ANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="N.ANH"><span class="cell-title">LAPTOP 4</span><span class="cell-staff">N.ANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THANH"><span class="cell-title">BTN XIAOMI</span><span class="cell-staff">THANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THANH"><span class="cell-title">BTN XIAOMI</span><span class="cell-staff">THANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="TRÂM"><span class="cell-title">BTN MOTO</span><span class="cell-staff">TRÂM</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THƯ"><span class="cell-title">OPPO</span><span class="cell-staff">THƯ</span></div>
+              </div>
+
+              <!-- HÀNG 3 -->
+              <div class="ict-subgrid">
+                <div class="map-cell bg-yellow-dark" style="grid-column: span 3;" data-staff="MỸ"><span class="cell-title">ĐỒNG HỒ THỜI TRANG</span><span class="cell-staff">MỸ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="N.ANH"><span class="cell-title">LAPTOP 5</span><span class="cell-staff">N.ANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="N.ANH"><span class="cell-title">LAPTOP 6</span><span class="cell-staff">N.ANH</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THƯ"><span class="cell-title">BTN OPPO</span><span class="cell-staff">THƯ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THƯ"><span class="cell-title">BTN OPPO</span><span class="cell-staff">THƯ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="TRÂM"><span class="cell-title">BTN VIVO</span><span class="cell-staff">TRÂM</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="TRÂM"><span class="cell-title">BTN REALME</span><span class="cell-staff">TRÂM</span></div>
+              </div>
+
+              <!-- HÀNG 4 -->
+              <div class="ict-subgrid">
+                <div class="map-cell bg-yellow-dark" style="grid-column: span 3;" data-staff="MỸ"><span class="cell-title">ĐỒNG HỒ THÔNG MINH</span><span class="cell-staff">MỸ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THƯ"><span class="cell-title">BTN SAMSUNG</span><span class="cell-staff">THƯ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THƯ"><span class="cell-title">BTN SAMSUNG</span><span class="cell-staff">THƯ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THƯ"><span class="cell-title">BTN HONOR</span><span class="cell-staff">THƯ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THƯ"><span class="cell-title">BTN APPLE</span><span class="cell-staff">THƯ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THƯ"><span class="cell-title">SAMSUNG</span><span class="cell-staff">THƯ</span></div>
+                <div class="map-cell bg-yellow-dark" data-staff="THƯ"><span class="cell-title">APPLE</span><span class="cell-staff">THƯ</span></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- ================= TAB 1: BẢNG PHÂN CÔNG 15 VỊ TRÍ ================= -->
-    <div class="tab-content-panel" id="shiftsTab">
-      <div class="shifts-grid" id="shiftsGridContainer">
-        <!-- Render động 15 thẻ phân công trực -->
+    <!-- TAB 2: PHÂN CÔNG 15 VỊ TRÍ TRỰC (W17:Z31) -->
+    <div class="tab-content" id="shiftsTab">
+      <div class="shifts-grid" id="shiftsCardsContainer">
+        <!-- Render 15 thẻ ca trực tự động bằng JavaScript -->
       </div>
     </div>
 
-    <!-- ================= TAB 2: SƠ ĐỒ MẶT BẰNG SIÊU THỊ 1841 ================= -->
-    <div class="tab-content-panel" id="floorMapTab" style="display: none;">
-      <div class="map-card-container" id="floorPlanExportTarget">
-        <div class="map-header">
-          <div class="map-title">
-            <i class="fa-solid fa-store"></i>
-            <span>SƠ ĐỒ BẢN ĐỒ MẶT BẰNG BỐ TRÍ SIÊU THỊ 1841</span>
-          </div>
-          <div class="map-legend">
-            <div class="legend-item"><span class="legend-color" style="background:#eff6ff; border:1px solid #bfdbfe;"></span> <span>ICT & Phone</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:#fff7ed; border:1px solid #fed7aa;"></span> <span>Dãy Tivi</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:#f0fdfa; border:1px solid #99f6e4;"></span> <span>Máy Giặt</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:#f0f9ff; border:1px solid #bae6fd;"></span> <span>Tủ Lạnh</span></div>
-            <div class="legend-item"><span class="legend-color" style="background:#fdf2f8; border:1px solid #fbcfe8;"></span> <span>Gia Dụng</span></div>
-          </div>
-        </div>
-
-        <div class="store-floor-plan" id="storeFloorPlan">
-          <!-- Hàng 1: Mặt tiền & Lối vào -->
-          <div class="floor-row">
-            <div class="zone-box zone-entrance" style="flex:2;" data-zone="VÁCH KÍNH">
-              <span class="zone-name">🪟 VÁCH KÍNH TRƯỚC</span>
-              <span class="zone-assignee" id="assign_vach_kinh">Linh + Lên TĐKH</span>
-            </div>
-            <div class="zone-box zone-entrance" style="flex:1; background:#bbf7d0;" data-zone="CỬA">
-              <span class="zone-name">🚪 CỬA RA VÀO CHÍNH</span>
-            </div>
-            <div class="zone-box zone-entrance" style="flex:2;" data-zone="VÁCH KÍNH">
-              <span class="zone-name">🪟 VÁCH KÍNH - SÂN XE - BANNER</span>
-              <span class="zone-assignee" id="assign_san_xe">Linh + Lên TĐKH</span>
-            </div>
-          </div>
-
-          <!-- Hàng 2: Khu vực ICT, Điện thoại & Dãy Tivi đầu tiên -->
-          <div class="floor-row">
-            <div class="zone-box zone-ict" data-zone="ALL KHU VỰC ICT">
-              <span class="zone-name">📱 TỦ PHONE (LÊ ?NH)</span>
-              <span class="zone-assignee" id="assign_ict_1">Lê ?nh • PG ICT</span>
-            </div>
-            <div class="zone-box zone-ict" data-zone="ALL KHU VỰC ICT">
-              <span class="zone-name">📱 BÀN TRẢI NGHIỆM 1 (ÁI)</span>
-              <span class="zone-assignee">Ái Vivo</span>
-            </div>
-            <div class="zone-box zone-ict" data-zone="ALL KHU VỰC ICT">
-              <span class="zone-name">⌚ TỦ ĐỒNG HỒ 1 & 2 (TRÂM)</span>
-              <span class="zone-assignee">Trâm Realme</span>
-            </div>
-            <div class="zone-box zone-tivi" data-zone="TIVI 1,2,3, VÁCH SONY, VÁCH SS">
-              <span class="zone-name">📺 DÃY TIVI 1 & 2</span>
-              <span class="zone-assignee" id="assign_tivi_1">Hạnh • Oanh LG</span>
-            </div>
-            <div class="zone-box zone-tivi" data-zone="TIVI 1,2,3, VÁCH SONY, VÁCH SS">
-              <span class="zone-name">📺 VÁCH HÃNG SONY & SAMSUNG</span>
-              <span class="zone-assignee">Hạnh • Oanh LG</span>
-            </div>
-          </div>
-
-          <!-- Hàng 3: Bàn trải nghiệm di động & Tivi 3, 4, 5 -->
-          <div class="floor-row">
-            <div class="zone-box zone-ict" data-zone="ALL KHU VỰC ICT">
-              <span class="zone-name">📱 BTN REALME - SAMSUNG - VIVO</span>
-              <span class="zone-assignee">Thanh Xiaomi • Ái Vivo</span>
-            </div>
-            <div class="zone-box zone-ict" data-zone="ALL KHU VỰC ICT">
-              <span class="zone-name">💻 LAPTOP & BTN OPPO</span>
-              <span class="zone-assignee">Thanh • Anh Thư</span>
-            </div>
-            <div class="zone-box zone-ict" data-zone="ALL KHU VỰC ICT">
-              <span class="zone-name">🎧 VÁCH PHỤ KIỆN</span>
-              <span class="zone-assignee">Lê ?nh</span>
-            </div>
-            <div class="zone-box zone-tivi" data-zone="TIVI 4,5, LOA, VÁCH LG">
-              <span class="zone-name">📺 DÃY TIVI 3, 4, 5 & VÁCH LG</span>
-              <span class="zone-assignee" id="assign_tivi_2">Hùng Mạnh</span>
-            </div>
-            <div class="zone-box zone-tivi" data-zone="TIVI 4,5, LOA, VÁCH LG">
-              <span class="zone-name">🔊 LOA KÉO XÁCH TAY</span>
-              <span class="zone-assignee">Hùng Mạnh</span>
-            </div>
-          </div>
-
-          <!-- Hàng 4: Thu ngân, Vách máy lạnh, Máy giặt 1..3 -->
-          <div class="floor-row">
-            <div class="zone-box" style="background:#fefce8; border-color:#fde047;" data-zone="QUẦY THU NGÂN - HTKT">
-              <span class="zone-name">💳 QUẦY THU NGÂN - HTKT</span>
-              <span class="zone-assignee">Thu Ngân / Kho</span>
-            </div>
-            <div class="zone-box" style="background:#e0f2fe; border-color:#7dd3fc;" data-zone="VÁCH ML, DÀN MƯỚP, TỦ ĐÔNG">
-              <span class="zone-name">❄️ VÁCH MÁY LẠNH & DÀN MƯỚP</span>
-              <span class="zone-assignee" id="assign_may_lanh">Diễm My</span>
-            </div>
-            <div class="zone-box" style="background:#f0fdf4; border-color:#86efac;" data-zone="VÁCH ML, DÀN MƯỚP, TỦ ĐÔNG">
-              <span class="zone-name">🧊 TỦ ĐÔNG 1 & 2</span>
-              <span class="zone-assignee">Diễm My</span>
-            </div>
-            <div class="zone-box zone-washing" data-zone="MÁY GIẶT 1,2,3">
-              <span class="zone-name">🧺 DÃY MÁY GIẶT 1 - 2 - 3</span>
-              <span class="zone-assignee" id="assign_giat_1">Nhạn • Trang</span>
-            </div>
-            <div class="zone-box zone-washing" data-zone="MÁY GIẶT 4,5,6">
-              <span class="zone-name">🧺 DÃY MÁY GIẶT 4 - 5 - 6</span>
-              <span class="zone-assignee" id="assign_giat_2">Kim Mỹ</span>
-            </div>
-          </div>
-
-          <!-- Hàng 5: Lọc nước & Tủ lạnh 1..4 -->
-          <div class="floor-row">
-            <div class="zone-box zone-appliance" data-zone="LỌC NƯỚC, GIA DỤNG 1">
-              <span class="zone-name">💧 LỌC NƯỚC 1 & 2</span>
-              <span class="zone-assignee" id="assign_loc_nuoc">Duy • Hi Mutosi</span>
-            </div>
-            <div class="zone-box zone-fridge" data-zone="TỦ LẠNH 1,2">
-              <span class="zone-name">❄️ DÃY TỦ LẠNH 1 & 2</span>
-              <span class="zone-assignee" id="assign_lanh_1">Thanh Nhi • Tín TCL</span>
-            </div>
-            <div class="zone-box zone-fridge" data-zone="TỦ LẠNH 3,4">
-              <span class="zone-name">❄️ DÃY TỦ LẠNH 3 & 4</span>
-              <span class="zone-assignee" id="assign_lanh_2">Phúc • Được</span>
-            </div>
-            <div class="zone-box zone-fridge" data-zone="ALL VÁCH TỦ LẠNH">
-              <span class="zone-name">❄️ VÁCH TỦ LẠNH HÃNG</span>
-              <span class="zone-assignee" id="assign_vach_lanh">Đại</span>
-            </div>
-          </div>
-
-          <!-- Hàng 6: Gia dụng 1..7 & Vách áp tường -->
-          <div class="floor-row">
-            <div class="zone-box zone-appliance" data-zone="GIA DỤNG 2,3">
-              <span class="zone-name">🍳 GIA DỤNG 1, 2, 3</span>
-              <span class="zone-assignee">Duy • Ý</span>
-            </div>
-            <div class="zone-box zone-appliance" data-zone="GIA DỤNG 4,5">
-              <span class="zone-name">🍳 GIA DỤNG 4, 5</span>
-              <span class="zone-assignee">Tuấn Mi • Băng Blue</span>
-            </div>
-            <div class="zone-box zone-appliance" data-zone="GIA DỤNG 6,7">
-              <span class="zone-name">🍳 GIA DỤNG 6, 7</span>
-              <span class="zone-assignee">Thắm • Trinh Sun</span>
-            </div>
-            <div class="zone-box zone-appliance" data-zone="ALL VÁCH GD ÁP TƯỜNG, CHẢO, NỒI CHIÊN">
-              <span class="zone-name">🥘 VÁCH CHẢO - NỒI CHIÊN - BẾP ĐIỆN</span>
-              <span class="zone-assignee">?nh • PG Karofi</span>
-            </div>
-            <div class="zone-box zone-storage" data-zone="KHO">
-              <span class="zone-name">🚪 CỬA KHO ĐM & KHO ICT</span>
-              <span class="zone-assignee">Kho Siêu Thị</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ================= TAB 3: ĐIỂM DANH 26 NHÂN VIÊN ================= -->
-    <div class="tab-content-panel" id="employeesTab" style="display: none;">
-      <!-- Thống kê điểm danh -->
-      <div class="employee-stats-bar">
+    <!-- TAB 3: ĐIỂM DANH & 26 NHÂN VIÊN (AC1:AE26) -->
+    <div class="tab-content" id="employeesTab">
+      <div class="employees-stats-row">
         <div class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);">
+          <div class="stat-icon" style="background:#f59e0b;">
             <i class="fa-solid fa-users"></i>
           </div>
           <div>
-            <div class="stat-number" id="statTotalEmployees">26</div>
+            <div class="stat-value" id="statTotalEmployees">26</div>
             <div class="stat-label">Tổng Nhân Viên</div>
           </div>
         </div>
-
         <div class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #34d399 0%, #059669 100%);">
+          <div class="stat-icon" style="background:#10b981;">
             <i class="fa-solid fa-user-check"></i>
           </div>
           <div>
-            <div class="stat-number" id="statPresentCount">0</div>
+            <div class="stat-value" id="statPresentCount">0</div>
             <div class="stat-label">Đang Trực / Có Mặt</div>
           </div>
         </div>
-
         <div class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #f472b6 0%, #db2777 100%);">
-            <i class="fa-solid fa-handshake-angle"></i>
+          <div class="stat-icon" style="background:#ec4899;">
+            <i class="fa-solid fa-handshake"></i>
           </div>
           <div>
-            <div class="stat-number" id="statPgCount">10</div>
+            <div class="stat-value">10</div>
             <div class="stat-label">PG Hỗ Trợ Hãng</div>
           </div>
         </div>
       </div>
 
-      <!-- Danh sách 26 thẻ nhân viên -->
-      <div class="emp-list-grid" id="empListContainer">
-        <!-- Render động 26 nhân viên -->
+      <div class="employees-grid" id="employeesGridContainer">
+        <!-- Render danh sách 26 nhân viên tự động bằng JavaScript -->
       </div>
     </div>
-
   </div>
 
-  <!-- Toast notification -->
-  <div class="toast-box" id="toastBox" style="display: none;">
-    <i class="fa-solid fa-circle-check" style="color: #a855f7; font-size: 16px;"></i>
-    <span id="toastMsg">Đã cập nhật dữ liệu thành công!</span>
-  </div>
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast-container" id="toastContainer"></div>
 
-  <!-- Modal cấu hình Google Apps Script Web App -->
-  <div class="modal-overlay" id="configModal" style="display: none;">
-    <div class="modal-card">
-      <h3>
-        <i class="fa-solid fa-sliders"></i>
-        <span>Cài Đặt Kết Nối Google Sheets</span>
-      </h3>
-      <p style="font-size: 12.5px; color: #64748b; margin-bottom: 14px; line-height: 1.5;">
-        Dán URL Web App Google Apps Script của bạn vào đây để đồng bộ 2 chiều (Lưu dữ liệu về Google Sheet ngay lập tức).
+  <!-- MODAL CẤU HÌNH WEB APP URL -->
+  <div class="modal-overlay" id="configModal">
+    <div class="modal-box">
+      <div class="modal-title">
+        <span><i class="fa-solid fa-sliders"></i> Cài Đặt Kết Nối Web App</span>
+        <button class="btn-icon" id="btnCloseConfigModal" style="width:28px;height:28px;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
+        Dán URL Web App triển khai từ Google Apps Script để kích hoạt tính năng lưu tự động 2 chiều về Google Sheet.
       </p>
-
-      <div style="margin-bottom: 12px;">
-        <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Google Spreadsheet ID</label>
-        <input type="text" id="cfgSheetId" class="field-input" value="1z6vAzHRIrYihI91Yw1dMnluPPL0BuAYiZarPBD5qNfw" style="margin-top: 4px;">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:5px;">URL Web App Apps Script</label>
+        <input type="text" id="cfgWebAppUrl" class="shift-field-input" placeholder="https://script.google.com/macros/s/.../exec">
       </div>
-
-      <div style="margin-bottom: 16px;">
-        <label style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase;">Google Apps Script Web App URL</label>
-        <input type="text" id="cfgWebAppUrl" class="field-input" placeholder="https://script.google.com/macros/s/.../exec" style="margin-top: 4px;">
-      </div>
-
-      <div style="display: flex; justify-content: flex-end; gap: 8px;">
-        <button type="button" class="btn-action btn-secondary" id="btnCloseConfigModal">Đóng</button>
-        <button type="button" class="btn-action btn-primary" id="btnSaveConfig">Lưu Cài Đặt</button>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn btn-secondary" onclick="document.getElementById('configModal').style.display='none'">Hủy</button>
+        <button class="btn btn-primary" id="btnSaveConfig">Lưu Cấu Hình</button>
       </div>
     </div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC ĐỒNG BỘ THỜI GIAN THỰC & GOOGLE SHEETS -->
+  <!-- JAVASCRIPT LOGIC & REALTIME SYNC -->
   <script>
-    /**
-     * DỮ LIỆU KHỞI TẠO TỪ GOOGLE SHEET 1z6vAzHRIrYihI91Yw1dMnluPPL0BuAYiZarPBD5qNfw
-     */
     const DEFAULT_CONFIG = {
-      sheetId: '1z6vAzHRIrYihI91Yw1dMnluPPL0BuAYiZarPBD5qNfw',
-      webAppUrl: localStorage.getItem('phancong_webapp_url') || '',
-      mqttBroker: 'wss://broker.emqx.io:8084/mqtt',
-      mqttTopic: 'dmx1841/vesinh/realtime_sync'
+      sheetId: "1z6vAzHRIrYihI91Yw1dMnluPPL0BuAYiZarPBD5qNfw",
+      webAppUrl: localStorage.getItem('phancong_webapp_url') || "",
+      mqttBroker: "wss://broker.emqx.io:8084/mqtt",
+      mqttTopic: "st1841/vesinh/realtime_sync"
     };
-
-    // 26 Nhân viên mặc định từ sheet
-    const INITIAL_EMPLOYEES = [
-      "Huỳnh Hoàng Phúc", "Thanh Nhi", "Lâm Thị Như Ý", "Lê Kim Mỹ", "Lê Văn Kỳ",
-      "Ngô Thị Bé Thắm", "Nguyễn Diễm My", "Nguyễn Hùng Mạnh", "Thạch Vũ", "Nguyễn Tuấn Mi",
-      "Nguyễn Thị Nhạn", "Phạm Ngọc Anh", "Phạm Văn Đại", "Trần Văn Duy", "Trang Toshiba",
-      "Tuấn Aqua", "Thanh Xiaomi", "Trinh - Sunhouse", "Oanh LG", "Băng Bluestone",
-      "Ái Vivo", "Tín TCL", "Trâm Realme", "Khang Hi Mutosi", "Anh Thư - Oppo", "Lam Karofi"
-    ];
-
-    // 15 Vị trí phân công mặc định từ sheet
-    const INITIAL_SHIFTS = [
-      { stt: 1, nv: "LÊ ?NH", kv: "ALL KHU VỰC ICT", pg: "PG ICT" },
-      { stt: 2, nv: "HẠNH", kv: "TIVI 1,2,3, VÁCH SONY, VÁCH SS", pg: "OANH LG" },
-      { stt: 3, nv: "HÙNG MẠNH", kv: "TIVI 4,5, LOA, VÁCH LG", pg: "" },
-      { stt: 4, nv: "NHẠN", kv: "MÁY GIẶT 1,2,3", pg: "TRANG / -" },
-      { stt: 5, nv: "KIM MỸ", kv: "MÁY GIẶT 4,5,6", pg: "" },
-      { stt: 6, nv: "DIỄM MY", kv: "VÁCH ML, DÀN MƯỚP, TỦ ĐÔNG", pg: "-" },
-      { stt: 7, nv: "?NH", kv: "ALL VÁCH GD ÁP TƯỜNG, CHẢO, NỒI CHIÊN", pg: "PG KAROFI" },
-      { stt: 8, nv: "DUY", kv: "LỌC NƯỚC, GIA DỤNG 1", pg: "HI MUTOSHI" },
-      { stt: 9, nv: "Ý", kv: "GIA DỤNG 2,3", pg: "" },
-      { stt: 10, nv: "- MI", kv: "GIA DỤNG 4,5", pg: "BĂNG BLUE" },
-      { stt: 11, nv: "THẮM", kv: "GIA DỤNG 6,7", pg: "TRINH SUN" },
-      { stt: 12, nv: "THANH NHI", kv: "TỦ LẠNH 1,2", pg: "TÍN TCL" },
-      { stt: 13, nv: "PHÚC", kv: "TỦ LẠNH 3,4", pg: "ĐƯỢC" },
-      { stt: 14, nv: "ĐẠI", kv: "ALL VÁCH TỦ LẠNH", pg: "" },
-      { stt: 15, nv: "LINH + LÊN TĐKH", kv: "VÁCH KÍNH - SÂN XE - BANNER", pg: "" }
-    ];
 
     const state = {
-      clientId: 'client_' + Math.random().toString(36).substring(2, 9),
-      shifts: JSON.parse(localStorage.getItem('phancong_shifts_cached') || JSON.stringify(INITIAL_SHIFTS)),
-      employees: JSON.parse(localStorage.getItem('phancong_employees_cached') || '[]'),
-      attendanceMap: JSON.parse(localStorage.getItem('phancong_attendance_cached') || '{}'),
-      searchQuery: '',
-      activeTab: 'shiftsTab',
-      isSaving: false
+      activeTab: 'floorMapTab',
+      shifts: [],
+      employees: [],
+      searchKeyword: ''
     };
 
-    // Khởi tạo danh sách nhân viên nếu chưa có
-    if (!state.employees || state.employees.length === 0) {
-      state.employees = INITIAL_EMPLOYEES.map((name, idx) => ({
-        stt: idx + 1,
-        name: name,
-        marked: name === "Tuấn Aqua" || name === "Oanh LG"
-      }));
+    // Khởi tạo 15 ca trực mặc định từ Sheet
+    const DEFAULT_SHIFTS = [
+      { stt: 1, row: 17, nv: "LÊ ÁNH", kv: "ALL KHU VỰC ICT", pg: "PG ICT" },
+      { stt: 2, row: 18, nv: "HẠNH", kv: "TIVI 1,2,3, VÁCH SONY, VÁCH SS", pg: "OANH LG" },
+      { stt: 3, row: 19, nv: "HÙNG MẠNH", kv: "TIVI 4,5, LOA, VÁCH LG", pg: "" },
+      { stt: 4, row: 20, nv: "NHẠN", kv: "MÁY GIẶT 1,2,3", pg: "TRANG / -" },
+      { stt: 5, row: 21, nv: "KIM MỸ", kv: "MÁY GIẶT 4,5,6", pg: "" },
+      { stt: 6, row: 22, nv: "DIỄM MY", kv: "VÁCH ML, DÀN MƯỚP, TỦ ĐÔNG", pg: "-" },
+      { stt: 7, row: 23, nv: "ÁNH", kv: "ALL VÁCH GD ÁP TƯỜNG, CHẢO, NỒI CHIÊN", pg: "PG KAROFI" },
+      { stt: 8, row: 24, nv: "DUY", kv: "LỌC NƯỚC, GIA DỤNG 1", pg: "HI MUTOSHI" },
+      { stt: 9, row: 25, nv: "Ý", kv: "GIA DỤNG 2,3", pg: "" },
+      { stt: 10, row: 26, nv: "- MI", kv: "GIA DỤNG 4,5", pg: "BĂNG BLUE" },
+      { stt: 11, row: 27, nv: "THẮM", kv: "GIA DỤNG 6,7", pg: "TRINH SUN" },
+      { stt: 12, row: 28, nv: "THANH NHI", kv: "TỦ LẠNH 1,2", pg: "TÍN TCL" },
+      { stt: 13, row: 29, nv: "PHÚC", kv: "TỦ LẠNH 3,4", pg: "ĐƯỢC" },
+      { stt: 14, row: 30, nv: "ĐẠI", kv: "ALL VÁCH TỦ LẠNH", pg: "" },
+      { stt: 15, row: 31, nv: "LINH + LÊN TĐKH", kv: "VÁCH KÍNH - SÂN XE - BANNER", pg: "" }
+    ];
+
+    const DEFAULT_EMPLOYEES = [
+      { stt: 1, name: "Huỳnh Hoàng Phúc", marked: false },
+      { stt: 2, name: "Thanh Nhi", marked: true },
+      { stt: 3, name: "Lâm Thị Như Ý", marked: true },
+      { stt: 4, name: "Lê Kim Mỹ", marked: true },
+      { stt: 5, name: "Lê Văn Kỳ", marked: true },
+      { stt: 6, name: "Ngô Thị Bé Thắm", marked: true },
+      { stt: 7, name: "Nguyễn Diễm My", marked: true },
+      { stt: 8, name: "Nguyễn Hùng Mạnh", marked: true },
+      { stt: 9, name: "Thạch Vũ", marked: true },
+      { stt: 10, name: "Nguyễn Tuấn Mi", marked: true },
+      { stt: 11, name: "Nguyễn Thị Nhạn", marked: true },
+      { stt: 12, name: "Phạm Ngọc Anh", marked: true },
+      { stt: 13, name: "Phạm Văn Đại", marked: true },
+      { stt: 14, name: "Trần Văn Duy", marked: true },
+      { stt: 15, name: "Trang Toshiba", marked: true },
+      { stt: 16, name: "Tuấn Aqua", marked: true },
+      { stt: 17, name: "Thanh Xiaomi", marked: true },
+      { stt: 18, name: "Trinh - Sunhouse", marked: true },
+      { stt: 19, name: "Oanh LG", marked: true },
+      { stt: 20, name: "Băng Bluestone", marked: true },
+      { stt: 21, name: "Ái Vivo", marked: true },
+      { stt: 22, name: "Tín TCL", marked: true },
+      { stt: 23, name: "Trâm Realme", marked: true },
+      { stt: 24, name: "Khang Hi Mutosi", marked: true },
+      { stt: 25, name: "Anh Thư - Oppo", marked: true },
+      { stt: 26, name: "Lam Karofi", marked: true }
+    ];
+
+    state.shifts = JSON.parse(localStorage.getItem('st1841_shifts')) || DEFAULT_SHIFTS;
+    state.employees = JSON.parse(localStorage.getItem('st1841_employees')) || DEFAULT_EMPLOYEES;
+
+    function showToast(msg) {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast-msg';
+      toast.innerHTML = '<i class="fa-solid fa-circle-info" style="color:#f59e0b;"></i> ' + msg;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        toast.style.transition = 'all 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 2600);
     }
 
-    // Thiết lập kênh BroadcastChannel đa cửa sổ
-    const broadcastChannel = window.BroadcastChannel ? new BroadcastChannel('phancong_1841_realtime') : null;
+    // RENDER 15 CA TRỰC
+    function renderShifts() {
+      const container = document.getElementById('shiftsCardsContainer');
+      if (!container) return;
+      container.innerHTML = '';
 
-    /* ==========================================================================
-       ĐỒNG BỒ REALTIME QUA MQTT WEBSOCKET & BROADCAST CHANNEL
-       ========================================================================== */
-    let mqttClient = null;
-
-    function initRealtimeSync() {
-      // 1. Kênh BroadcastChannel (0ms giữa các tab cùng trình duyệt)
-      if (broadcastChannel) {
-        broadcastChannel.onmessage = (event) => {
-          if (event && event.data && event.data.senderId !== state.clientId) {
-            handleRemoteMessage(event.data);
-          }
-        };
-      }
-
-      // 2. Kênh LocalStorage Event (đa cửa sổ)
-      window.addEventListener('storage', (e) => {
-        if (e.key === 'phancong_realtime_event' && e.newValue) {
-          try {
-            const data = JSON.parse(e.newValue);
-            if (data && data.senderId !== state.clientId) {
-              handleRemoteMessage(data);
-            }
-          } catch (err) {}
-        }
+      state.shifts.forEach((s, idx) => {
+        const isAssigned = s.nv && s.nv.trim() !== '';
+        const card = document.createElement('div');
+        card.className = 'shift-card';
+        card.innerHTML = `
+          <div class="shift-card-header">
+            <span class="shift-stt-badge"><i class="fa-solid fa-hashtag"></i> Vị trí ${s.stt}</span>
+            <span class="shift-status-tag ${isAssigned ? 'assigned' : 'empty'}">
+              ${isAssigned ? '✓ Đã phân công' : 'Chưa phân công'}
+            </span>
+          </div>
+          <div class="shift-field-group">
+            <label class="shift-field-label"><i class="fa-solid fa-user"></i> Nhân Viên Trực</label>
+            <input type="text" class="shift-field-input" value="${s.nv || ''}" placeholder="Nhập tên nhân viên trực..." onchange="updateShiftField(${idx}, 'nv', this.value)">
+          </div>
+          <div class="shift-field-group">
+            <label class="shift-field-label"><i class="fa-solid fa-location-dot"></i> Khu Vực Phụ Trách</label>
+            <input type="text" class="shift-field-input" value="${s.kv || ''}" placeholder="Khu vực trực..." onchange="updateShiftField(${idx}, 'kv', this.value)">
+          </div>
+          <div class="shift-field-group">
+            <label class="shift-field-label"><i class="fa-solid fa-handshake"></i> PG Hỗ Trợ Hãng</label>
+            <input type="text" class="shift-field-input" value="${s.pg || ''}" placeholder="PG hỗ trợ..." onchange="updateShiftField(${idx}, 'pg', this.value)">
+          </div>
+          <div style="font-size:11px; color:#78716c; display:flex; justify-content:space-between; margin-top:2px;">
+            <span>Dòng Sheet: ${s.row || (16 + s.stt)}</span>
+            <span style="color:#d97706; font-weight:600;"><i class="fa-solid fa-bolt"></i> Tự động lưu</span>
+          </div>
+        `;
+        container.appendChild(card);
       });
 
-      // 3. Kênh MQTT WebSocket (20ms - 50ms giữa mọi máy tính và điện thoại khác nhau)
+      const assignedCount = state.shifts.filter(s => s.nv && s.nv.trim()).length;
+      document.getElementById('badgeShiftCount').textContent = `${assignedCount}/15 Vị trí`;
+    }
+
+    // RENDER 26 NHÂN VIÊN
+    function renderEmployees() {
+      const container = document.getElementById('employeesGridContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      let presentCount = 0;
+      state.employees.forEach((emp, idx) => {
+        if (emp.marked) presentCount++;
+        const card = document.createElement('div');
+        card.className = 'employee-card ' + (emp.marked ? 'present' : '');
+        card.innerHTML = `
+          <div class="emp-info">
+            <div class="emp-stt">${emp.stt}</div>
+            <div>
+              <div class="emp-name">${emp.name}</div>
+              <div style="font-size:11px; color:var(--text-muted);">
+                ${emp.marked ? '<span style="color:#059669; font-weight:700;">✓ Có mặt / Đang trực</span>' : 'Vắng mặt'}
+              </div>
+            </div>
+          </div>
+          <button class="btn-toggle-attend ${emp.marked ? 'checked' : 'unchecked'}" onclick="toggleEmployeeAttendance(${idx})">
+            ${emp.marked ? '✓ Có mặt' : '○ Vắng'}
+          </button>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('statTotalEmployees').textContent = state.employees.length;
+      document.getElementById('statPresentCount').textContent = presentCount;
+      document.getElementById('badgeEmpCount').textContent = `${state.employees.length} NV`;
+    }
+
+    // CẬP NHẬT 1 TRƯỜNG CA TRỰC
+    window.updateShiftField = function(idx, field, value) {
+      state.shifts[idx][field] = value.trim();
+      localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
+      broadcastMqtt({ type: 'UPDATE_SHIFT', index: idx, data: state.shifts[idx] });
+      autoSaveToSheetDebounced();
+      showToast(`Đã lưu thay đổi vị trí ${state.shifts[idx].stt}`);
+    };
+
+    // TOGGLE ĐIỂM DANH
+    window.toggleEmployeeAttendance = function(idx) {
+      state.employees[idx].marked = !state.employees[idx].marked;
+      localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+      renderEmployees();
+      broadcastMqtt({ type: 'TOGGLE_ATTENDANCE', index: idx, marked: state.employees[idx].marked });
+      autoSaveToSheetDebounced();
+      showToast(`Đã cập nhật điểm danh: ${state.employees[idx].name}`);
+    };
+
+    // TÌM KIẾM VÀ HIGHLIGHT TRÊN SƠ ĐỒ MẶT BẰNG
+    document.getElementById('globalSearchInput').addEventListener('input', function(e) {
+      const kw = e.target.value.trim().toLowerCase();
+      state.searchKeyword = kw;
+
+      const cells = document.querySelectorAll('.map-cell');
+      cells.forEach(c => {
+        const text = c.textContent.toLowerCase();
+        const staff = (c.getAttribute('data-staff') || '').toLowerCase();
+        if (kw && (text.includes(kw) || staff.includes(kw))) {
+          c.classList.add('highlight-target');
+        } else {
+          c.classList.remove('highlight-target');
+        }
+      });
+    });
+
+    // INTERACTION CHO TỪNG Ô BẢN ĐỒ
+    document.querySelectorAll('.map-cell').forEach(cell => {
+      cell.addEventListener('click', () => {
+        const title = cell.querySelector('.cell-title') ? cell.querySelector('.cell-title').textContent : cell.textContent.trim();
+        const staff = cell.querySelector('.cell-staff') ? cell.querySelector('.cell-staff').textContent : (cell.getAttribute('data-staff') || 'Chưa gán');
+        showToast(`📍 ${title} — Phụ trách: ${staff}`);
+      });
+    });
+
+    // TABS SWITCHING
+    document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const tabId = btn.getAttribute('data-tab');
+        document.getElementById(tabId).classList.add('active');
+        state.activeTab = tabId;
+      });
+    });
+
+    // REALTIME MQTT CLIENT
+    let mqttClient = null;
+    function initRealtime() {
       try {
         if (typeof mqtt !== 'undefined') {
           mqttClient = mqtt.connect(DEFAULT_CONFIG.mqttBroker, {
-            clientId: 'pub_' + state.clientId,
+            clientId: 'client_1841_' + Math.random().toString(16).substring(2, 8),
             clean: true,
-            connectTimeout: 4000,
-            reconnectPeriod: 3000
+            connectTimeout: 4000
           });
 
           mqttClient.on('connect', () => {
-            document.getElementById('syncText').textContent = 'Realtime Live (Đã kết nối)';
+            console.log('MQTT Realtime Connected');
             mqttClient.subscribe(DEFAULT_CONFIG.mqttTopic);
+            document.getElementById('realtimeStatusText').textContent = 'Realtime Live (Đã kết nối)';
           });
 
           mqttClient.on('message', (topic, payload) => {
-            if (topic === DEFAULT_CONFIG.mqttTopic) {
-              try {
-                const data = JSON.parse(payload.toString());
-                if (data && data.senderId !== state.clientId) {
-                  handleRemoteMessage(data);
-                }
-              } catch (e) {}
-            }
+            try {
+              const msg = JSON.parse(payload.toString());
+              handleRealtimeMessage(msg);
+            } catch (err) {}
           });
         }
-      } catch (err) {
-        console.warn('MQTT init failed:', err);
-      }
-    }
-
-    function broadcastEvent(action, payload) {
-      const msg = {
-        action: action,
-        senderId: state.clientId,
-        timestamp: Date.now(),
-        data: payload
-      };
-      const str = JSON.stringify(msg);
-
-      if (broadcastChannel) {
-        try { broadcastChannel.postMessage(msg); } catch (e) {}
-      }
-      try {
-        localStorage.setItem('phancong_realtime_event', str);
       } catch (e) {}
+    }
 
+    function broadcastMqtt(msg) {
       if (mqttClient && mqttClient.connected) {
-        try {
-          mqttClient.publish(DEFAULT_CONFIG.mqttTopic, str);
-        } catch (e) {}
+        mqttClient.publish(DEFAULT_CONFIG.mqttTopic, JSON.stringify(msg));
       }
     }
 
-    function handleRemoteMessage(msg) {
-      if (!msg || !msg.action) return;
-      if (msg.action === 'updateShift') {
-        const item = msg.data;
-        const target = state.shifts.find(s => s.stt === item.stt);
-        if (target) {
-          target.nv = item.nv;
-          target.kv = item.kv;
-          target.pg = item.pg;
-          renderShifts();
-          renderFloorPlan();
-          renderEmployees();
-          showToast(`⚡ Trình duyệt khác vừa đổi Vị trí ${item.stt}: ${item.nv}`);
-        }
-      } else if (msg.action === 'toggleAttendance') {
-        const { stt, marked } = msg.data;
-        const emp = state.employees.find(e => e.stt === stt);
-        if (emp) {
-          emp.marked = marked;
-          renderEmployees();
-        }
-      } else if (msg.action === 'reloadAll') {
-        loadDataFromGoogleSheet();
+    function handleRealtimeMessage(msg) {
+      if (msg.type === 'UPDATE_SHIFT' && state.shifts[msg.index]) {
+        state.shifts[msg.index] = msg.data;
+        renderShifts();
+      } else if (msg.type === 'TOGGLE_ATTENDANCE' && state.employees[msg.index]) {
+        state.employees[msg.index].marked = msg.marked;
+        renderEmployees();
       }
     }
 
-    /* ==========================================================================
-       LOAD DỮ LIỆU TỪ GOOGLE SHEETS QUA GVIZ API (SIÊU TỐC 0.2S)
-       ========================================================================== */
-    function loadDataFromGoogleSheet() {
-      const gvizUrl = `https://docs.google.com/spreadsheets/d/${DEFAULT_CONFIG.sheetId}/gviz/tq?tqx=out:json&_=${Date.now()}`;
-      
-      fetch(gvizUrl)
-        .then(res => res.text())
-        .then(text => {
-          const raw = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-          const json = JSON.parse(raw);
-          parseGvizData(json);
-        })
-        .catch(err => {
-          console.warn('Load GViz failed, using cache:', err);
-          renderShifts();
-          renderFloorPlan();
-          renderEmployees();
-        });
+    // AUTO SAVE DEBOUNCED
+    let saveTimeout = null;
+    function autoSaveToSheetDebounced() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(saveAllToSheet, 1200);
     }
 
-    function parseGvizData(json) {
-      if (!json || !json.table || !json.table.rows) return;
-      const rows = json.table.rows;
+    function saveAllToSheet() {
+      const url = DEFAULT_CONFIG.webAppUrl;
+      if (!url) return;
 
-      // 1. Phân tích 15 vị trí phân công (Dòng 17..31 => index 16..30)
-      const parsedShifts = [];
-      for (let r = 16; r <= 30; r++) {
-        if (r < rows.length) {
-          const row = rows[r];
-          const stt = row.c[22] ? parseInt(row.c[22].v, 10) : (r - 15);
-          const nv = row.c[23] ? String(row.c[23].v || '').trim() : '';
-          const kv = row.c[24] ? String(row.c[24].v || '').trim() : '';
-          const pg = row.c[25] ? String(row.c[25].v || '').trim() : '';
-          parsedShifts.push({ stt, nv, kv, pg });
-        }
-      }
-      if (parsedShifts.length > 0) {
-        state.shifts = parsedShifts;
-        localStorage.setItem('phancong_shifts_cached', JSON.stringify(state.shifts));
-      }
-
-      // 2. Phân tích danh sách 26 nhân viên (Dòng 1..26 => index 0..25)
-      const parsedEmployees = [];
-      for (let r = 0; r <= 25; r++) {
-        if (r < rows.length) {
-          const row = rows[r];
-          const name = row.c[29] ? String(row.c[29].v || '').trim() : '';
-          if (name) {
-            const stt = row.c[28] ? parseInt(row.c[28].v, 10) : (r + 1);
-            const mark = row.c[30] ? String(row.c[30].v || '').trim().toUpperCase() : '';
-            const isMarked = mark === 'X' || mark === 'TRUE' || mark === '1';
-            parsedEmployees.push({ stt, name, marked: isMarked });
-          }
-        }
-      }
-      if (parsedEmployees.length > 0) {
-        state.employees = parsedEmployees;
-        localStorage.setItem('phancong_employees_cached', JSON.stringify(state.employees));
-      }
-
-      renderShifts();
-      renderFloorPlan();
-      renderEmployees();
-      showToast('✅ Đã nạp dữ liệu mới nhất từ Google Sheet!');
-    }
-
-    /* ==========================================================================
-       LƯU DỮ LIỆU NGƯỢC VỀ GOOGLE SHEETS
-       ========================================================================== */
-    function saveShiftRowToSheet(stt, nv, kv, pg) {
-      if (!DEFAULT_CONFIG.webAppUrl) return;
-
-      const formData = new URLSearchParams();
-      formData.append('action', 'updateShift');
-      formData.append('stt', stt);
-      formData.append('nv', nv);
-      formData.append('kv', kv);
-      formData.append('pg', pg);
-      formData.append('sheetId', DEFAULT_CONFIG.sheetId);
-
-      fetch(DEFAULT_CONFIG.webAppUrl, {
+      fetch(url, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formData.toString()
-      }).catch(err => {
-        // Fallback GET
-        const url = `${DEFAULT_CONFIG.webAppUrl}?action=updateShift&stt=${stt}&nv=${encodeURIComponent(nv)}&kv=${encodeURIComponent(kv)}&pg=${encodeURIComponent(pg)}&_=${Date.now()}`;
-        const ping = new Image();
-        ping.src = url;
-      });
-    }
-
-    function saveAllShiftsToSheet() {
-      if (state.isSaving) return;
-      state.isSaving = true;
-      const btn = document.getElementById('btnSaveToSheetMain');
-      const textEl = document.getElementById('saveBtnMainText');
-      if (btn) btn.disabled = true;
-      if (textEl) textEl.textContent = 'Đang lưu...';
-
-      if (!DEFAULT_CONFIG.webAppUrl) {
-        showToast('⚠️ Vui lòng cài đặt URL Web App Google Apps Script trước!');
-        state.isSaving = false;
-        if (btn) btn.disabled = false;
-        if (textEl) textEl.textContent = 'Lưu Về Sheet';
-        document.getElementById('configModal').style.display = 'flex';
-        return;
-      }
-
-      const postData = {
-        action: 'updateAllShifts',
-        sheetId: DEFAULT_CONFIG.sheetId,
-        shifts: state.shifts
-      };
-
-      fetch(DEFAULT_CONFIG.webAppUrl, {
-        method: 'POST',
-        mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(postData)
-      })
-      .then(() => {
-        state.isSaving = false;
-        if (btn) btn.disabled = false;
-        if (textEl) textEl.textContent = 'Lưu Về Sheet';
-        showToast('✅ Đã lưu toàn bộ 15 vị trí phân công về Google Sheet!');
-        broadcastEvent('reloadAll', {});
-      })
-      .catch(err => {
-        state.isSaving = false;
-        if (btn) btn.disabled = false;
-        if (textEl) textEl.textContent = 'Lưu Về Sheet';
-        showToast('❌ Lỗi khi gửi dữ liệu: ' + err.message);
+        mode: 'no-cors',
+        body: JSON.stringify({
+          action: 'updateAllShifts',
+          sheetId: DEFAULT_CONFIG.sheetId,
+          shifts: state.shifts
+        })
+      }).then(() => {
+        showToast('☁️ Đã lưu đồng bộ dữ liệu về Google Sheet');
+      }).catch(err => {
+        console.warn('Lỗi lưu sheet:', err);
       });
     }
 
-    function toggleAttendanceInSheet(stt, marked) {
-      if (!DEFAULT_CONFIG.webAppUrl) return;
-
-      const url = `${DEFAULT_CONFIG.webAppUrl}?action=toggleAttendance&stt=${stt}&marked=${marked ? 'X' : ''}&sheetId=${DEFAULT_CONFIG.sheetId}&_=${Date.now()}`;
-      const ping = new Image();
-      ping.src = url;
-    }
-
-    /* ==========================================================================
-       RENDER GIAO DIỆN (UI RENDERING)
-       ========================================================================== */
-    function renderShifts() {
-      const container = document.getElementById('shiftsGridContainer');
-      if (!container) return;
-
-      const q = (state.searchQuery || '').toLowerCase().trim();
-      const filtered = state.shifts.filter(item => {
-        if (!q) return true;
-        const str = `${item.stt} ${item.nv} ${item.kv} ${item.pg}`.toLowerCase();
-        return str.includes(q);
-      });
-
-      let assignedCount = 0;
-      state.shifts.forEach(s => { if (s.nv && s.nv.trim()) assignedCount++; });
-      document.getElementById('badgeShiftCount').textContent = `${assignedCount}/15 Vị trí`;
-
-      container.innerHTML = filtered.map(item => {
-        const isAssigned = item.nv && item.nv.trim() !== '';
-        return `
-          <div class="shift-card" data-stt="${item.stt}">
-            <div class="shift-header">
-              <span class="shift-stt-badge">
-                <i class="fa-solid fa-hashtag"></i> Vị trí ${item.stt}
-              </span>
-              <span class="shift-status-tag ${isAssigned ? 'status-assigned' : 'status-empty'}">
-                ${isAssigned ? '✓ Đã phân công' : '⚠ Chưa phân công'}
-              </span>
-            </div>
-
-            <div class="shift-field-group">
-              <label class="field-label"><i class="fa-solid fa-user-tag"></i> Nhân viên trực</label>
-              <select class="field-select select-assign-emp" data-stt="${item.stt}">
-                <option value="">-- Chọn nhân viên siêu thị --</option>
-                ${state.employees.map(e => `
-                  <option value="${escapeHtml(e.name)}" ${item.nv === e.name ? 'selected' : ''}>
-                    ${e.stt}. ${escapeHtml(e.name)}
-                  </option>
-                `).join('')}
-                ${!state.employees.some(e => e.name === item.nv) && item.nv ? `
-                  <option value="${escapeHtml(item.nv)}" selected>${escapeHtml(item.nv)} (Tùy chỉnh)</option>
-                ` : ''}
-              </select>
-            </div>
-
-            <div class="shift-field-group">
-              <label class="field-label"><i class="fa-solid fa-location-dot"></i> Khu vực phụ trách</label>
-              <input type="text" class="field-input input-kv" data-stt="${item.stt}" value="${escapeHtml(item.kv)}" placeholder="Nhập khu vực...">
-            </div>
-
-            <div class="shift-field-group">
-              <label class="field-label"><i class="fa-solid fa-handshake-angle"></i> PG Hỗ trợ</label>
-              <input type="text" class="field-input input-pg" data-stt="${item.stt}" value="${escapeHtml(item.pg)}" placeholder="PG hãng...">
-            </div>
-
-            <div class="shift-card-footer">
-              <span>Hàng Google Sheet: ${item.stt + 16}</span>
-              <span style="color:#8b5cf6; font-weight:700;"><i class="fa-solid fa-bolt"></i> Auto Lưu</span>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      // Gắn sự kiện thay đổi
-      container.querySelectorAll('.select-assign-emp').forEach(el => {
-        el.addEventListener('change', (e) => {
-          const stt = parseInt(e.target.dataset.stt, 10);
-          const shift = state.shifts.find(s => s.stt === stt);
-          if (shift) {
-            shift.nv = e.target.value;
-            localStorage.setItem('phancong_shifts_cached', JSON.stringify(state.shifts));
-            saveShiftRowToSheet(shift.stt, shift.nv, shift.kv, shift.pg);
-            broadcastEvent('updateShift', shift);
-            renderFloorPlan();
-            renderEmployees();
-            showToast(`✅ Đã gán vị trí ${stt}: ${shift.nv || 'Trống'}`);
-          }
-        });
-      });
-
-      container.querySelectorAll('.input-kv').forEach(el => {
-        el.addEventListener('change', (e) => {
-          const stt = parseInt(e.target.dataset.stt, 10);
-          const shift = state.shifts.find(s => s.stt === stt);
-          if (shift) {
-            shift.kv = e.target.value.trim();
-            localStorage.setItem('phancong_shifts_cached', JSON.stringify(state.shifts));
-            saveShiftRowToSheet(shift.stt, shift.nv, shift.kv, shift.pg);
-            broadcastEvent('updateShift', shift);
-            renderFloorPlan();
-          }
-        });
-      });
-
-      container.querySelectorAll('.input-pg').forEach(el => {
-        el.addEventListener('change', (e) => {
-          const stt = parseInt(e.target.dataset.stt, 10);
-          const shift = state.shifts.find(s => s.stt === stt);
-          if (shift) {
-            shift.pg = e.target.value.trim();
-            localStorage.setItem('phancong_shifts_cached', JSON.stringify(state.shifts));
-            saveShiftRowToSheet(shift.stt, shift.nv, shift.kv, shift.pg);
-            broadcastEvent('updateShift', shift);
-          }
-        });
-      });
-    }
-
-    function renderFloorPlan() {
-      // Cập nhật tên nhân viên lên từng phân khu trên sơ đồ
-      function getAssignee(stt) {
-        const item = state.shifts.find(s => s.stt === stt);
-        if (!item || !item.nv) return 'Chưa phân công';
-        return `${item.nv}${item.pg ? ' • ' + item.pg : ''}`;
+    // NÚT XUẤT ẢNH HD
+    document.getElementById('btnExportImage').addEventListener('click', () => {
+      showToast('📸 Đang tạo ảnh HD sơ đồ mặt bằng...');
+      const target = state.activeTab === 'floorMapTab' ? document.getElementById('floorPlanExportTarget') : document.getElementById('appMainContainer');
+      if (typeof html2canvas !== 'undefined') {
+        html2canvas(target, { scale: 2, backgroundColor: '#fffdf5', useCORS: true }).then(canvas => {
+          const a = document.createElement('a');
+          a.download = `SoDo_VeSinh_1841_${Date.now()}.png`;
+          a.href = canvas.toDataURL('image/png');
+          a.click();
+          showToast('✅ Đã tải file ảnh HD thành công!');
+        }).catch(e => showToast('❌ Lỗi xuất ảnh: ' + e.message));
       }
-
-      const mapEl = {
-        assign_vach_kinh: getAssignee(15),
-        assign_san_xe: getAssignee(15),
-        assign_ict_1: getAssignee(1),
-        assign_tivi_1: getAssignee(2),
-        assign_tivi_2: getAssignee(3),
-        assign_may_lanh: getAssignee(6),
-        assign_giat_1: getAssignee(4),
-        assign_giat_2: getAssignee(5),
-        assign_loc_nuoc: getAssignee(8),
-        assign_lanh_1: getAssignee(12),
-        assign_lanh_2: getAssignee(13),
-        assign_vach_lanh: getAssignee(14)
-      };
-
-      for (const id in mapEl) {
-        const el = document.getElementById(id);
-        if (el) el.textContent = mapEl[id];
-      }
-
-      // Gắn sự kiện click vào khu vực trên sơ đồ
-      document.querySelectorAll('.zone-box').forEach(box => {
-        box.onclick = () => {
-          document.querySelectorAll('.zone-box').forEach(b => b.classList.remove('highlight'));
-          box.classList.add('highlight');
-          const zoneName = box.dataset.zone || box.querySelector('.zone-name').textContent;
-          const assignee = box.querySelector('.zone-assignee') ? box.querySelector('.zone-assignee').textContent : '';
-          showToast(`📍 ${zoneName} ➜ Phụ trách: ${assignee || 'Khu vực chung'}`);
-        };
-      });
-    }
-
-    function renderEmployees() {
-      const container = document.getElementById('empListContainer');
-      if (!container) return;
-
-      const q = (state.searchQuery || '').toLowerCase().trim();
-      const filtered = state.employees.filter(e => {
-        if (!q) return true;
-        return `${e.stt} ${e.name}`.toLowerCase().includes(q);
-      });
-
-      let presentCount = 0;
-      state.employees.forEach(e => { if (e.marked) presentCount++; });
-      document.getElementById('statTotalEmployees').textContent = state.employees.length;
-      document.getElementById('statPresentCount').textContent = presentCount;
-
-      container.innerHTML = filtered.map(emp => {
-        // Tìm xem nhân viên này đang trực vị trí nào
-        const assignedShift = state.shifts.find(s => s.nv && s.nv.toLowerCase().includes(emp.name.toLowerCase()));
-        return `
-          <div class="emp-item-card ${emp.marked ? 'is-active' : ''}">
-            <div class="emp-info">
-              <span class="emp-stt">${emp.stt}</span>
-              <div>
-                <div class="emp-name">${escapeHtml(emp.name)}</div>
-                ${assignedShift ? `
-                  <span class="emp-assign-tag">
-                    <i class="fa-solid fa-thumbtack"></i> Vị trí ${assignedShift.stt}: ${escapeHtml(assignedShift.kv)}
-                  </span>
-                ` : `
-                  <span style="font-size:11px; color:#9ca3af;">Chưa gán vị trí</span>
-                `}
-              </div>
-            </div>
-
-            <button type="button" class="btn-toggle-att ${emp.marked ? 'att-active' : 'att-inactive'}" data-stt="${emp.stt}">
-              ${emp.marked ? '✓ Có mặt' : '○ Vắng'}
-            </button>
-          </div>
-        `;
-      }).join('');
-
-      // Gắn sự kiện điểm danh
-      container.querySelectorAll('.btn-toggle-att').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const stt = parseInt(btn.dataset.stt, 10);
-          const emp = state.employees.find(x => x.stt === stt);
-          if (emp) {
-            emp.marked = !emp.marked;
-            localStorage.setItem('phancong_employees_cached', JSON.stringify(state.employees));
-            toggleAttendanceInSheet(emp.stt, emp.marked);
-            broadcastEvent('toggleAttendance', { stt: emp.stt, marked: emp.marked });
-            renderEmployees();
-            showToast(`${emp.marked ? '✅' : '⚪'} Điểm danh: ${emp.name} ➜ ${emp.marked ? 'Có mặt' : 'Vắng'}`);
-          }
-        });
-      });
-    }
-
-    /* ==========================================================================
-       TIỆN ÍCH & EVENT LISTENERS
-       ========================================================================== */
-    function showToast(msg) {
-      const toast = document.getElementById('toastBox');
-      const text = document.getElementById('toastMsg');
-      if (!toast || !text) return;
-      text.textContent = msg;
-      toast.style.display = 'flex';
-      clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => {
-        toast.style.display = 'none';
-      }, 3500);
-    }
-
-    function escapeHtml(text) {
-      if (!text) return '';
-      return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
-    // Khởi chạy khi tài liệu sẵn sàng
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1. Đồng hồ thời gian thực
-      function updateClock() {
-        const el = document.getElementById('clockDisplay');
-        if (!el) return;
-        const now = new Date();
-        const pad = n => (n < 10 ? '0' + n : n);
-        el.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
-      }
-      setInterval(updateClock, 1000);
-      updateClock();
-
-      // 2. Chuyển đổi Tabs
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-          document.querySelectorAll('.tab-content-panel').forEach(p => p.style.display = 'none');
-          btn.classList.add('active');
-          const targetTab = document.getElementById(btn.dataset.tab);
-          if (targetTab) targetTab.style.display = 'block';
-          state.activeTab = btn.dataset.tab;
-        });
-      });
-
-      // 3. Tìm kiếm
-      const searchInput = document.getElementById('searchInput');
-      if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-          state.searchQuery = e.target.value;
-          renderShifts();
-          renderEmployees();
-        });
-      }
-
-      // 4. Nút Lưu về Google Sheet
-      const btnSaveMain = document.getElementById('btnSaveToSheetMain');
-      if (btnSaveMain) {
-        btnSaveMain.addEventListener('click', saveAllShiftsToSheet);
-      }
-
-      // 5. Nút Làm Mới Trang
-      const btnReload = document.getElementById('btnReloadPage');
-      if (btnReload) {
-        btnReload.addEventListener('click', () => {
-          btnReload.querySelector('i').style.transition = 'transform 0.4s ease';
-          btnReload.querySelector('i').style.transform = 'rotate(360deg)';
-          setTimeout(() => {
-            window.location.reload();
-          }, 150);
-        });
-      }
-
-      // 6. Nút Xuất file ảnh HD
-      const btnExport = document.getElementById('btnExportImage');
-      if (btnExport) {
-        btnExport.addEventListener('click', () => {
-          showToast('📸 Đang tạo file ảnh phân ca HD...');
-          let targetEl = document.getElementById('appMainContainer');
-          if (state.activeTab === 'floorMapTab') {
-            targetEl = document.getElementById('floorPlanExportTarget');
-          }
-          if (typeof html2canvas !== 'undefined') {
-            html2canvas(targetEl, {
-              scale: 2,
-              useCORS: true,
-              backgroundColor: '#f5f3ff'
-            }).then(canvas => {
-              const link = document.createElement('a');
-              link.download = `PhanCong_VeSinh_1841_${Date.now()}.png`;
-              link.href = canvas.toDataURL('image/png');
-              link.click();
-              showToast('✅ Đã xuất và tải file ảnh HD thành công!');
-            }).catch(e => {
-              showToast('❌ Lỗi khi xuất ảnh: ' + e.message);
-            });
-          }
-        });
-      }
-
-      // 7. Modal cài đặt
-      const modal = document.getElementById('configModal');
-      const btnOpenCfg = document.getElementById('btnOpenConfigModal');
-      const btnCloseCfg = document.getElementById('btnCloseConfigModal');
-      const btnSaveCfg = document.getElementById('btnSaveConfig');
-
-      if (btnOpenCfg) btnOpenCfg.onclick = () => modal.style.display = 'flex';
-      if (btnCloseCfg) btnCloseCfg.onclick = () => modal.style.display = 'none';
-      if (btnSaveCfg) {
-        btnSaveCfg.onclick = () => {
-          const url = document.getElementById('cfgWebAppUrl').value.trim();
-          DEFAULT_CONFIG.webAppUrl = url;
-          localStorage.setItem('phancong_webapp_url', url);
-          modal.style.display = 'none';
-          showToast('✅ Đã lưu cấu hình kết nối Web App!');
-        };
-      }
-
-      // 8. Khởi tạo dữ liệu ban đầu
-      renderShifts();
-      renderFloorPlan();
-      renderEmployees();
-      initRealtimeSync();
-      loadDataFromGoogleSheet();
     });
+
+    // LÀM MỚI TRANG
+    document.getElementById('btnReloadPage').addEventListener('click', () => {
+      window.location.reload();
+    });
+
+    // NÚT LƯU VỀ SHEET
+    document.getElementById('btnSaveToSheetMain').addEventListener('click', saveAllToSheet);
+
+    // MODAL CÀI ĐẶT
+    document.getElementById('btnOpenConfigModal').onclick = () => document.getElementById('configModal').style.display = 'flex';
+    document.getElementById('btnCloseConfigModal').onclick = () => document.getElementById('configModal').style.display = 'none';
+    document.getElementById('btnSaveConfig').onclick = () => {
+      const url = document.getElementById('cfgWebAppUrl').value.trim();
+      DEFAULT_CONFIG.webAppUrl = url;
+      localStorage.setItem('phancong_webapp_url', url);
+      document.getElementById('configModal').style.display = 'none';
+      showToast('✅ Đã lưu cấu hình Web App URL!');
+    };
+
+    // KHỞI ĐỘNG
+    renderShifts();
+    renderEmployees();
+    initRealtime();
   </script>
 </body>
 </html>
