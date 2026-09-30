@@ -532,10 +532,17 @@
       transition: all 0.18s ease;
       cursor: pointer;
       user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
       min-height: 38px;
       line-height: 1.25;
       border: 1px solid transparent;
       position: relative;
+    }
+    .map-cell * {
+      user-select: none;
+      -webkit-user-select: none;
+      pointer-events: none;
     }
     .map-cell:hover {
       transform: translateY(-2px);
@@ -1144,12 +1151,12 @@
 
     /* MODAL */
     .modal-overlay {
-      z-index: 99999;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0,0,0,0.55);
       backdrop-filter: blur(4px);
-      z-index: 1000;
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 999999 !important;
       display: none;
       align-items: center;
       justify-content: center;
@@ -3211,6 +3218,10 @@
 
         const titleEl = cell.querySelector('.cell-title');
         const staffEl = cell.querySelector('.cell-staff');
+        const cellTitle = titleEl ? titleEl.textContent.trim() : (cell.textContent.trim() || 'Khu vực');
+
+        // Gợi ý thao tác khi di chuột
+        cell.title = `Nhấp đúp (hoặc bấm) để sửa phân bổ: ${cellTitle}`;
 
         // Nếu đã có cấu hình lưu trước đó
         if (savedAllocations[cellId]) {
@@ -3221,15 +3232,30 @@
           }
         }
 
-        // Gán sự kiện click cho từng ô
-        cell.addEventListener('click', (e) => {
-          e.stopPropagation();
+        // Gán sự kiện hỗ trợ cả nhấp đơn và nhấp đúp trên mọi trình duyệt/thiết bị
+        const onCellTrigger = (e) => {
+          if (e) {
+            e.stopPropagation();
+            if (e.type === 'dblclick') {
+              e.preventDefault();
+            }
+          }
           handleMapCellClick(cell);
-        });
+        };
+
+        // Gỡ bỏ handler cũ nếu có để tránh trùng lặp
+        if (cell._onTriggerHandler) {
+          cell.removeEventListener('click', cell._onTriggerHandler);
+          cell.removeEventListener('dblclick', cell._onTriggerHandler);
+        }
+        cell._onTriggerHandler = onCellTrigger;
+
+        cell.addEventListener('click', onCellTrigger);
+        cell.addEventListener('dblclick', onCellTrigger);
       });
     }
 
-    // Xử lý khi click vào ô trên sơ đồ
+    // Xử lý khi click / double-click vào ô trên sơ đồ
     function handleMapCellClick(cell) {
       const cellTitle = cell.querySelector('.cell-title') ? cell.querySelector('.cell-title').textContent.trim() : cell.textContent.trim();
       const currentStaff = cell.getAttribute('data-staff') || (cell.querySelector('.cell-staff') ? cell.querySelector('.cell-staff').textContent.trim() : '');
@@ -3275,33 +3301,46 @@
 
     // Mở modal phân bổ & thay đổi nhân viên
     function openStaffAllocationModal(cell, areaTitle, currentStaff) {
+      state.modalOpenTime = Date.now();
       state.selectedCellEl = cell;
       const modal = document.getElementById('staffAllocationModal');
+      if (!modal) return;
       
-      document.getElementById('modalTargetAreaTitle').textContent = areaTitle;
-      document.getElementById('modalCurrentStaffName').textContent = currentStaff || 'Chưa gán';
-      document.getElementById('modalBtnStaffTargetName').textContent = currentStaff || 'khu vực này';
-      document.getElementById('modalBtnDirectStaffName').textContent = currentStaff || 'nhân viên';
+      const titleEl = document.getElementById('modalTargetAreaTitle');
+      if (titleEl) titleEl.textContent = areaTitle;
+
+      const currentStaffEl = document.getElementById('modalCurrentStaffName');
+      if (currentStaffEl) currentStaffEl.textContent = currentStaff || 'Chưa gán';
+
+      const btnTargetEl = document.getElementById('modalBtnStaffTargetName');
+      if (btnTargetEl) btnTargetEl.textContent = currentStaff || 'khu vực này';
+
+      const btnDirectEl = document.getElementById('modalBtnDirectStaffName');
+      if (btnDirectEl) btnDirectEl.textContent = currentStaff || 'nhân viên';
 
       // Đếm số lượng khu vực nhân viên này đang phụ trách
       const count = getStaffAreaCount(currentStaff);
-      document.getElementById('modalCurrentStaffCountBadge').textContent = 'Đang có ' + count + ' khu vực';
+      const countBadge = document.getElementById('modalCurrentStaffCountBadge');
+      if (countBadge) countBadge.textContent = 'Đang có ' + count + ' khu vực';
 
       // Đổ danh sách 26 nhân viên vào dropdown
       const dropdown = document.getElementById('modalStaffDropdown');
-      dropdown.innerHTML = '<option value="">-- Chọn từ 26 nhân viên siêu thị --</option>';
-      state.employees.forEach(emp => {
-        const opt = document.createElement('option');
-        opt.value = emp.name;
-        opt.textContent = emp.stt + '. ' + emp.name;
-        dropdown.appendChild(opt);
-      });
+      if (dropdown) {
+        dropdown.innerHTML = '<option value="">-- Chọn từ ' + (state.employees ? state.employees.length : 26) + ' nhân viên siêu thị --</option>';
+        (state.employees || []).forEach(emp => {
+          const opt = document.createElement('option');
+          opt.value = emp.name;
+          opt.textContent = emp.stt + '. ' + emp.name + (emp.role === 'pg' ? ' [PG]' : '');
+          dropdown.appendChild(opt);
+        });
 
-      const customInp = document.getElementById('modalStaffCustomInput');
-      customInp.value = '';
-      dropdown.onchange = function() {
-        if (this.value) customInp.value = this.value;
-      };
+        const customInp = document.getElementById('modalStaffCustomInput');
+        if (customInp) customInp.value = '';
+        dropdown.onchange = function() {
+          if (this.value && customInp) customInp.value = this.value;
+        };
+      }
+
       modal.style.display = 'flex';
     }
 
@@ -3416,6 +3455,7 @@
       });
 
       saveMapAllocations();
+      initMapCells();
     }
 
     // Đổi tên nhân viên trên TẤT CẢ các khu vực
@@ -3574,6 +3614,10 @@
     };
     document.getElementById('staffAllocationModal').onclick = (e) => {
       if (e.target.id === 'staffAllocationModal') {
+        // Ngăn chặn click thứ 2 của thao tác nhấp đúp vô tình rơi vào nền overlay và đóng modal ngay lập tức
+        if (Date.now() - (state.modalOpenTime || 0) < 400) {
+          return;
+        }
         document.getElementById('staffAllocationModal').style.display = 'none';
       }
     };
