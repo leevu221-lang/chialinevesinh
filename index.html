@@ -810,6 +810,7 @@
 
     /* MODAL */
     .modal-overlay {
+      z-index: 99999;
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.45);
@@ -1956,7 +1957,6 @@
       state.employees[idx].marked = !state.employees[idx].marked;
       localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
       renderEmployees();
-    initMapCells();
       broadcastMqtt({ type: 'TOGGLE_ATTENDANCE', index: idx, marked: state.employees[idx].marked });
       autoSaveToSheetDebounced();
       showToast(`Đã cập nhật điểm danh: ${state.employees[idx].name}`);
@@ -1988,7 +1988,7 @@
 
     // Khởi tạo các ô trên sơ đồ với ID duy nhất & nạp trạng thái đã lưu
     function initMapCells() {
-      const cells = document.querySelectorAll('#storeLayoutGridEl .map-cell');
+      const cells = document.querySelectorAll('.map-cell');
       const savedAllocations = JSON.parse(localStorage.getItem('st1841_map_allocations') || '{}');
 
       cells.forEach((cell, idx) => {
@@ -2083,7 +2083,11 @@
         dropdown.appendChild(opt);
       });
 
-      document.getElementById('modalStaffCustomInput').value = '';
+      const customInp = document.getElementById('modalStaffCustomInput');
+      customInp.value = '';
+      dropdown.onchange = function() {
+        if (this.value) customInp.value = this.value;
+      };
       modal.style.display = 'flex';
     }
 
@@ -2091,7 +2095,7 @@
     function getStaffAreaCount(staffName) {
       if (!staffName || !staffName.trim()) return 0;
       let count = 0;
-      document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+      document.querySelectorAll('.map-cell').forEach(c => {
         const st = c.getAttribute('data-staff') || '';
         if (st.trim().toUpperCase() === staffName.trim().toUpperCase()) {
           count++;
@@ -2103,7 +2107,7 @@
     // Lưu toàn bộ cấu hình sơ đồ vào localStorage
     function saveMapAllocations() {
       const allocations = {};
-      document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+      document.querySelectorAll('.map-cell').forEach(c => {
         const cellId = c.getAttribute('data-cell-id');
         const staff = c.getAttribute('data-staff') || '';
         if (cellId) {
@@ -2136,7 +2140,7 @@
       } else {
         // Thay đổi TẤT CẢ các ô có tên nhân viên này
         let updatedCount = 0;
-        document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+        document.querySelectorAll('.map-cell').forEach(c => {
           const st = (c.getAttribute('data-staff') || '').trim();
           if (st.toUpperCase() === oldStaff.toUpperCase()) {
             c.setAttribute('data-staff', newStaff);
@@ -2225,7 +2229,7 @@
       document.getElementById('storeLayoutGridEl').classList.add('allocation-mode-active');
 
       // Highlight tất cả các ô của nhân viên này
-      document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+      document.querySelectorAll('.map-cell').forEach(c => {
         const st = (c.getAttribute('data-staff') || '').trim();
         if (st.toUpperCase() === staffName.toUpperCase()) {
           c.classList.add('in-allocation-target');
@@ -2248,7 +2252,7 @@
       document.getElementById('allocationActiveBanner').style.display = 'none';
       document.getElementById('storeLayoutGridEl').classList.remove('allocation-mode-active');
 
-      document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+      document.querySelectorAll('.map-cell').forEach(c => {
         c.classList.remove('in-allocation-target');
       });
 
@@ -2326,7 +2330,7 @@
         state.employees[msg.index].marked = msg.marked;
         renderEmployees();
       } else if (msg.type === 'BATCH_RENAME_STAFF') {
-        document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+        document.querySelectorAll('.map-cell').forEach(c => {
           const st = (c.getAttribute('data-staff') || '').trim();
           if (st.toUpperCase() === msg.oldStaff.toUpperCase()) {
             c.setAttribute('data-staff', msg.newStaff);
@@ -2483,6 +2487,7 @@
     renderShifts();
     renderEmployees();
     initRealtime();
+    initMapCells();
   </script>
 </body>
 </html>
