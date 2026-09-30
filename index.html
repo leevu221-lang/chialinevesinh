@@ -1433,6 +1433,394 @@
       transform: translateY(-2px);
     }
 
+  
+    /* ==========================================================================
+       TỐI ƯU HÓA ĐẶC BIỆT CHO TRÌNH DUYỆT ĐIỆN THOẠI & LINE/ZALO IN-APP BROWSER
+       ========================================================================== */
+    html {
+      -webkit-text-size-adjust: 100%;
+      touch-action: manipulation;
+    }
+    body {
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+
+    /* Sub-tabs điều hướng lọc nhanh cho mobile */
+    .mobile-emp-subtabs {
+      display: none;
+      gap: 6px;
+      margin-bottom: 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mobile-emp-subtabs::-webkit-scrollbar {
+      display: none;
+    }
+    .mobile-subtab-btn {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 700;
+      border: 1.5px solid #fde68a;
+      background: #ffffff;
+      color: #78350f;
+      cursor: pointer;
+      white-space: nowrap;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .mobile-subtab-btn.active {
+      background: var(--primary-gradient);
+      color: #ffffff;
+      border-color: #d97706;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+    }
+
+    .mobile-scroll-tip {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: #fffbeb;
+      border: 1.5px dashed #f59e0b;
+      color: #92400e;
+      padding: 7px 12px;
+      border-radius: 10px;
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      animation: pulseTip 2s infinite;
+    }
+    @keyframes pulseTip {
+      0%, 100% { opacity: 0.9; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.01); }
+    }
+
+    /* Nút cuộn nhanh lên đầu trang */
+    .btn-scroll-top {
+      position: fixed;
+      bottom: 20px;
+      right: 16px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--primary-gradient);
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      z-index: 999;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-scroll-top:active {
+      transform: scale(0.92);
+    }
+
+    /* MEDIA QUERY TỐI ƯU MÀN HÌNH ĐIỆN THOẠI (<= 768px) */
+    @media (max-width: 768px) {
+      .app-container {
+        padding: 8px 8px 60px 8px !important;
+      }
+
+      /* HEADER */
+      .app-header {
+        padding: 10px 12px !important;
+        border-radius: var(--radius-lg) !important;
+        margin-bottom: 10px !important;
+        gap: 10px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+      .header-branding {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        width: 100% !important;
+      }
+      .brand-icon {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 18px !important;
+        border-radius: 10px !important;
+        flex-shrink: 0 !important;
+      }
+      .brand-title h1 {
+        font-size: 14.5px !important;
+        gap: 6px !important;
+        flex-wrap: wrap !important;
+        line-height: 1.3 !important;
+      }
+      .brand-title .badge-tag {
+        font-size: 10px !important;
+        padding: 2px 6px !important;
+      }
+      .brand-subtitle {
+        font-size: 11px !important;
+      }
+
+      /* Cụm nút hành động trên Header */
+      .header-actions {
+        width: 100% !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr auto auto !important;
+        gap: 6px !important;
+        align-items: center !important;
+      }
+      .live-status-pill {
+        display: none !important; /* Ẩn bớt text live trên header để nhường chỗ */
+      }
+      .header-actions .btn {
+        padding: 8px 8px !important;
+        font-size: 11.5px !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
+        height: 38px !important;
+      }
+      .header-actions .btn-icon {
+        width: 38px !important;
+        height: 38px !important;
+        flex-shrink: 0 !important;
+      }
+
+      /* TABS NAVIGATION */
+      .nav-toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        margin-bottom: 10px !important;
+      }
+      .nav-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        gap: 6px !important;
+        padding: 2px 2px 6px 2px !important;
+        scrollbar-width: none !important;
+      }
+      .nav-tabs::-webkit-scrollbar {
+        display: none !important;
+      }
+      .nav-tab-btn {
+        flex-shrink: 0 !important;
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+        border-radius: 20px !important;
+        white-space: nowrap !important;
+      }
+      .search-box-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .search-input {
+        font-size: 16px !important; /* Chống iOS LINE zoom in khi chạm */
+        padding: 9px 12px 9px 36px !important;
+        border-radius: 12px !important;
+      }
+
+      /* SƠ ĐỒ MẶT BẰNG */
+      .floorplan-card {
+        padding: 10px 8px !important;
+        border-radius: var(--radius-lg) !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+      }
+      .floorplan-header-strip {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+      }
+      .floorplan-legend {
+        gap: 8px !important;
+        font-size: 10.5px !important;
+        overflow-x: auto !important;
+        width: 100% !important;
+        padding-bottom: 4px !important;
+        white-space: nowrap !important;
+        scrollbar-width: none !important;
+      }
+      .floorplan-legend::-webkit-scrollbar {
+        display: none !important;
+      }
+      .mobile-scroll-tip {
+        display: flex !important;
+      }
+      .allocation-banner {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+        padding: 8px 10px !important;
+      }
+      .allocation-banner > div:last-child {
+        display: flex !important;
+        justify-content: flex-end !important;
+      }
+
+      /* PHÂN CA 15 VỊ TRÍ */
+      .shifts-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+      .shift-card {
+        padding: 12px 12px !important;
+      }
+      .shift-field-input, .shift-field-select {
+        font-size: 16px !important;
+        min-height: 40px !important;
+      }
+
+      /* TAB DANH SÁCH NV/PG */
+      .employees-toolbar {
+        padding: 10px !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+      }
+      .emp-search-wrap {
+        width: 100% !important;
+      }
+      .emp-search-wrap input {
+        font-size: 16px !important;
+        padding: 9px 12px 9px 34px !important;
+      }
+      #btnOpenAddEmployeeModal {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 10px 16px !important;
+        font-size: 13.5px !important;
+      }
+      .employees-stats-row {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px !important;
+      }
+      .stat-card {
+        padding: 10px 10px !important;
+        gap: 8px !important;
+      }
+      .stat-icon {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 14px !important;
+        border-radius: 8px !important;
+      }
+      .stat-value {
+        font-size: 19px !important;
+      }
+      .stat-label {
+        font-size: 10.5px !important;
+      }
+
+      /* Hiển thị sub-tabs lọc trên mobile */
+      .mobile-emp-subtabs {
+        display: flex !important;
+      }
+      .employees-dual-columns {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      .emp-column-panel {
+        padding: 12px 10px !important;
+        border-radius: var(--radius-md) !important;
+      }
+      .employee-card {
+        padding: 10px 10px !important;
+        gap: 6px !important;
+      }
+      .emp-name {
+        font-size: 13.5px !important;
+      }
+      .emp-stt {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 11px !important;
+      }
+      .btn-toggle-attend {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+        min-height: 34px !important;
+      }
+      .btn-action-icon {
+        width: 32px !important;
+        height: 32px !important;
+      }
+
+      /* QUY ƯỚC */
+      .rules-card-wrapper {
+        padding: 12px !important;
+        border-radius: var(--radius-lg) !important;
+      }
+      .rules-banner-header {
+        padding: 12px !important;
+        gap: 10px !important;
+      }
+      .rules-banner-icon {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 18px !important;
+        border-radius: 12px !important;
+      }
+      .rules-banner-title {
+        font-size: 14px !important;
+      }
+      .rules-banner-sub {
+        font-size: 11.5px !important;
+      }
+      .rules-grid-layout {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+      }
+      .rule-box-card {
+        padding: 12px !important;
+      }
+      .sanctions-timeline {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+      }
+      .sanction-arrow-divider {
+        display: none !important;
+      }
+
+      /* MODALS BOTTOM SHEET */
+      .modal-overlay {
+        padding: 8px !important;
+        align-items: flex-end !important;
+      }
+      .modal-box {
+        max-width: 100% !important;
+        width: 100% !important;
+        max-height: 88vh !important;
+        overflow-y: auto !important;
+        border-radius: 20px 20px 10px 10px !important;
+        padding: 16px 14px 28px !important;
+        animation: mobileModalUp 0.25s ease !important;
+      }
+      @keyframes mobileModalUp {
+        from { transform: translateY(60px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
+      .shift-field-input, .shift-field-select, input, select {
+        font-size: 16px !important; /* Chống iOS LINE zoom */
+      }
+      .toast-container {
+        left: 12px !important;
+        right: 12px !important;
+        bottom: 16px !important;
+      }
+      .toast-msg {
+        font-size: 12px !important;
+        padding: 8px 12px !important;
+        border-radius: 8px !important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -1518,6 +1906,12 @@
             <span class="legend-item"><span class="legend-box" style="background:#fef08a;border-color:#eab308;"></span> Khu ICT / Điện Thoại</span>
             <span class="legend-item"><span class="legend-box" style="background:#ffe4e6;border-color:#fca5a5;"></span> Thu Ngân / HTKT</span>
           </div>
+        </div>
+
+        <!-- GỢI Ý VUỐT NGANG TRÊN ĐIỆN THOẠI -->
+        <div class="mobile-scroll-tip">
+          <i class="fa-solid fa-arrows-left-right"></i>
+          <span>Vuốt ngang <strong>👈 👉</strong> để xem toàn bộ sơ đồ mặt bằng</span>
         </div>
 
         <!-- BANNER CHẾ ĐỘ PHÂN BỔ TRỰC TIẾP -->
@@ -1818,6 +2212,19 @@
             <div class="stat-label">Vắng Mặt / Nghỉ Ca</div>
           </div>
         </div>
+      </div>
+
+      <!-- BỘ LỌC CHUYỂN NHANH TRÊN ĐIỆN THOẠI (NHÂN VIÊN / PG) -->
+      <div class="mobile-emp-subtabs" id="mobileEmpSubtabs">
+        <button class="mobile-subtab-btn active" data-filter="all">
+          <i class="fa-solid fa-layer-group"></i> Tất Cả
+        </button>
+        <button class="mobile-subtab-btn" data-filter="nv">
+          <i class="fa-solid fa-user-tie"></i> Nhân Viên Siêu Thị
+        </button>
+        <button class="mobile-subtab-btn" data-filter="pg">
+          <i class="fa-solid fa-handshake"></i> PG Hãng
+        </button>
       </div>
 
       <!-- BỐ CỤC 2 CỘT: NHÂN VIÊN BÊN TRÁI, PG BÊN PHẢI -->
@@ -3237,6 +3644,55 @@
       showToast('✅ Đã lưu cấu hình Web App URL!');
     };
 
+
+    // XỬ LÝ SUB-TABS TRÊN ĐIỆN THOẠI (CHUYỂN NHANH NV / PG)
+    let currentMobileEmpFilter = 'all';
+    document.querySelectorAll('.mobile-subtab-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.mobile-subtab-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentMobileEmpFilter = this.getAttribute('data-filter');
+        applyMobileEmpFilter();
+      });
+    });
+
+    function applyMobileEmpFilter() {
+      const panelStaff = document.querySelector('.emp-column-panel.panel-staff');
+      const panelPg = document.querySelector('.emp-column-panel.panel-pg');
+      if (!panelStaff || !panelPg) return;
+
+      if (window.innerWidth <= 768) {
+        if (currentMobileEmpFilter === 'nv') {
+          panelStaff.style.display = 'flex';
+          panelPg.style.display = 'none';
+        } else if (currentMobileEmpFilter === 'pg') {
+          panelStaff.style.display = 'none';
+          panelPg.style.display = 'flex';
+        } else {
+          panelStaff.style.display = 'flex';
+          panelPg.style.display = 'flex';
+        }
+      } else {
+        panelStaff.style.display = 'flex';
+        panelPg.style.display = 'flex';
+      }
+    }
+
+    window.addEventListener('resize', applyMobileEmpFilter);
+
+    // NÚT CUỘN LÊN ĐẦU TRANG (MOBILE BACK TO TOP)
+    const btnScrollTopEl = document.getElementById('btnScrollTop');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 300) {
+        btnScrollTopEl.style.display = 'flex';
+      } else {
+        btnScrollTopEl.style.display = 'none';
+      }
+    });
+    btnScrollTopEl.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
     // KHỞI ĐỘNG
     renderShifts();
     renderEmployees();
@@ -3244,5 +3700,9 @@
     initMapCells();
     fetchDataFromGoogleSheet(true);
   </script>
+  <!-- NÚT CUỘN LÊN ĐẦU TRANG TRÊN MOBILE -->
+  <button class="btn-scroll-top" id="btnScrollTop" title="Lên đầu trang">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
 </body>
 </html>
