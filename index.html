@@ -315,6 +315,22 @@
       color: var(--primary-dark);
       border-color: #f59e0b;
     }
+    .btn-icon.spinning {
+      background: #fef3c7 !important;
+      border-color: #f59e0b !important;
+      color: #92400e !important;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+      pointer-events: none;
+    }
+    .btn-icon.spinning i {
+      display: inline-block;
+      animation: spinReload 0.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      color: #b45309 !important;
+    }
+    @keyframes spinReload {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
     /* NAVIGATION TABS & SEARCH */
     .nav-toolbar {
@@ -3956,6 +3972,27 @@
       if (hasUpdated && !silent) {
         showToast(`☁️ Đã đồng bộ dữ liệu mới nhất từ Google Trang Tính! (${sourceName})`);
       }
+      stopReloadButtonSpin();
+    }
+
+    // HIỆU ỨNG TỰ ĐỘNG CHẠY XOAY NÚT LÀM MỚI (RELOAD BUTTON SPIN)
+    function startReloadButtonSpin() {
+      const btn = document.getElementById('btnReloadPage');
+      if (btn) btn.classList.add('spinning');
+    }
+
+    function stopReloadButtonSpin() {
+      const btn = document.getElementById('btnReloadPage');
+      if (btn) {
+        setTimeout(() => {
+          btn.classList.remove('spinning');
+        }, 650);
+      }
+    }
+
+    function triggerReloadButton(silent = false) {
+      startReloadButtonSpin();
+      fetchDataFromGoogleSheet(silent);
     }
 
     // ==========================================================================
@@ -4096,6 +4133,7 @@
             statusPill.className = 'live-status-pill connected';
             statusText.textContent = '🟢 Realtime Live (Bộ nhớ đệm)';
           }
+          stopReloadButtonSpin();
         });
     }
 
@@ -4317,7 +4355,7 @@
 
     // LÀM MỚI & ĐỒNG BỘ TỪ GOOGLE SHEET
     document.getElementById('btnReloadPage').addEventListener('click', () => {
-      fetchDataFromGoogleSheet(false);
+      triggerReloadButton(false);
     });
 
     // NÚT LƯU VỀ SHEET (LƯU CẢ CA TRỰC VÀ DANH SÁCH NV/PG)
@@ -4396,27 +4434,32 @@
     initRealtime();
     initMapCells();
     syncMapCellsFromShifts();
-    fetchDataFromGoogleSheet(true);
+    triggerReloadButton(true);
+
+    // TỰ ĐỘNG CHẠY NÚT LÀM MỚI KHI F5 XONG (PAGE LOAD)
+    window.addEventListener('load', () => {
+      triggerReloadButton(true);
+    });
 
     // Bấm vào status pill để làm mới thủ công
     const pillEl = document.getElementById('realtimeStatusPill');
     if (pillEl) {
       pillEl.addEventListener('click', () => {
-        fetchDataFromGoogleSheet(false);
+        triggerReloadButton(false);
       });
     }
 
     // Tự động đồng bộ khi chuyển lại tab / mở lại app
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
-        fetchDataFromGoogleSheet(true);
+        triggerReloadButton(true);
       }
     });
 
     // Tự động đồng bộ định kỳ mỗi 45 giây nếu đang mở trang
     setInterval(() => {
       if (document.visibilityState === 'visible') {
-        fetchDataFromGoogleSheet(true);
+        triggerReloadButton(true);
       }
     }, 45000);
   </script>
