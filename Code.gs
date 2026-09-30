@@ -15,12 +15,21 @@ const SPREADSHEET_ID = "1z6vAzHRIrYihI91Yw1dMnluPPL0BuAYiZarPBD5qNfw";
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu("🧹 Phân Công Vệ Sinh 1841")
+    .addItem("📊 Tạo / Khởi Tạo Tab 'save data'", "menuInitSaveDataSheet")
+    .addSeparator()
     .addItem("🔍 Mở Bảng Phân Công (Sidebar)", "showSidebar")
     .addItem("🖥️ Mở Sơ Đồ & Phân Công (Cửa sổ lớn)", "showDialog")
     .addSeparator()
     .addItem("⚡ Cài đặt & Định dạng Sheet", "setupSheetFormatting")
     .addItem("ℹ️ Hướng Dẫn Sử Dụng", "showHelp")
     .addToUi();
+}
+
+/**
+ * Hàm chạy trực tiếp từ Apps Script để tạo ngay tab 'save data'
+ */
+function createSaveDataSheet() {
+  return menuInitSaveDataSheet();
 }
 
 /**
