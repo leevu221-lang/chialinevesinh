@@ -3732,10 +3732,144 @@
     let currentExportDataUrl = "";
 
 
+    // HÀM XỬ LÝ VÀ HIỂN THỊ DỮ LIỆU ĐỌC ĐƯỢC TỪ SHEET
+    function applyReceivedSheetData(data, sourceName = 'Google Apps Script', silent = false) {
+      let hasUpdated = false;
+
+      // 1. Cập nhật 15 ca trực nếu có
+      if (Array.isArray(data.shifts) && data.shifts.length > 0) {
+        let validShifts = data.shifts.filter(s => {
+          const nv = (s.nv || '').trim().toUpperCase();
+          const kv = (s.kv || '').trim().toUpperCase();
+          return nv !== 'NHÂN VIÊN TRỰC' && kv !== 'KHU VỰC PHỤ TRÁCH';
+        });
+
+        validShifts = validShifts.map((s, idx) => ({
+          stt: idx + 1,
+          row: s.rowInSheet || s.row || (17 + idx),
+          nv: (s.nv || '').trim(),
+          kv: (s.kv || '').trim(),
+          pg: (s.pg || '').trim()
+        }));
+
+        if (validShifts.length < 15) {
+          for (let i = validShifts.length; i < 15; i++) {
+            validShifts.push(DEFAULT_SHIFTS[i]);
+          }
+        }
+
+        state.shifts = validShifts;
+        localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
+        renderShifts();
+        syncMapCellsFromShifts();
+        hasUpdated = true;
+      }
+
+      // 2. Cập nhật danh sách NV/PG nếu có
+      if (Array.isArray(data.employees) && data.employees.length > 0) {
+        const validEmps = data.employees.filter(e => {
+          const name = (e.name || '').trim().toUpperCase();
+          return name !== 'HỌ VÀ TÊN' && name !== 'NHÂN SỰ';
+        }).map((emp, idx) => ({
+          stt: emp.stt || (idx + 1),
+          name: (emp.name || '').trim(),
+          role: emp.role || (/pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(emp.name) ? 'pg' : 'nv'),
+          marked: (emp.marked === true || emp.marked === 'X' || emp.marked === '1')
+        }));
+
+        state.employees = validEmps;
+        localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+        renderEmployees();
+        if (typeof initModalDropdowns === 'function') initModalDropdowns();
+        hasUpdated = true;
+      }
+
+      // 3. Cập nhật trạng thái hiển thị
+      const statusPill = document.getElementById('realtimeStatusPill');
+      const statusText = document.getElementById('realtimeStatusText');
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+      if (statusPill && statusText) {
+        statusPill.className = 'live-status-pill connected';
+        statusText.textContent = `🟢 Realtime Live (${timeStr})`;
+      }
+
+      if (hasUpdated && !silent) {
+        showToast(`☁️ Đã đồng bộ dữ liệu mới nhất từ Google Trang Tính! (${sourceName})`);
+      }
+    }
+
+    // ĐỌC DỮ LIỆU QUA GOOGLE VISUALIZATION API (FALLBACK TRỰC TIẾP TỪ GOOGLE DRIVE CHỐNG NGHẼN/CORS)
+    function fetchDirectFromGoogleSheetGviz(silent = false) {
+      const gvizUrl = `https://docs.google.com/spreadsheets/d/${DEFAULT_CONFIG.sheetId}/gviz/tq?tqx=out:json&_t=${Date.now()}`;
+      
+      fetch(gvizUrl)
+        .then(res => res.text())
+        .then(text => {
+          const match = text.match(/setResponse\(([\s\S]*)\);/);
+          if (!match) throw new Error('Không đọc được định dạng Google Visualization');
+          const json = JSON.parse(match[1]);
+          const rows = (json.table && json.table.rows) ? json.table.rows : [];
+
+          // 1. Trích xuất 15 ca trực từ dòng 17 (chỉ mục 16, cột W..Z)
+          const shifts = [];
+          for (let i = 0; i < 15; i++) {
+            const r = rows[16 + i];
+            if (!r || !r.c) continue;
+            const c = r.c;
+            const stt = c[22] ? (c[22].v || (i + 1)) : (i + 1);
+            const nv = c[23] ? String(c[23].v || '').trim() : '';
+            const kv = c[24] ? String(c[24].v || '').trim() : '';
+            const pg = c[25] ? String(c[25].v || '').trim() : '';
+            shifts.push({ stt: Number(stt), nv, kv, pg });
+          }
+
+          // 2. Trích xuất danh sách nhân viên từ dòng 1 (chỉ mục 0, cột AC..AE)
+          const employees = [];
+          for (let i = 0; i < rows.length; i++) {
+            const r = rows[i];
+            if (!r || !r.c) continue;
+            const c = r.c;
+            const name = c[29] ? String(c[29].v || '').trim() : '';
+            if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ') continue;
+            const stt = c[28] ? (c[28].v || (employees.length + 1)) : (employees.length + 1);
+            const mark = c[30] ? String(c[30].v || '').trim().toUpperCase() : '';
+            const isPg = /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
+            employees.push({
+              stt: Number(stt),
+              name,
+              role: isPg ? 'pg' : 'nv',
+              marked: (mark === 'X' || mark === '1' || mark === 'TRUE')
+            });
+          }
+
+          if (shifts.length > 0 || employees.length > 0) {
+            applyReceivedSheetData({ success: true, shifts, employees }, 'Google Sheets Live', silent);
+          } else {
+            throw new Error('Không có hàng dữ liệu');
+          }
+        })
+        .catch(err => {
+          console.warn('Cả Apps Script và Gviz fallback đều không đọc được:', err);
+          const statusPill = document.getElementById('realtimeStatusPill');
+          const statusText = document.getElementById('realtimeStatusText');
+          if (statusPill && statusText) {
+            statusPill.className = 'live-status-pill offline';
+            statusText.textContent = '⚠️ Dùng dữ liệu đệm (Bấm làm mới)';
+          }
+          if (!silent) {
+            showToast('⚠️ Đang hiển thị dữ liệu bộ nhớ đệm. Bấm nút Làm Mới để tải lại từ Sheet.');
+          }
+        });
+    }
+
     // ĐỒNG BỘ ĐỌC DỮ LIỆU TỪ GOOGLE SHEET VỀ WEB APP
     function fetchDataFromGoogleSheet(silent = false) {
       const url = DEFAULT_CONFIG.webAppUrl;
-      if (!url) return;
+      if (!url) {
+        fetchDirectFromGoogleSheetGviz(silent);
+        return;
+      }
 
       const statusPill = document.getElementById('realtimeStatusPill');
       const statusText = document.getElementById('realtimeStatusText');
@@ -3752,13 +3886,9 @@
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 12000);
 
+      // Simple Request không có headers tùy biến để tránh bị trình duyệt chặn CORS preflight
       fetch(fetchUrl, {
         method: 'GET',
-        cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        },
         signal: controller.signal
       })
         .then(res => {
@@ -3768,84 +3898,15 @@
         })
         .then(data => {
           if (data && data.success) {
-            let hasUpdated = false;
-
-            // 1. Cập nhật 15 ca trực nếu có
-            if (Array.isArray(data.shifts) && data.shifts.length > 0) {
-              // Lọc bỏ dòng header nếu bị lẫn vào từ sheet
-              let validShifts = data.shifts.filter(s => {
-                const nv = (s.nv || '').trim().toUpperCase();
-                const kv = (s.kv || '').trim().toUpperCase();
-                return nv !== 'NHÂN VIÊN TRỰC' && kv !== 'KHU VỰC PHỤ TRÁCH';
-              });
-
-              // Chuẩn hóa danh sách ca trực
-              validShifts = validShifts.map((s, idx) => ({
-                stt: idx + 1,
-                row: s.rowInSheet || s.row || (17 + idx),
-                nv: (s.nv || '').trim(),
-                kv: (s.kv || '').trim(),
-                pg: (s.pg || '').trim()
-              }));
-
-              // Bổ sung đủ 15 ca nếu thiếu
-              if (validShifts.length < 15) {
-                for (let i = validShifts.length; i < 15; i++) {
-                  validShifts.push(DEFAULT_SHIFTS[i]);
-                }
-              }
-
-              state.shifts = validShifts;
-              localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
-              renderShifts();
-              syncMapCellsFromShifts();
-              hasUpdated = true;
-            }
-
-            // 2. Cập nhật danh sách NV/PG nếu có
-            if (Array.isArray(data.employees) && data.employees.length > 0) {
-              const validEmps = data.employees.filter(e => {
-                const name = (e.name || '').trim().toUpperCase();
-                return name !== 'HỌ VÀ TÊN' && name !== 'NHÂN SỰ';
-              }).map((emp, idx) => ({
-                stt: emp.stt || (idx + 1),
-                name: (emp.name || '').trim(),
-                role: emp.role || (/pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(emp.name) ? 'pg' : 'nv'),
-                marked: (emp.marked === true || emp.marked === 'X' || emp.marked === '1')
-              }));
-
-              state.employees = validEmps;
-              localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
-              renderEmployees();
-              if (typeof initModalDropdowns === 'function') initModalDropdowns();
-              hasUpdated = true;
-            }
-
-            // Cập nhật trạng thái hiển thị
-            const now = new Date();
-            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-            if (statusPill && statusText) {
-              statusPill.className = 'live-status-pill connected';
-              statusText.textContent = `🟢 Realtime Live (${timeStr})`;
-            }
-
-            if (hasUpdated) {
-              showToast('☁️ Đã tự động đồng bộ dữ liệu mới nhất từ Google Trang Tính!');
-            }
+            applyReceivedSheetData(data, 'Google Apps Script', silent);
           } else {
             throw new Error(data && data.message ? data.message : 'Dữ liệu không hợp lệ');
           }
         })
         .catch(err => {
           clearTimeout(timeoutId);
-          console.warn('Không thể đọc trực tiếp từ Sheet, sử dụng dữ liệu bộ nhớ đệm:', err);
-          if (statusPill && statusText) {
-            statusPill.className = 'live-status-pill offline';
-            statusText.textContent = '⚠️ Dùng dữ liệu đệm (Bấm làm mới)';
-          }
-          if (!silent) {
-            showToast('⚠️ Đang hiển thị dữ liệu bộ nhớ đệm. Bấm nút Làm Mới để tải lại từ Sheet.');
-          }
+          console.warn('Apps Script Web App không phản hồi, tự động chuyển sang đọc trực tiếp Google Sheets Gviz:', err);
+          fetchDirectFromGoogleSheetGviz(silent);
         });
     }
 

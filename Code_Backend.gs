@@ -303,8 +303,16 @@ function getTargetSheet(targetSheetId) {
     } catch (e2) {}
   }
   if (!ss) return null;
-  // Lấy sheet đầu tiên hoặc sheet đang chọn
-  return ss.getSheets()[0] || ss.getActiveSheet();
+  // Ưu tiên tìm sheet gốc 'VS CŨ'
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    const sName = sheets[i].getName().trim().toUpperCase();
+    if (sName === "VS CŨ" || sName === "VS CU") return sheets[i];
+  }
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getName().trim().toLowerCase() !== "save data") return sheets[i];
+  }
+  return sheets[0] || ss.getActiveSheet();
 }
 
 /**
