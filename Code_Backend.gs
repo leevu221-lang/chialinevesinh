@@ -69,6 +69,14 @@ function handleApiOrHtml(e) {
     }
   }
 
+  // API: Tạo / Khởi tạo tab 'save data'
+  if (params && (params.action === "createSaveDataSheet" || params.action === "initSaveData")) {
+    const targetSheetId = params.sheetId || (postBody && postBody.sheetId) || SPREADSHEET_ID;
+    const res = initOrGetSaveDataSheet(targetSheetId);
+    return ContentService.createTextOutput(JSON.stringify(res))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   // API: Lấy toàn bộ dữ liệu phân công, nhân viên và sơ đồ
   if (params && params.action === "getData") {
     const targetSheetId = params.sheetId || (postBody && postBody.sheetId) || SPREADSHEET_ID;
@@ -124,6 +132,151 @@ function handleApiOrHtml(e) {
 /**
  * Lấy đối tượng Sheet làm việc
  */
+
+/**
+ * Lấy hoặc Tự động tạo Sheet 'save data' để lưu dữ liệu từ Web App
+ */
+function getSaveDataSheet(targetSheetId) {
+  let ss = null;
+  const sheetId = targetSheetId || SPREADSHEET_ID;
+  try {
+    if (sheetId) ss = SpreadsheetApp.openById(sheetId);
+  } catch (e) {}
+  if (!ss) {
+    try { ss = SpreadsheetApp.getActiveSpreadsheet(); } catch (e2) {}
+  }
+  if (!ss) return null;
+
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getName().trim().toLowerCase() === "save data") {
+      return sheets[i];
+    }
+  }
+
+  // Nếu chưa có thì tạo mới
+  const newSheet = ss.insertSheet("save data");
+  setupSaveDataSheetFormatting(newSheet, ss);
+  return newSheet;
+}
+
+/**
+ * Khởi tạo định dạng & dữ liệu mẫu cho tab 'save data'
+ */
+function setupSaveDataSheetFormatting(sheet, ss) {
+  try {
+    // 1. Độ rộng các cột
+    sheet.setColumnWidth(1, 55);   // A: STT Ca
+    sheet.setColumnWidth(2, 170);  // B: NV
+    sheet.setColumnWidth(3, 260);  // C: KV
+    sheet.setColumnWidth(4, 170);  // D: PG
+    sheet.setColumnWidth(5, 25);   // E: Trống
+    sheet.setColumnWidth(6, 55);   // F: STT NV
+    sheet.setColumnWidth(7, 210);  // G: Họ Tên
+    sheet.setColumnWidth(8, 130);  // H: Phân Loại
+    sheet.setColumnWidth(9, 100);  // I: Điểm Danh
+    sheet.setColumnWidth(10, 25);  // J: Trống
+    sheet.setColumnWidth(11, 160); // K: Thông số
+    sheet.setColumnWidth(12, 220); // L: Giá trị
+
+    // 2. Tiêu đề khối
+    // Khối 1: Ca trực
+    sheet.getRange("A1:D1").merge()
+      .setValue("BẢNG PHÂN CÔNG 15 VỊ TRÍ TRỰC (VỆ SINH 1841)")
+      .setBackground("#fef3c7").setFontColor("#92400e").setFontWeight("bold").setHorizontalAlignment("center").setFontSize(12);
+
+    sheet.getRange("A2:D2").setValues([["STT", "NHÂN VIÊN", "KHU VỰC PHÂN CÔNG", "PG HỖ TRỢ HÃNG"]])
+      .setBackground("#fde68a").setFontColor("#78350f").setFontWeight("bold").setHorizontalAlignment("center");
+
+    // Khối 2: Danh sách nhân sự
+    sheet.getRange("F1:I1").merge()
+      .setValue("DANH SÁCH NHÂN SỰ (NV & PG SIÊU THỊ 1841)")
+      .setBackground("#fef3c7").setFontColor("#92400e").setFontWeight("bold").setHorizontalAlignment("center").setFontSize(12);
+
+    sheet.getRange("F2:I2").setValues([["STT", "HỌ VÀ TÊN", "PHÂN LOẠI", "ĐIỂM DANH (X)"]])
+      .setBackground("#fde68a").setFontColor("#78350f").setFontWeight("bold").setHorizontalAlignment("center");
+
+    // Khối 3: Thông tin đồng bộ
+    sheet.getRange("K1:L1").merge()
+      .setValue("THÔNG TIN ĐỒNG BỘ WEB APP")
+      .setBackground("#fef3c7").setFontColor("#92400e").setFontWeight("bold").setHorizontalAlignment("center").setFontSize(12);
+
+    sheet.getRange("K2:L2").setValues([["THÔNG SỐ", "GIÁ TRỊ"]])
+      .setBackground("#fde68a").setFontColor("#78350f").setFontWeight("bold").setHorizontalAlignment("center");
+
+    sheet.getRange("K3:L6").setValues([
+      ["Thời gian lưu cuối:", new Date().toLocaleString("vi-VN")],
+      ["Nguồn lưu dữ liệu:", "Web App GitHub Pages"],
+      ["Tổng số nhân sự:", '=COUNTA(G3:G100)'],
+      ["Đang có mặt:", '=COUNTIF(I3:I100, "X")']
+    ]);
+    sheet.getRange("K3:K6").setFontWeight("bold").setFontColor("#78350f");
+
+    // Đọc dữ liệu từ sheet cũ nếu có để điền ban đầu vào save data
+    let oldSheet = null;
+    const allSheets = ss.getSheets();
+    for (let i = 0; i < allSheets.length; i++) {
+      if (allSheets[i].getName() !== "save data") {
+        oldSheet = allSheets[i];
+        break;
+      }
+    }
+
+    if (oldSheet) {
+      const oldVals = oldSheet.getRange(1, 1, Math.max(oldSheet.getLastRow(), 40), 32).getValues();
+      
+      // Copy 15 ca trực từ W17:Z31
+      const initialShifts = [];
+      for (let r = 16; r <= 30; r++) {
+        const row = oldVals[r] || [];
+        initialShifts.push([row[22] || (r - 15), row[23] || "", row[24] || "", row[25] || ""]);
+      }
+      sheet.getRange(3, 1, 15, 4).setValues(initialShifts);
+
+      // Copy danh sách nhân viên từ AC1:AE26
+      const initialEmps = [];
+      for (let r = 0; r < 35; r++) {
+        const row = oldVals[r] || [];
+        const name = row[29] ? String(row[29]).trim() : "";
+        if (name) {
+          const stt = row[28] || (initialEmps.length + 1);
+          const mark = (String(row[30]).toUpperCase() === "X" || row[30] === true) ? "X" : "";
+          const isPg = /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
+          initialEmps.push([stt, name, isPg ? "PG Hãng" : "NV Siêu Thị", mark]);
+        }
+      }
+      if (initialEmps.length > 0) {
+        sheet.getRange(3, 6, initialEmps.length, 4).setValues(initialEmps);
+      }
+    }
+
+    // Kẻ viền bảng cho đẹp mắt
+    sheet.getRange("A2:D17").setBorder(true, true, true, true, true, true, "#cbd5e1", SpreadsheetApp.BorderStyle.SOLID);
+    sheet.getRange("F2:I35").setBorder(true, true, true, true, true, true, "#cbd5e1", SpreadsheetApp.BorderStyle.SOLID);
+    sheet.getRange("K2:L6").setBorder(true, true, true, true, true, true, "#cbd5e1", SpreadsheetApp.BorderStyle.SOLID);
+
+    SpreadsheetApp.flush();
+  } catch (err) {
+    console.warn("Lỗi setupSaveDataSheetFormatting:", err);
+  }
+}
+
+/**
+ * API khởi tạo thủ công tab 'save data'
+ */
+function initOrGetSaveDataSheet(targetSheetId) {
+  try {
+    const sheet = getSaveDataSheet(targetSheetId);
+    return {
+      success: true,
+      sheetName: sheet.getName(),
+      message: "Đã tạo / kết nối thành công sheet 'save data'!"
+    };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
 function getTargetSheet(targetSheetId) {
   let ss = null;
   const sheetId = targetSheetId || SPREADSHEET_ID;
@@ -154,47 +307,82 @@ function getShiftData(targetSheetId) {
       return { success: false, message: "Không tìm thấy trang tính!" };
     }
 
-    const lastRow = Math.max(sheet.getLastRow(), 45);
-    const lastCol = Math.max(sheet.getLastColumn(), 32);
-    const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+    // Kiểm tra xem sheet 'save data' có tồn tại không
+    let saveSheet = null;
+    try {
+      const ss = sheet.getParent();
+      saveSheet = ss.getSheetByName("save data") || ss.getSheetByName("Save Data");
+    } catch(e) {}
 
-    // 1. Đọc Bảng 1: Phân công nhân viên trực (Dòng 17..31 trong Sheet => index 16..30)
-    // Cột W: STT (index 22), Cột X: NV (23), Cột Y: KV (24), Cột Z: PG (25)
     const shifts = [];
-    for (let r = 16; r <= 30; r++) {
-      if (r < values.length) {
-        const row = values[r];
-        const stt = row[22] ? parseInt(row[22], 10) : (r - 15);
-        const nv = row[23] ? String(row[23]).trim() : "";
-        const kv = row[24] ? String(row[24]).trim() : "";
-        const pg = row[25] ? String(row[25]).trim() : "";
-        shifts.push({
-          stt: stt,
-          rowInSheet: r + 1,
-          nv: nv,
-          kv: kv,
-          pg: pg
-        });
-      }
-    }
-
-    // 2. Đọc Bảng 2: Danh sách Nhân viên & PG (Cột AC: STT, Cột AD: Tên, Cột AE: Đánh dấu)
     const employees = [];
-    const maxEmpRow = Math.min(values.length, 60);
-    for (let r = 0; r < maxEmpRow; r++) {
-      const row = values[r];
-      const name = row[29] ? String(row[29]).trim() : "";
-      if (name) {
-        const stt = row[28] ? parseInt(row[28], 10) : (employees.length + 1);
-        const mark = row[30] ? String(row[30]).trim().toUpperCase() : "";
-        const isMarked = mark === "X" || mark === "TRUE" || mark === "1";
-        employees.push({
-          stt: stt,
-          rowInSheet: r + 1,
-          name: name,
-          marked: isMarked
-        });
+
+    if (saveSheet && saveSheet.getLastRow() >= 3) {
+      // ĐỌC TRỰC TIẾP TỪ SHEET 'save data'
+      const saveVals = saveSheet.getRange(1, 1, Math.max(saveSheet.getLastRow(), 35), 12).getValues();
+      
+      // 1. Đọc 15 ca trực từ A3:D17
+      for (let r = 2; r <= 16; r++) {
+        const row = saveVals[r] || [];
+        const stt = row[0] ? parseInt(row[0], 10) : (r - 1);
+        const nv = row[1] ? String(row[1]).trim() : "";
+        const kv = row[2] ? String(row[2]).trim() : "";
+        const pg = row[3] ? String(row[3]).trim() : "";
+        shifts.push({ stt: stt, rowInSheet: r + 1, nv: nv, kv: kv, pg: pg });
       }
+
+      // 2. Đọc danh sách NV/PG từ F3:I60
+      for (let r = 2; r < saveVals.length; r++) {
+        const row = saveVals[r] || [];
+        const name = row[6] ? String(row[6]).trim() : "";
+        if (name) {
+          const stt = row[5] ? parseInt(row[5], 10) : (employees.length + 1);
+          const role = (row[7] && String(row[7]).includes("PG")) ? "pg" : "nv";
+          const mark = row[8] ? String(row[8]).trim().toUpperCase() : "";
+          const isMarked = mark === "X" || mark === "TRUE" || mark === "1";
+          employees.push({ stt: stt, rowInSheet: r + 1, name: name, role: role, marked: isMarked });
+        }
+      }
+    } else {
+      // ĐỌC TỪ SHEET GỐC (VS CŨ) VÀ KHỞI TẠO TAB 'save data'
+      const lastRow = Math.max(sheet.getLastRow(), 45);
+      const lastCol = Math.max(sheet.getLastColumn(), 32);
+      const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+
+      for (let r = 16; r <= 30; r++) {
+        if (r < values.length) {
+          const row = values[r];
+          const stt = row[22] ? parseInt(row[22], 10) : (r - 15);
+          shifts.push({
+            stt: stt,
+            rowInSheet: r + 1,
+            nv: row[23] ? String(row[23]).trim() : "",
+            kv: row[24] ? String(row[24]).trim() : "",
+            pg: row[25] ? String(row[25]).trim() : ""
+          });
+        }
+      }
+
+      const maxEmpRow = Math.min(values.length, 60);
+      for (let r = 0; r < maxEmpRow; r++) {
+        const row = values[r];
+        const name = row[29] ? String(row[29]).trim() : "";
+        if (name) {
+          const stt = row[28] ? parseInt(row[28], 10) : (employees.length + 1);
+          const mark = row[30] ? String(row[30]).trim().toUpperCase() : "";
+          employees.push({
+            stt: stt,
+            rowInSheet: r + 1,
+            name: name,
+            marked: (mark === "X" || mark === "TRUE" || mark === "1")
+          });
+        }
+      }
+
+      // Tự động tạo và chuẩn bị tab 'save data'
+      try {
+        getSaveDataSheet(targetSheetId);
+      } catch(e) {}
     }
 
     return {
@@ -248,8 +436,6 @@ function updateShiftRow(stt, nv, kv, pg, targetSheetId) {
  */
 function updateAllShifts(shifts, targetSheetId) {
   try {
-    const sheet = getTargetSheet(targetSheetId);
-    if (!sheet) return { success: false, message: "Không tìm thấy trang tính!" };
     if (!Array.isArray(shifts) || shifts.length === 0) {
       return { success: false, message: "Dữ liệu phân công không hợp lệ" };
     }
@@ -264,14 +450,27 @@ function updateAllShifts(shifts, targetSheetId) {
       rowData.push([stt, nv, kv, pg]);
     }
 
-    // Ghi vào dải W17:Z31 (dòng 17, cột 23, 15 dòng, 4 cột)
-    sheet.getRange(17, 23, rowData.length, 4).setValues(rowData);
+    // 1. ƯU TIÊN GHI VÀO TAB 'save data' (Cột A..D, dòng 3..17)
+    const saveSheet = getSaveDataSheet(targetSheetId);
+    if (saveSheet) {
+      saveSheet.getRange(3, 1, rowData.length, 4).setValues(rowData);
+      saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
+    }
+
+    // 2. Đồng thời ghi vào sheet gốc (Cột W17:Z31) nếu có
+    try {
+      const sheet = getTargetSheet(targetSheetId);
+      if (sheet && sheet.getName() !== "save data") {
+        sheet.getRange(17, 23, rowData.length, 4).setValues(rowData);
+      }
+    } catch(e) {}
+
     SpreadsheetApp.flush();
 
     return {
       success: true,
       totalUpdated: rowData.length,
-      message: "Đã lưu thành công toàn bộ bảng phân công vào Google Sheet!"
+      message: "Đã lưu thành công 15 ca trực vào sheet 'save data'!"
     };
   } catch (err) {
     return { success: false, message: err.toString() };
@@ -311,32 +510,57 @@ function toggleEmployeeAttendance(stt, isMarked, targetSheetId) {
  */
 function updateAllEmployees(employees, targetSheetId) {
   try {
-    const sheet = getTargetSheet(targetSheetId);
-    if (!sheet) return { success: false, message: "Không tìm thấy trang tính!" };
     if (!Array.isArray(employees)) {
       return { success: false, message: "Dữ liệu danh sách NV/PG không hợp lệ" };
     }
 
-    // Xóa vùng dữ liệu nhân viên cũ trong Sheet (Cột AC..AE, dòng 1..60)
-    sheet.getRange(1, 29, 60, 3).clearContent();
+    // 1. ƯU TIÊN GHI VÀO TAB 'save data' (Cột F..I, dòng 3..N)
+    const saveSheet = getSaveDataSheet(targetSheetId);
+    if (saveSheet) {
+      // Xóa vùng dữ liệu nhân viên cũ (F3:I100)
+      saveSheet.getRange(3, 6, 80, 4).clearContent();
 
-    if (employees.length > 0) {
-      const rowData = [];
-      for (let i = 0; i < employees.length; i++) {
-        const emp = employees[i] || {};
-        const stt = emp.stt || (i + 1);
-        const name = emp.name ? String(emp.name).trim() : "";
-        const mark = (emp.marked === true || emp.marked === "X" || emp.marked === "1") ? "X" : "";
-        rowData.push([stt, name, mark]);
+      if (employees.length > 0) {
+        const rowData = [];
+        for (let i = 0; i < employees.length; i++) {
+          const emp = employees[i] || {};
+          const stt = emp.stt || (i + 1);
+          const name = emp.name ? String(emp.name).trim() : "";
+          const isPg = emp.role === "pg" || /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
+          const roleLabel = isPg ? "PG Hãng" : "NV Siêu Thị";
+          const mark = (emp.marked === true || emp.marked === "X" || emp.marked === "1") ? "X" : "";
+          rowData.push([stt, name, roleLabel, mark]);
+        }
+        saveSheet.getRange(3, 6, rowData.length, 4).setValues(rowData);
+        saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
       }
-      sheet.getRange(1, 29, rowData.length, 3).setValues(rowData);
     }
+
+    // 2. Ghi song song vào cột AC..AE của sheet gốc (nếu có)
+    try {
+      const sheet = getTargetSheet(targetSheetId);
+      if (sheet && sheet.getName() !== "save data") {
+        sheet.getRange(1, 29, 60, 3).clearContent();
+        if (employees.length > 0) {
+          const rowDataOld = [];
+          for (let i = 0; i < employees.length; i++) {
+            const emp = employees[i] || {};
+            const stt = emp.stt || (i + 1);
+            const name = emp.name ? String(emp.name).trim() : "";
+            const mark = (emp.marked === true || emp.marked === "X" || emp.marked === "1") ? "X" : "";
+            rowDataOld.push([stt, name, mark]);
+          }
+          sheet.getRange(1, 29, rowDataOld.length, 3).setValues(rowDataOld);
+        }
+      }
+    } catch(e) {}
+
     SpreadsheetApp.flush();
 
     return {
       success: true,
       totalUpdated: employees.length,
-      message: "Đã cập nhật danh sách " + employees.length + " NV/PG vào Google Sheet!"
+      message: "Đã cập nhật danh sách " + employees.length + " NV/PG vào sheet 'save data'!"
     };
   } catch (err) {
     return { success: false, message: err.toString() };
@@ -381,4 +605,17 @@ function showHelp() {
 function setupSheetFormatting() {
   const ui = SpreadsheetApp.getUi();
   ui.alert("Thông Báo", "Trang tính đã được kết nối và sẵn sàng sử dụng!", ui.ButtonSet.OK);
+}
+
+/**
+ * Hàm gọi từ Menu Google Sheet: Tạo tab 'save data'
+ */
+function menuInitSaveDataSheet() {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const res = initOrGetSaveDataSheet();
+    ui.alert("Thành Công", "Đã tạo và định dạng thành công tab 'save data' trên trang tính!", ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert("Lỗi", err.toString(), ui.ButtonSet.OK);
+  }
 }
