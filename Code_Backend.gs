@@ -236,9 +236,10 @@ function setupSaveDataSheetFormatting(sheet, ss) {
       
       // Copy 15 ca trực từ W17:Z31
       const initialShifts = [];
-      for (let r = 16; r <= 30; r++) {
-        const row = oldVals[r] || [];
-        initialShifts.push([row[22] || (r - 15), row[23] || "", row[24] || "", row[25] || ""]);
+      const shiftRows = oldSheet.getRange(17, 23, 15, 4).getValues();
+      for (let i = 0; i < 15; i++) {
+        const row = shiftRows[i] || [];
+        initialShifts.push([i + 1, row[1] || "", row[2] || "", row[3] || ""]);
       }
       sheet.getRange(3, 1, 15, 4).setValues(initialShifts);
 
@@ -330,21 +331,54 @@ function getShiftData(targetSheetId) {
       // ĐỌC TRỰC TIẾP TỪ SHEET 'save data'
       const saveVals = saveSheet.getRange(1, 1, Math.max(saveSheet.getLastRow(), 35), 12).getValues();
       
-      // 1. Đọc 15 ca trực từ A3:D17
-      for (let r = 2; r <= 16; r++) {
+      // 1. Đọc 15 ca trực từ A3:D18 (Bỏ qua dòng 3 nếu chứa tiêu đề "NHÂN VIÊN TRỰC")
+      let startRow = 2; // Dòng 3 (0-indexed 2)
+      if (saveVals[2] && (
+        String(saveVals[2][1]).includes("NHÂN VIÊN TRỰC") || 
+        String(saveVals[2][2]).includes("KHU VỰC PHỤ TRÁCH") ||
+        String(saveVals[2][3]).includes("PG HỔ TRỢ")
+      )) {
+        startRow = 3; // Bắt đầu từ dòng 4 (0-indexed 3)
+      }
+
+      for (let r = startRow; r < startRow + 15 && r < saveVals.length; r++) {
         const row = saveVals[r] || [];
-        const stt = row[0] ? parseInt(row[0], 10) : (r - 1);
         const nv = row[1] ? String(row[1]).trim() : "";
         const kv = row[2] ? String(row[2]).trim() : "";
         const pg = row[3] ? String(row[3]).trim() : "";
-        shifts.push({ stt: stt, rowInSheet: r + 1, nv: nv, kv: kv, pg: pg });
+        if (nv !== "NHÂN VIÊN TRỰC" && kv !== "KHU VỰC PHỤ TRÁCH") {
+          shifts.push({ 
+            stt: shifts.length + 1, 
+            rowInSheet: r + 1, 
+            nv: nv, 
+            kv: kv, 
+            pg: pg 
+          });
+        }
+      }
+
+      // Nếu thiếu ca 15, đọc bổ sung từ sheet gốc (W17:Z31)
+      if (shifts.length < 15 && sheet && sheet.getName() !== "save data") {
+        try {
+          const oldVals = sheet.getRange(17, 23, 15, 4).getValues();
+          for (let i = shifts.length; i < 15; i++) {
+            const row = oldVals[i] || [];
+            shifts.push({
+              stt: i + 1,
+              rowInSheet: 17 + i,
+              nv: row[1] ? String(row[1]).trim() : "",
+              kv: row[2] ? String(row[2]).trim() : "",
+              pg: row[3] ? String(row[3]).trim() : ""
+            });
+          }
+        } catch(eOld) {}
       }
 
       // 2. Đọc danh sách NV/PG từ F3:I60
       for (let r = 2; r < saveVals.length; r++) {
         const row = saveVals[r] || [];
         const name = row[6] ? String(row[6]).trim() : "";
-        if (name) {
+        if (name && name !== "HỌ VÀ TÊN" && name !== "NHÂN SỰ") {
           const stt = row[5] ? parseInt(row[5], 10) : (employees.length + 1);
           const role = (row[7] && String(row[7]).includes("PG")) ? "pg" : "nv";
           const mark = row[8] ? String(row[8]).trim().toUpperCase() : "";
@@ -353,36 +387,33 @@ function getShiftData(targetSheetId) {
         }
       }
     } else {
-      // ĐỌC TỪ SHEET GỐC (VS CŨ) VÀ KHỞI TẠO TAB 'save data'
-      const lastRow = Math.max(sheet.getLastRow(), 45);
-      const lastCol = Math.max(sheet.getLastColumn(), 32);
-      const values = sheet.getRange(1, 1, lastRow, lastCol).getValues();
-
-      for (let r = 16; r <= 30; r++) {
-        if (r < values.length) {
-          const row = values[r];
-          const stt = row[22] ? parseInt(row[22], 10) : (r - 15);
-          shifts.push({
-            stt: stt,
-            rowInSheet: r + 1,
-            nv: row[23] ? String(row[23]).trim() : "",
-            kv: row[24] ? String(row[24]).trim() : "",
-            pg: row[25] ? String(row[25]).trim() : ""
-          });
-        }
+      // ĐỌC TỪ SHEET GỐC (VS CŨ): Dòng 17 đến dòng 31 (Cột W..Z)
+      const values = sheet.getRange(17, 23, 15, 4).getValues();
+      for (let i = 0; i < 15; i++) {
+        const row = values[i] || [];
+        shifts.push({
+          stt: i + 1,
+          rowInSheet: 17 + i,
+          nv: row[1] ? String(row[1]).trim() : "",
+          kv: row[2] ? String(row[2]).trim() : "",
+          pg: row[3] ? String(row[3]).trim() : ""
+        });
       }
 
-      const maxEmpRow = Math.min(values.length, 60);
-      for (let r = 0; r < maxEmpRow; r++) {
-        const row = values[r];
-        const name = row[29] ? String(row[29]).trim() : "";
-        if (name) {
-          const stt = row[28] ? parseInt(row[28], 10) : (employees.length + 1);
-          const mark = row[30] ? String(row[30]).trim().toUpperCase() : "";
+      const maxEmpRow = Math.min(sheet.getLastRow(), 60);
+      const empValues = sheet.getRange(1, 29, maxEmpRow, 3).getValues();
+      for (let r = 0; r < empValues.length; r++) {
+        const row = empValues[r] || [];
+        const name = row[1] ? String(row[1]).trim() : "";
+        if (name && name !== "HỌ VÀ TÊN" && name !== "NHÂN SỰ") {
+          const stt = row[0] ? parseInt(row[0], 10) : (employees.length + 1);
+          const mark = row[2] ? String(row[2]).trim().toUpperCase() : "";
+          const isPg = /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
           employees.push({
             stt: stt,
             rowInSheet: r + 1,
             name: name,
+            role: isPg ? "pg" : "nv",
             marked: (mark === "X" || mark === "TRUE" || mark === "1")
           });
         }
@@ -463,6 +494,11 @@ function updateAllShifts(shifts, targetSheetId) {
     const saveSheet = getSaveDataSheet(targetSheetId);
     if (saveSheet) {
       saveSheet.getRange(3, 1, rowData.length, 4).setValues(rowData);
+      try {
+        if (saveSheet.getLastRow() >= 18) {
+          saveSheet.getRange(18, 1, 1, 4).clearContent();
+        }
+      } catch(eClr) {}
       saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
     }
 

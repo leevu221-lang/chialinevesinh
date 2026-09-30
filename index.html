@@ -205,6 +205,42 @@
       color: #065f46;
       font-size: 12px;
       font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
+    .live-status-pill:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+    .live-status-pill.syncing {
+      background: #fef3c7;
+      border-color: #fde68a;
+      color: #92400e;
+    }
+    .live-status-pill.syncing .live-dot {
+      background: #f59e0b;
+      box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35);
+      animation: pulseDot 0.9s infinite;
+    }
+    .live-status-pill.connected {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #065f46;
+    }
+    .live-status-pill.connected .live-dot {
+      background: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+    }
+    .live-status-pill.offline {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+    .live-status-pill.offline .live-dot {
+      background: #ef4444;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25);
+      animation: none;
     }
 
     .live-dot {
@@ -1629,7 +1665,12 @@
         align-items: center !important;
       }
       .live-status-pill {
-        display: none !important; /* Ẩn bớt text live trên header để nhường chỗ */
+        grid-column: 1 / -1 !important;
+        display: flex !important;
+        justify-content: center !important;
+        font-size: 11.5px !important;
+        padding: 5px 10px !important;
+        margin-bottom: 2px !important;
       }
       .header-actions .btn {
         padding: 8px 8px !important;
@@ -1897,9 +1938,9 @@
       </div>
 
       <div class="header-actions">
-        <div class="live-status-pill" id="realtimeStatusPill">
+        <div class="live-status-pill syncing" id="realtimeStatusPill" title="Bấm để đồng bộ lại dữ liệu">
           <span class="live-dot"></span>
-          <span id="realtimeStatusText">Realtime Live</span>
+          <span id="realtimeStatusText">🔄 Đang nạp từ Google Sheet...</span>
         </div>
         <button class="btn btn-primary" id="btnExportImage" title="Xuất ảnh sơ đồ chất lượng cao gửi Zalo">
           <i class="fa-solid fa-camera"></i> Xuất Ảnh HD
@@ -2714,6 +2755,15 @@
     ];
 
     state.shifts = JSON.parse(localStorage.getItem('st1841_shifts')) || DEFAULT_SHIFTS;
+    // Tự động làm sạch ca trực nếu bộ nhớ đệm cũ từng lưu nhầm dòng tiêu đề
+    if (Array.isArray(state.shifts) && state.shifts.length > 0) {
+      if (state.shifts[0].nv === 'NHÂN VIÊN TRỰC' || state.shifts[0].kv === 'KHU VỰC PHỤ TRÁCH') {
+        state.shifts.shift();
+      }
+      if (state.shifts.length < 15) {
+        state.shifts = DEFAULT_SHIFTS;
+      }
+    }
     state.employees = JSON.parse(localStorage.getItem('st1841_employees')) || DEFAULT_EMPLOYEES;
 
     function showToast(msg) {
@@ -2913,6 +2963,7 @@
     window.updateShiftField = function(idx, field, value) {
       state.shifts[idx][field] = value.trim();
       localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
+      if (typeof syncMapCellsFromShifts === 'function') syncMapCellsFromShifts();
       broadcastMqtt({ type: 'UPDATE_SHIFT', index: idx, data: state.shifts[idx] });
       autoSaveToSheetDebounced();
       showToast(`Đã lưu thay đổi vị trí ${state.shifts[idx].stt}`);
@@ -3280,6 +3331,93 @@
       localStorage.setItem('st1841_map_allocations', JSON.stringify(allocations));
     }
 
+    // ĐỒNG BỘ TỰ ĐỘNG TÊN NHÂN SỰ TỪ 15 CA TRỰC LÊN CÁC Ô SƠ ĐỒ MẶT BẰNG
+    function syncMapCellsFromShifts() {
+      if (!Array.isArray(state.shifts) || state.shifts.length === 0) return;
+
+      const sMap = {};
+      state.shifts.forEach((s, idx) => {
+        sMap[idx + 1] = s;
+      });
+
+      const cells = document.querySelectorAll('.map-cell');
+      cells.forEach(cell => {
+        const titleEl = cell.querySelector('.cell-title');
+        if (!titleEl) return;
+        const title = titleEl.textContent.trim().toUpperCase();
+        const isIctSubgrid = cell.closest('.ict-subgrid') !== null;
+
+        let assignedStaff = '';
+
+        if (isIctSubgrid || title.includes('VÁCH PK') || title.includes('LAPTOP') || 
+            title.includes('SMARTPHONE') || title.includes('MOTOROLA') || title.includes('REALME') ||
+            title.includes('VIVO') || title.includes('XIAOMI') || title.includes('PK BASEUS') ||
+            title.includes('PK ANKER') || title.includes('CAMERA') || title.includes('BTN XIAOMI') ||
+            title.includes('BTN MOTO') || title.includes('OPPO') || title.includes('ĐỒNG HỒ') ||
+            title.includes('BTN OPPO') || title.includes('BTN VIVO') || title.includes('BTN REALME') ||
+            title.includes('BTN SAMSUNG') || title.includes('BTN HONOR') || title.includes('BTN APPLE') ||
+            title.includes('APPLE') || title.includes('VÁCH PHỤ KIỆN') || title.includes('BTV ')) {
+          assignedStaff = sMap[1] ? sMap[1].nv : '';
+        } else if (title.includes('TIVI 1') || title.includes('TIVI 2') || title.includes('TIVI 3') || 
+                   title.includes('VÁCH HÃNG SONY') || title.includes('VÁCH HÃNG SAMSUNG') || (title.includes('BỤC HÃNG SAMSUNG') && !title.includes('TỦ LẠNH'))) {
+          assignedStaff = sMap[2] ? sMap[2].nv : '';
+        } else if (title.includes('TIVI 4') || title.includes('TIVI 5') || title.includes('LOA') || 
+                   title.includes('VÁCH HÃNG LG') || title.includes('VÁCH LOA') || title.includes('KỆ LOA') || (title.includes('BỤC HÃNG LG') && !title.includes('TỦ LẠNH'))) {
+          assignedStaff = sMap[3] ? sMap[3].nv : '';
+        } else if (title.includes('MÁY GIẶT 1') || title.includes('MÁY GIẶT 2') || title.includes('MÁY GIẶT 3') || 
+                   title.includes('MÁY GIẶT 1 - 2 -3') || title.includes('MÁY GIẶT ELECTROLUX') || title.includes('MÁY GIẶT HISENSE') || title.includes('BỤC HÃNG HESENSI')) {
+          assignedStaff = sMap[4] ? sMap[4].nv : '';
+        } else if (title.includes('MÁY GIẶT 4') || title.includes('MÁY GIẶT 5') || title.includes('MÁY GIẶT 6') || 
+                   title.includes('MÁY GIẶT 4 - 5 - 6') || title.includes('MÁY GIẶT SAMSUNG') || title.includes('MÁY GIẶT PANASONIC') || 
+                   title.includes('MÁY GIẶT AQUA') || title.includes('MÁY GIẶT HAIER') || title.includes('MÁY GIẶT TOSHIBA') || 
+                   title.includes('BỤC MÁY GIẶT') || title.includes('BỤC HÃNG TOSHIBA') || title.includes('BỤC HÃNG TCL')) {
+          assignedStaff = sMap[5] ? sMap[5].nv : '';
+        } else if (title.includes('VÁCH MÁY LẠNH') || title.includes('DÀN MƯỚP') || title.includes('TỦ ĐÔNG')) {
+          assignedStaff = sMap[6] ? sMap[6].nv : '';
+        } else if (title.includes('BẾP') || title.includes('LÒ VI SÓNG') || title.includes('CHẢO') || 
+                   title.includes('VÁCH NỒI') || title.includes('NỒI CHIÊN') || title.includes('JUNGER') || title.includes('HAFALE')) {
+          assignedStaff = sMap[7] ? sMap[7].nv : '';
+        } else if (title.includes('LỌC NƯỚC') || title.includes('MLN MUTOSI') || title.includes('MLN HOÀ PHÁT') || 
+                   title.includes('MLN KAROFI') || title.includes('GIA DỤNG 1') || title.includes('GIA DỤNG 01')) {
+          assignedStaff = sMap[8] ? sMap[8].nv : '';
+        } else if (title.includes('GIA DỤNG 2') || title.includes('GIA DỤNG 02') || title.includes('GIA DỤNG 3') || title.includes('GIA DỤNG 03')) {
+          assignedStaff = sMap[9] ? sMap[9].nv : '';
+        } else if (title.includes('GIA DỤNG 4') || title.includes('GIA DỤNG 04') || title.includes('GIA DỤNG 5') || title.includes('GIA DỤNG 05') || 
+                   title.includes('GIA DỤNG KANGAROO') || (title.includes('GIA DỤNG TOSHIBA') && !title.includes('MLN'))) {
+          assignedStaff = sMap[10] ? sMap[10].nv : '';
+        } else if (title.includes('GIA DỤNG 6') || title.includes('GIA DỤNG 06') || title.includes('GIA DỤNG 7') || title.includes('GIA DỤNG 07') || 
+                   title.includes('KỆ GIA DỤNG') || title.includes('GIA DỤNG SUNHOUSE') || title.includes('ROBOT') || title.includes('MLN SUNHOUSE')) {
+          assignedStaff = sMap[11] ? sMap[11].nv : '';
+        } else if (title.includes('TỦ LẠNH 1') || title.includes('TỦ LẠNH 2') || title.includes('TỦ LẠNH HITACHI') || 
+                   title.includes('TỦ LẠNH AQUA') || title.includes('TỦ LẠNH LG') || title.includes('TỦ LẠNH SHARP') || 
+                   (title.includes('TỦ LẠNH TOSHIBA') && !title.includes('VÁCH')) || title.includes('BỤC HÃNG HAIER') || 
+                   title.includes('BỤC HÃNG AQUA') || title.includes('BỤC HÃNG XIAOMI')) {
+          assignedStaff = sMap[12] ? sMap[12].nv : '';
+        } else if (title.includes('TỦ LẠNH 3') || title.includes('TỦ LẠNH 4') || title.includes('TỦ LẠNH SAMSUNG') || 
+                   title.includes('TỦ LẠNH PANASONIC') || title.includes('TỦ LẠNH HAIER') || title.includes('BỤC TỦ LẠNH')) {
+          assignedStaff = sMap[13] ? sMap[13].nv : '';
+        } else if (title.includes('VÁCH TỦ LẠNH') || title.includes('VÁCH TL')) {
+          assignedStaff = sMap[14] ? sMap[14].nv : '';
+        } else if (title.includes('VÁCH KÍNH') || title.includes('CỬA') || title.includes('TIẾP ĐÓN') || 
+                   title.includes('GIAO HÀNG') || title.includes('HTKT') || title.includes('THU NGÂN')) {
+          assignedStaff = sMap[15] ? sMap[15].nv : '';
+        }
+
+        if (assignedStaff) {
+          cell.setAttribute('data-staff', assignedStaff);
+          let staffEl = cell.querySelector('.cell-staff');
+          if (!staffEl) {
+            staffEl = document.createElement('span');
+            staffEl.className = 'cell-staff';
+            cell.appendChild(staffEl);
+          }
+          staffEl.textContent = assignedStaff;
+        }
+      });
+
+      saveMapAllocations();
+    }
+
     // Đổi tên nhân viên trên TẤT CẢ các khu vực
     document.getElementById('btnApplyToAllStaffAreas').addEventListener('click', () => {
       const oldStaff = (document.getElementById('modalCurrentStaffName').textContent || '').trim();
@@ -3555,38 +3693,115 @@
       const url = DEFAULT_CONFIG.webAppUrl;
       if (!url) return;
 
-      if (!silent) showToast('☁️ Đang đồng bộ dữ liệu từ Google Trang Tính...');
+      const statusPill = document.getElementById('realtimeStatusPill');
+      const statusText = document.getElementById('realtimeStatusText');
+      if (statusPill && statusText) {
+        statusPill.className = 'live-status-pill syncing';
+        statusText.textContent = '🔄 Đang đồng bộ Google Sheet...';
+      }
 
-      fetch(url + '?action=getData&sheetId=' + DEFAULT_CONFIG.sheetId)
-        .then(res => res.json())
+      if (!silent) showToast('☁️ Đang kết nối và đồng bộ dữ liệu từ Google Trang Tính...');
+
+      // Thêm _t=Date.now() chống cache WebView iOS/Android/LINE
+      const fetchUrl = url + (url.includes('?') ? '&' : '?') + 'action=getData&sheetId=' + encodeURIComponent(DEFAULT_CONFIG.sheetId) + '&_t=' + Date.now();
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+      fetch(fetchUrl, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        signal: controller.signal
+      })
+        .then(res => {
+          clearTimeout(timeoutId);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          return res.json();
+        })
         .then(data => {
           if (data && data.success) {
             let hasUpdated = false;
 
-            // Cập nhật 15 ca trực nếu có
+            // 1. Cập nhật 15 ca trực nếu có
             if (Array.isArray(data.shifts) && data.shifts.length > 0) {
-              state.shifts = data.shifts;
+              // Lọc bỏ dòng header nếu bị lẫn vào từ sheet
+              let validShifts = data.shifts.filter(s => {
+                const nv = (s.nv || '').trim().toUpperCase();
+                const kv = (s.kv || '').trim().toUpperCase();
+                return nv !== 'NHÂN VIÊN TRỰC' && kv !== 'KHU VỰC PHỤ TRÁCH';
+              });
+
+              // Chuẩn hóa danh sách ca trực
+              validShifts = validShifts.map((s, idx) => ({
+                stt: idx + 1,
+                row: s.rowInSheet || s.row || (17 + idx),
+                nv: (s.nv || '').trim(),
+                kv: (s.kv || '').trim(),
+                pg: (s.pg || '').trim()
+              }));
+
+              // Bổ sung đủ 15 ca nếu thiếu
+              if (validShifts.length < 15) {
+                for (let i = validShifts.length; i < 15; i++) {
+                  validShifts.push(DEFAULT_SHIFTS[i]);
+                }
+              }
+
+              state.shifts = validShifts;
               localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
               renderShifts();
+              syncMapCellsFromShifts();
               hasUpdated = true;
             }
 
-            // Cập nhật danh sách NV/PG nếu có
+            // 2. Cập nhật danh sách NV/PG nếu có
             if (Array.isArray(data.employees) && data.employees.length > 0) {
-              state.employees = data.employees;
+              const validEmps = data.employees.filter(e => {
+                const name = (e.name || '').trim().toUpperCase();
+                return name !== 'HỌ VÀ TÊN' && name !== 'NHÂN SỰ';
+              }).map((emp, idx) => ({
+                stt: emp.stt || (idx + 1),
+                name: (emp.name || '').trim(),
+                role: emp.role || (/pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(emp.name) ? 'pg' : 'nv'),
+                marked: (emp.marked === true || emp.marked === 'X' || emp.marked === '1')
+              }));
+
+              state.employees = validEmps;
               localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
               renderEmployees();
               if (typeof initModalDropdowns === 'function') initModalDropdowns();
               hasUpdated = true;
             }
 
-            if (hasUpdated) {
-              showToast('✅ Đã nạp thành công dữ liệu mới nhất từ Google Trang Tính!');
+            // Cập nhật trạng thái hiển thị
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+            if (statusPill && statusText) {
+              statusPill.className = 'live-status-pill connected';
+              statusText.textContent = `🟢 Realtime Live (${timeStr})`;
             }
+
+            if (hasUpdated) {
+              showToast('☁️ Đã tự động đồng bộ dữ liệu mới nhất từ Google Trang Tính!');
+            }
+          } else {
+            throw new Error(data && data.message ? data.message : 'Dữ liệu không hợp lệ');
           }
         })
         .catch(err => {
+          clearTimeout(timeoutId);
           console.warn('Không thể đọc trực tiếp từ Sheet, sử dụng dữ liệu bộ nhớ đệm:', err);
+          if (statusPill && statusText) {
+            statusPill.className = 'live-status-pill offline';
+            statusText.textContent = '⚠️ Dùng dữ liệu đệm (Bấm làm mới)';
+          }
+          if (!silent) {
+            showToast('⚠️ Đang hiển thị dữ liệu bộ nhớ đệm. Bấm nút Làm Mới để tải lại từ Sheet.');
+          }
         });
     }
 
@@ -3754,7 +3969,30 @@
     renderEmployees();
     initRealtime();
     initMapCells();
-    fetchDataFromGoogleSheet(true);
+    syncMapCellsFromShifts();
+    fetchDataFromGoogleSheet(false);
+
+    // Bấm vào status pill để làm mới thủ công
+    const pillEl = document.getElementById('realtimeStatusPill');
+    if (pillEl) {
+      pillEl.addEventListener('click', () => {
+        fetchDataFromGoogleSheet(false);
+      });
+    }
+
+    // Tự động đồng bộ khi chuyển lại tab / mở lại app
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        fetchDataFromGoogleSheet(true);
+      }
+    });
+
+    // Tự động đồng bộ định kỳ mỗi 45 giây nếu đang mở trang
+    setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchDataFromGoogleSheet(true);
+      }
+    }, 45000);
   </script>
   <!-- NÚT CUỘN LÊN ĐẦU TRANG TRÊN MOBILE -->
   <button class="btn-scroll-top" id="btnScrollTop" title="Lên đầu trang">
