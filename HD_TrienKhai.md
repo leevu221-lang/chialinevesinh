@@ -39,18 +39,16 @@
 
 ## 🌐 BƯỚC 2: ĐẨY LÊN GITHUB & KÍCH HOẠT GITHUB PAGES
 
-1. Khởi tạo kho lưu trữ (Repository) mới trên tài khoản GitHub của bạn (ví dụ: `phancong-vesinh-1841`).
-2. Tải toàn bộ các file trong thư mục này lên GitHub (đặc biệt là tệp `index.html` nằm ngay tại thư mục gốc của repository).
+1. Repo GitHub: [https://github.com/leevu221-lang/chialinevesinh](https://github.com/leevu221-lang/chialinevesinh).
+2. Toàn bộ mã nguồn đã được tải lên nhánh `main` thành công.
 3. Bật GitHub Pages:
-   - Trong trang Repository trên GitHub, vào mục **Settings** (Cài đặt).
-   - Chọn mục **Pages** ở menu bên trái.
+   - Truy cập vào: [https://github.com/leevu221-lang/chialinevesinh/settings/pages](https://github.com/leevu221-lang/chialinevesinh/settings/pages)
    - Tại phần **Build and deployment**:
      * **Source**: Chọn `Deploy from a branch`.
-     * **Branch**: Chọn nhánh `main` (hoặc `master`), thư mục chọn `/ (root)`.
+     * **Branch**: Chọn nhánh `main`, thư mục chọn `/ (root)`.
      * Bấm **Save**.
-4. Chờ khoảng 1-2 phút, GitHub sẽ cung cấp đường link website của bạn:  
-   `https://<ten-tai-khoan>.github.io/<ten-repo>/`  
-   *(Ví dụ: `https://leevu221-lang.github.io/phancong-vesinh-1841/`)*.
+4. Chờ khoảng 1-2 phút, trang web sẽ hoạt động chính thức tại:  
+   👉 **`https://leevu221-lang.github.io/chialinevesinh/`**
 
 ---
 

@@ -32,12 +32,15 @@ phancong-vesinh-1841/
 
 Xem hướng dẫn chi tiết tại [HD_TrienKhai.md](./HD_TrienKhai.md).
 
+- **Website GitHub Pages**: [https://leevu221-lang.github.io/chialinevesinh/](https://leevu221-lang.github.io/chialinevesinh/)
+- **Repository**: [https://github.com/leevu221-lang/chialinevesinh](https://github.com/leevu221-lang/chialinevesinh)
+
 1. **Google Apps Script**:
    - Dán `Code_Backend.gs` vào Apps Script của Google Sheet.
    - Bấm **Triển khai (Deploy)** ➔ **Ứng dụng web (Web app)** ➔ Quyền truy cập: `Bất kỳ ai (Anyone)`.
    - Lấy URL dạng `https://script.google.com/macros/s/.../exec`.
 2. **GitHub Pages**:
-   - Đẩy mã nguồn lên repo GitHub của bạn.
-   - Vào **Settings** ➔ **Pages** ➔ Chọn nhánh `main` ➔ **Save**.
+   - Đã được đẩy lên nhánh `main`.
+   - Vào [Settings -> Pages](https://github.com/leevu221-lang/chialinevesinh/settings/pages) ➔ Chọn nhánh `main` ➔ **Save**.
 3. **Kết nối**:
-   - Mở link GitHub Pages, bấm icon ⚙️ ở góc trên bên phải, dán URL Web App vào và bấm Lưu.
+   - Mở link [https://leevu221-lang.github.io/chialinevesinh/](https://leevu221-lang.github.io/chialinevesinh/), bấm icon ⚙️ ở góc trên bên phải, dán URL Web App vào và bấm Lưu.
