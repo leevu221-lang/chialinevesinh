@@ -1923,6 +1923,55 @@
       }
     }
 
+    /* ==========================================================================
+       CSS CHẾ ĐỘ XUẤT ẢNH HD TOÀN BỘ SƠ ĐỒ MẶT BẰNG (KHÔNG BỊ CẮT XÉN BẤT KỲ GÓC NÀO)
+       ========================================================================== */
+    body.exporting-full-map {
+      overflow: visible !important;
+      position: static !important;
+    }
+    body.exporting-full-map .app-container {
+      width: max-content !important;
+      max-width: none !important;
+      overflow: visible !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    body.exporting-full-map #floorMapTab {
+      width: max-content !important;
+      max-width: none !important;
+      overflow: visible !important;
+    }
+    body.exporting-full-map .floorplan-card {
+      width: max-content !important;
+      min-width: 1960px !important;
+      max-width: none !important;
+      overflow: visible !important;
+      box-sizing: border-box !important;
+      border-radius: 16px !important;
+      padding: 20px !important;
+      background: #ffffff !important;
+    }
+    body.exporting-full-map .floorplan-scroll-viewport {
+      width: 100% !important;
+      max-width: none !important;
+      overflow: visible !important;
+      overflow-x: visible !important;
+      border: 1.5px solid #fde047 !important;
+    }
+    body.exporting-full-map .store-layout-grid {
+      width: 100% !important;
+      min-width: 1920px !important;
+    }
+    body.exporting-full-map #btnQuickAllocationMode,
+    body.exporting-full-map .mobile-scroll-tip,
+    body.exporting-full-map #allocationActiveBanner {
+      display: none !important;
+    }
+    body.exporting-full-map .export-time-badge {
+      display: inline-flex !important;
+    }
+
   </style>
 </head>
 <body>
@@ -1996,6 +2045,9 @@
             <button class="btn btn-secondary" id="btnQuickAllocationMode" style="padding:4px 12px; font-size:12px;">
               <i class="fa-solid fa-hand-pointer" style="color:#d97706;"></i> Phân Bổ Nhanh
             </button>
+            <div class="export-time-badge" id="exportTimeBadge" style="display:none; font-size:12px; font-weight:700; color:#b45309; background:#fffbeb; padding:3px 10px; border-radius:12px; border:1px solid #fde68a;">
+              <i class="fa-regular fa-clock"></i> Xuất ảnh: <span id="exportTimeText"></span>
+            </div>
           </div>
           <div class="floorplan-legend">
             <span class="legend-item"><span class="legend-box" style="background:#dcfce7;border-color:#86efac;"></span> Vách Tủ Lạnh</span>
@@ -3903,48 +3955,152 @@
         });
     }
 
-    // NÚT XUẤT ẢNH HD: KHÔNG AUTO TẢI VỀ, HIỂN THỊ POPUP VÀ AUTO COPY
-    document.getElementById('btnExportImage').addEventListener('click', () => {
-      showToast('📸 Đang kết xuất ảnh HD...');
-      const target = state.activeTab === 'floorMapTab' 
+    // NÚT XUẤT ẢNH HD: ĐẢM BẢO CHỤP 100% TOÀN BỘ SƠ ĐỒ MẶT BẰNG KHÔNG BỊ CẮT XÉN
+    document.getElementById('btnExportImage').addEventListener('click', async () => {
+      if (typeof html2canvas === 'undefined') {
+        showToast('❌ Thư viện tạo ảnh chưa sẵn sàng!');
+        return;
+      }
+
+      showToast('📸 Đang kết xuất toàn bộ sơ đồ HD (sắc nét 2X)...');
+
+      const isFloorMap = (state.activeTab === 'floorMapTab');
+      const target = isFloorMap 
         ? document.getElementById('floorPlanExportTarget') 
         : (state.activeTab === 'rulesTab' 
           ? document.getElementById('rulesExportTarget') 
-          : document.getElementById('appMainContainer'));
+          : document.getElementById('employeesTab') || document.getElementById('appMainContainer'));
 
-      if (typeof html2canvas !== 'undefined') {
-        html2canvas(target, { 
-          scale: 2, 
-          backgroundColor: '#fffdf5', 
-          useCORS: true 
-        }).then(canvas => {
-          currentExportDataUrl = canvas.toDataURL('image/png');
-          
-          canvas.toBlob(blob => {
-            currentExportBlob = blob;
-            
-            // Auto copy vào Clipboard
-            if (navigator.clipboard && window.ClipboardItem && blob) {
-              try {
-                const item = new ClipboardItem({ 'image/png': blob });
-                navigator.clipboard.write([item]).then(() => {
-                  showToast('📋 Đã tự động sao chép ảnh vào Clipboard! (Bấm Ctrl+V để dán)');
-                }).catch(err => {
-                  console.warn('Clipboard write error:', err);
-                });
-              } catch(e) {}
+      if (!target) return;
+
+      // Xóa các ô đang highlight tìm kiếm (nếu có) để ảnh xuất ra chuẩn đẹp
+      document.querySelectorAll('.highlight-target').forEach(el => el.classList.remove('highlight-target'));
+
+      // Lưu trạng thái scroll ngang của viewport sơ đồ
+      const scrollViewport = document.querySelector('.floorplan-scroll-viewport');
+      const originalScrollLeft = scrollViewport ? scrollViewport.scrollLeft : 0;
+      if (scrollViewport) scrollViewport.scrollLeft = 0;
+
+      // Cập nhật timestamp xuất ảnh
+      const now = new Date();
+      const timeStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const tsEl = document.getElementById('exportTimeText');
+      if (tsEl) tsEl.textContent = timeStr;
+
+      // Bật chế độ full width để bung toàn bộ kích thước sơ đồ trong DOM
+      if (isFloorMap) {
+        document.body.classList.add('exporting-full-map');
+      }
+
+      // Chờ DOM tính toán lại layout (60ms)
+      await new Promise(r => setTimeout(r, 60));
+
+      try {
+        const gridEl = document.getElementById('storeLayoutGridEl');
+        const gridW = gridEl ? Math.max(gridEl.scrollWidth, 1920) : 1920;
+        const exportW = isFloorMap ? Math.max(target.scrollWidth, target.offsetWidth, gridW + 40, 1960) : Math.max(target.offsetWidth, target.scrollWidth);
+        const exportH = isFloorMap ? Math.max(target.scrollHeight, target.offsetHeight) : target.scrollHeight;
+
+        const windowW = Math.max(exportW + 80, 2050);
+        const windowH = Math.max(exportH + 100, 1600);
+
+        const canvas = await html2canvas(target, {
+          scale: 2,
+          backgroundColor: '#fffdf5',
+          useCORS: true,
+          logging: false,
+          width: exportW,
+          height: exportH,
+          windowWidth: windowW,
+          windowHeight: windowH,
+          scrollX: 0,
+          scrollY: 0,
+          onclone: (clonedDoc) => {
+            if (isFloorMap) {
+              clonedDoc.documentElement.style.overflow = 'visible';
+              clonedDoc.body.style.overflow = 'visible';
+              
+              const clonedApp = clonedDoc.querySelector('.app-container');
+              if (clonedApp) {
+                clonedApp.style.width = exportW + 'px';
+                clonedApp.style.maxWidth = 'none';
+                clonedApp.style.overflow = 'visible';
+                clonedApp.style.padding = '0';
+                clonedApp.style.margin = '0';
+              }
+
+              const clonedTarget = clonedDoc.getElementById('floorPlanExportTarget');
+              if (clonedTarget) {
+                clonedTarget.style.width = exportW + 'px';
+                clonedTarget.style.minWidth = exportW + 'px';
+                clonedTarget.style.maxWidth = 'none';
+                clonedTarget.style.overflow = 'visible';
+              }
+
+              const clonedVp = clonedDoc.querySelector('.floorplan-scroll-viewport');
+              if (clonedVp) {
+                clonedVp.style.width = '100%';
+                clonedVp.style.maxWidth = 'none';
+                clonedVp.style.overflow = 'visible';
+                clonedVp.style.overflowX = 'visible';
+                clonedVp.scrollLeft = 0;
+              }
+
+              const clonedGrid = clonedDoc.getElementById('storeLayoutGridEl');
+              if (clonedGrid) {
+                clonedGrid.style.width = '100%';
+                clonedGrid.style.minWidth = (exportW - 40) + 'px';
+              }
+
+              const btnQ = clonedDoc.getElementById('btnQuickAllocationMode');
+              if (btnQ) btnQ.style.display = 'none';
+              const tip = clonedDoc.querySelector('.mobile-scroll-tip');
+              if (tip) tip.style.display = 'none';
+              const banner = clonedDoc.getElementById('allocationActiveBanner');
+              if (banner) banner.style.display = 'none';
+              const timeBadge = clonedDoc.getElementById('exportTimeBadge');
+              if (timeBadge) timeBadge.style.display = 'inline-flex';
             }
+          }
+        });
 
-            // Hiển thị modal popup xem trước
-            const modal = document.getElementById('imagePreviewModal');
-            const imgEl = document.getElementById('previewModalImageEl');
-            imgEl.src = currentExportDataUrl;
-            modal.style.display = 'flex';
+        currentExportDataUrl = canvas.toDataURL('image/png');
 
-            showToast('✅ Đã xuất ảnh HD và sẵn sàng!');
-          }, 'image/png');
+        canvas.toBlob(blob => {
+          currentExportBlob = blob;
 
-        }).catch(e => showToast('❌ Lỗi xuất ảnh: ' + e.message));
+          // Auto copy vào Clipboard nếu hỗ trợ
+          if (navigator.clipboard && window.ClipboardItem && blob) {
+            try {
+              const item = new ClipboardItem({ 'image/png': blob });
+              navigator.clipboard.write([item]).then(() => {
+                showToast('📋 Đã tự động sao chép toàn bộ ảnh sơ đồ vào Clipboard! (Bấm Ctrl+V để dán Zalo)');
+              }).catch(err => {
+                console.warn('Clipboard write error:', err);
+              });
+            } catch(e) {}
+          }
+
+          // Hiển thị modal popup xem trước
+          const modal = document.getElementById('imagePreviewModal');
+          const imgEl = document.getElementById('previewModalImageEl');
+          imgEl.src = currentExportDataUrl;
+          modal.style.display = 'flex';
+
+          showToast('✅ Đã xuất trọn vẹn toàn bộ sơ đồ HD!');
+        }, 'image/png');
+
+      } catch (err) {
+        console.error('Lỗi khi xuất ảnh sơ đồ:', err);
+        showToast('❌ Lỗi xuất ảnh: ' + err.message);
+      } finally {
+        // Luôn khôi phục giao diện người dùng bình thường
+        if (isFloorMap) {
+          document.body.classList.remove('exporting-full-map');
+        }
+        if (scrollViewport) {
+          scrollViewport.scrollLeft = originalScrollLeft;
+        }
       }
     });
 
