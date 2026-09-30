@@ -134,6 +134,30 @@ function handleApiOrHtml(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
+  // API: Cập nhật đồng thời cả 15 Ca trực và Danh sách NV/PG ngay lập tức
+  if (params && (params.action === "saveAll" || params.action === "syncAll")) {
+    const targetSheetId = params.sheetId || (postBody && postBody.sheetId) || SPREADSHEET_ID;
+    const shifts = params.shifts || (postBody && postBody.shifts) || [];
+    const employees = params.employees || (postBody && postBody.employees) || [];
+
+    let resShifts = null;
+    let resEmps = null;
+
+    if (Array.isArray(shifts) && shifts.length > 0) {
+      resShifts = updateAllShifts(shifts, targetSheetId);
+    }
+    if (Array.isArray(employees) && employees.length > 0) {
+      resEmps = updateAllEmployees(employees, targetSheetId);
+    }
+
+    return ContentService.createTextOutput(JSON.stringify({
+      success: true,
+      shifts: resShifts,
+      employees: resEmps,
+      message: "Đã lưu tức thì toàn bộ ca trực & danh sách NV/PG về Google Sheet!"
+    })).setMimeType(ContentService.MimeType.JSON);
+  }
+
   // Trả về giao diện người dùng
   return getAppHtmlOutput();
 }

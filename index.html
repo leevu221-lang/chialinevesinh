@@ -2746,6 +2746,19 @@
     };
     localStorage.setItem('phancong_webapp_url', DEFAULT_CONFIG.webAppUrl);
 
+    // Cập nhật trạng thái kết nối & đồng bộ trên thanh tiêu đề
+    function setSyncStatus(stateType, text) {
+      const pill = document.getElementById('realtimeStatusPill');
+      const txt = document.getElementById('realtimeStatusText');
+      if (pill) {
+        pill.classList.remove('syncing', 'connected', 'offline');
+        pill.classList.add(stateType);
+      }
+      if (txt) {
+        txt.textContent = text;
+      }
+    }
+
     const state = {
       activeTab: 'floorMapTab',
       shifts: [],
@@ -3017,8 +3030,7 @@
       localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
       if (typeof syncMapCellsFromShifts === 'function') syncMapCellsFromShifts();
       broadcastMqtt({ type: 'UPDATE_SHIFT', index: idx, data: state.shifts[idx] });
-      autoSaveToSheetDebounced();
-      showToast(`Đã lưu thay đổi vị trí ${state.shifts[idx].stt}`);
+      saveToSheetImmediately(`☁️ Đã lưu thay đổi vị trí ${state.shifts[idx].stt} về Google Sheet!`);
     };
 
     // TOGGLE ĐIỂM DANH
@@ -3028,8 +3040,7 @@
       localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
       renderEmployees();
       broadcastMqtt({ type: 'TOGGLE_ATTENDANCE', index: idx, marked: state.employees[idx].marked });
-      autoSaveEmployeesToSheetDebounced();
-      showToast(`Đã cập nhật điểm danh: ${state.employees[idx].name}`);
+      saveToSheetImmediately(`☁️ Đã lưu điểm danh: ${state.employees[idx].name} về Google Sheet!`);
     };
 
     // ==========================================================================
@@ -3201,31 +3212,95 @@
       });
     }
 
-    // TỰ ĐỘNG LƯU DANH SÁCH NV/PG VỀ SHEET DEBOUNCED
-    let empSaveTimeout = null;
-    function autoSaveEmployeesToSheetDebounced() {
-      clearTimeout(empSaveTimeout);
-      empSaveTimeout = setTimeout(saveAllEmployeesToSheet, 1200);
-    }
+    // ==========================================================================
+    // HỆ THỐNG ĐỒNG BỘ & LƯU TỨC THÌ VỀ GOOGLE SHEET (REALTIME INSTANT SYNC)
+    // ==========================================================================
+    let isSavingToSheet = false;
+    let pendingSaveAgain = false;
 
-    function saveAllEmployeesToSheet() {
+    function saveToSheetImmediately(customToastMsg) {
       const url = DEFAULT_CONFIG.webAppUrl;
       if (!url) return;
 
-      fetch(url, {
+      if (isSavingToSheet) {
+        pendingSaveAgain = true;
+        return;
+      }
+      isSavingToSheet = true;
+      pendingSaveAgain = false;
+
+      // Cập nhật trạng thái hiển thị trên giao diện ngay lập tức
+      setSyncStatus('syncing', '⚡ Đang lưu về Google Sheet...');
+      if (customToastMsg) {
+        showToast(customToastMsg);
+      }
+
+      const timestamp = Date.now();
+
+      // 1. Gửi request saveAll đồng thời cả 15 Ca trực và Danh sách NV/PG
+      const pSaveAll = fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        mode: 'no-cors',
+        body: JSON.stringify({
+          action: 'saveAll',
+          sheetId: DEFAULT_CONFIG.sheetId,
+          shifts: state.shifts,
+          employees: state.employees,
+          _t: timestamp
+        })
+      });
+
+      // 2. Gửi đồng thời updateAllShifts & updateAllEmployees dự phòng
+      const pShifts = fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        mode: 'no-cors',
+        body: JSON.stringify({
+          action: 'updateAllShifts',
+          sheetId: DEFAULT_CONFIG.sheetId,
+          shifts: state.shifts,
+          _t: timestamp
+        })
+      });
+
+      const pEmps = fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         mode: 'no-cors',
         body: JSON.stringify({
           action: 'updateAllEmployees',
           sheetId: DEFAULT_CONFIG.sheetId,
-          employees: state.employees
+          employees: state.employees,
+          _t: timestamp
         })
-      }).then(() => {
-        showToast('☁️ Đã lưu danh sách NV/PG về tab "save data" trên Google Sheet');
-      }).catch(err => {
-        console.warn('Lỗi lưu danh sách NV/PG về Sheet:', err);
       });
+
+      Promise.allSettled([pSaveAll, pShifts, pEmps]).then(() => {
+        isSavingToSheet = false;
+        setSyncStatus('connected', '☁️ Đã lưu về Google Sheet (Vừa xong)');
+        if (pendingSaveAgain) {
+          saveToSheetImmediately();
+        }
+      }).catch(err => {
+        isSavingToSheet = false;
+        console.warn('Lỗi lưu tức thì về Sheet:', err);
+        setSyncStatus('connected', '☁️ Đã gửi lưu về Sheet');
+      });
+    }
+
+    // Các hàm tương thích ngược để gọi tức thì không độ trễ
+    function autoSaveEmployeesToSheetDebounced() {
+      saveToSheetImmediately();
+    }
+    function saveAllEmployeesToSheet() {
+      saveToSheetImmediately();
+    }
+    function autoSaveToSheetDebounced() {
+      saveToSheetImmediately();
+    }
+    function saveAllToSheet() {
+      saveToSheetImmediately();
     }
 
     // TÌM KIẾM VÀ HIGHLIGHT TRÊN SƠ ĐỒ MẶT BẰNG
@@ -3314,6 +3389,7 @@
           cell.setAttribute('data-staff', '');
           if (staffEl) staffEl.textContent = '';
           cell.classList.remove('in-allocation-target');
+          updateShiftForCell(cell, '');
           showToast('⚪ Đã hủy gán khu vực: ' + cellTitle);
         } else {
           // Gán khu vực cho nhân viên này
@@ -3327,6 +3403,7 @@
             cell.appendChild(newStaffSpan);
           }
           cell.classList.add('in-allocation-target');
+          updateShiftForCell(cell, state.allocatingStaff);
           showToast('🎯 Đã gán [' + cellTitle + '] cho ' + state.allocatingStaff);
         }
 
@@ -3337,6 +3414,7 @@
           cellId: cell.getAttribute('data-cell-id'),
           staff: cell.getAttribute('data-staff')
         });
+        saveToSheetImmediately();
         return;
       }
 
@@ -3400,6 +3478,78 @@
         }
       });
       return count;
+    }
+
+    // ÁNH XẠ Ô TRÊN SƠ ĐỒ VỀ ĐÚNG 1 TRONG 15 CA TRỰC ĐỂ LƯU VỀ GOOGLE SHEET
+    function getShiftIndexForCell(cell) {
+      if (!cell) return -1;
+      const titleEl = cell.querySelector('.cell-title');
+      const title = (titleEl ? titleEl.textContent : cell.textContent).trim().toUpperCase();
+      const isIctSubgrid = cell.closest('.ict-subgrid') !== null;
+
+      if (isIctSubgrid || title.includes('VÁCH PK') || title.includes('LAPTOP') || 
+          title.includes('SMARTPHONE') || title.includes('MOTOROLA') || title.includes('REALME') ||
+          title.includes('VIVO') || title.includes('XIAOMI') || title.includes('PK BASEUS') ||
+          title.includes('PK ANKER') || title.includes('CAMERA') || title.includes('BTN XIAOMI') ||
+          title.includes('BTN MOTO') || title.includes('OPPO') || title.includes('ĐỒNG HỒ') ||
+          title.includes('BTN OPPO') || title.includes('BTN VIVO') || title.includes('BTN REALME') ||
+          title.includes('BTN SAMSUNG') || title.includes('BTN HONOR') || title.includes('BTN APPLE') ||
+          title.includes('APPLE') || title.includes('VÁCH PHỤ KIỆN') || title.includes('BTV ')) {
+        return 0; // Ca 1 (STT 1)
+      } else if (title.includes('TIVI 1') || title.includes('TIVI 2') || title.includes('TIVI 3') || 
+                 title.includes('VÁCH HÃNG SONY') || title.includes('VÁCH HÃNG SAMSUNG') || (title.includes('BỤC HÃNG SAMSUNG') && !title.includes('TỦ LẠNH'))) {
+        return 1; // Ca 2 (STT 2)
+      } else if (title.includes('TIVI 4') || title.includes('TIVI 5') || title.includes('LOA') || 
+                 title.includes('VÁCH HÃNG LG') || title.includes('VÁCH LOA') || title.includes('KỆ LOA') || (title.includes('BỤC HÃNG LG') && !title.includes('TỦ LẠNH'))) {
+        return 2; // Ca 3 (STT 3)
+      } else if (title.includes('MÁY GIẶT 1') || title.includes('MÁY GIẶT 2') || title.includes('MÁY GIẶT 3') || 
+                 title.includes('MÁY GIẶT 1 - 2 -3') || title.includes('MÁY GIẶT ELECTROLUX') || title.includes('MÁY GIẶT HISENSE') || title.includes('BỤC HÃNG HESENSI')) {
+        return 3; // Ca 4 (STT 4)
+      } else if (title.includes('MÁY GIẶT 4') || title.includes('MÁY GIẶT 5') || title.includes('MÁY GIẶT 6') || 
+                 title.includes('MÁY GIẶT 4 - 5 - 6') || title.includes('MÁY GIẶT SAMSUNG') || title.includes('MÁY GIẶT PANASONIC') || 
+                 title.includes('MÁY GIẶT AQUA') || title.includes('MÁY GIẶT HAIER') || title.includes('MÁY GIẶT TOSHIBA') || 
+                 title.includes('BỤC MÁY GIẶT') || title.includes('BỤC HÃNG TOSHIBA') || title.includes('BỤC HÃNG TCL')) {
+        return 4; // Ca 5 (STT 5)
+      } else if (title.includes('VÁCH MÁY LẠNH') || title.includes('DÀN MƯỚP') || title.includes('TỦ ĐÔNG')) {
+        return 5; // Ca 6 (STT 6)
+      } else if (title.includes('BẾP') || title.includes('LÒ VI SÓNG') || title.includes('CHẢO') || 
+                 title.includes('VÁCH NỒI') || title.includes('NỒI CHIÊN') || title.includes('JUNGER') || title.includes('HAFALE')) {
+        return 6; // Ca 7 (STT 7)
+      } else if (title.includes('LỌC NƯỚC') || title.includes('MLN MUTOSI') || title.includes('MLN HOÀ PHÁT') || 
+                 title.includes('MLN KAROFI') || title.includes('GIA DỤNG 1') || title.includes('GIA DỤNG 01')) {
+        return 7; // Ca 8 (STT 8)
+      } else if (title.includes('GIA DỤNG 2') || title.includes('GIA DỤNG 02') || title.includes('GIA DỤNG 3') || title.includes('GIA DỤNG 03')) {
+        return 8; // Ca 9 (STT 9)
+      } else if (title.includes('GIA DỤNG 4') || title.includes('GIA DỤNG 04') || title.includes('GIA DỤNG 5') || title.includes('GIA DỤNG 05') || 
+                 title.includes('GIA DỤNG KANGAROO') || (title.includes('GIA DỤNG TOSHIBA') && !title.includes('MLN'))) {
+        return 9; // Ca 10 (STT 10)
+      } else if (title.includes('GIA DỤNG 6') || title.includes('GIA DỤNG 06') || title.includes('GIA DỤNG 7') || title.includes('GIA DỤNG 07') || 
+                 title.includes('KỆ GIA DỤNG') || title.includes('GIA DỤNG SUNHOUSE') || title.includes('ROBOT') || title.includes('MLN SUNHOUSE')) {
+        return 10; // Ca 11 (STT 11)
+      } else if (title.includes('TỦ LẠNH 1') || title.includes('TỦ LẠNH 2') || title.includes('TỦ LẠNH HITACHI') || 
+                 title.includes('TỦ LẠNH AQUA') || title.includes('TỦ LẠNH LG') || title.includes('TỦ LẠNH SHARP') || 
+                 (title.includes('TỦ LẠNH TOSHIBA') && !title.includes('VÁCH')) || title.includes('BỤC HÃNG HAIER') || 
+                 title.includes('BỤC HÃNG AQUA') || title.includes('BỤC HÃNG XIAOMI')) {
+        return 11; // Ca 12 (STT 12)
+      } else if (title.includes('TỦ LẠNH 3') || title.includes('TỦ LẠNH 4') || title.includes('TỦ LẠNH SAMSUNG') || 
+                 title.includes('TỦ LẠNH PANASONIC') || title.includes('TỦ LẠNH HAIER') || title.includes('BỤC TỦ LẠNH')) {
+        return 12; // Ca 13 (STT 13)
+      } else if (title.includes('VÁCH TỦ LẠNH') || title.includes('VÁCH TL')) {
+        return 13; // Ca 14 (STT 14)
+      } else if (title.includes('VÁCH KÍNH') || title.includes('CỬA') || title.includes('TIẾP ĐÓN') || 
+                 title.includes('GIAO HÀNG') || title.includes('HTKT') || title.includes('THU NGÂN')) {
+        return 14; // Ca 15 (STT 15)
+      }
+      return -1;
+    }
+
+    function updateShiftForCell(cell, staffName) {
+      const shiftIdx = getShiftIndexForCell(cell);
+      if (shiftIdx >= 0 && state.shifts[shiftIdx]) {
+        state.shifts[shiftIdx].nv = staffName;
+        localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
+        renderShifts();
+      }
     }
 
     // Lưu toàn bộ cấu hình sơ đồ vào localStorage
@@ -3521,6 +3671,7 @@
           state.selectedCellEl.setAttribute('data-staff', newStaff);
           const staffEl = state.selectedCellEl.querySelector('.cell-staff');
           if (staffEl) staffEl.textContent = newStaff;
+          updateShiftForCell(state.selectedCellEl, newStaff);
           saveMapAllocations();
         }
       } else {
@@ -3532,6 +3683,7 @@
             c.setAttribute('data-staff', newStaff);
             const staffEl = c.querySelector('.cell-staff');
             if (staffEl) staffEl.textContent = newStaff;
+            updateShiftForCell(c, newStaff);
             updatedCount++;
           }
         });
@@ -3540,9 +3692,9 @@
         state.shifts.forEach((s, idx) => {
           if (s.nv && s.nv.trim().toUpperCase().includes(oldStaff.toUpperCase())) {
             s.nv = s.nv.replace(new RegExp(oldStaff, 'gi'), newStaff);
-            updateShiftField(idx, 'nv', s.nv);
           }
         });
+        localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
         renderShifts();
 
         saveMapAllocations();
@@ -3556,7 +3708,7 @@
       }
 
       document.getElementById('staffAllocationModal').style.display = 'none';
-      autoSaveToSheetDebounced();
+      saveToSheetImmediately('☁️ Đã lưu cập nhật tất cả khu vực về Google Sheet!');
     });
 
     // Chỉ đổi riêng khu vực đang chọn
@@ -3573,7 +3725,15 @@
       if (state.selectedCellEl) {
         state.selectedCellEl.setAttribute('data-staff', newStaff);
         const staffEl = state.selectedCellEl.querySelector('.cell-staff');
-        if (staffEl) staffEl.textContent = newStaff;
+        if (staffEl) {
+          staffEl.textContent = newStaff;
+        } else {
+          const s = document.createElement('span');
+          s.className = 'cell-staff';
+          s.textContent = newStaff;
+          state.selectedCellEl.appendChild(s);
+        }
+        updateShiftForCell(state.selectedCellEl, newStaff);
         saveMapAllocations();
         broadcastMqtt({
           type: 'UPDATE_MAP_CELL',
@@ -3584,7 +3744,7 @@
       }
 
       document.getElementById('staffAllocationModal').style.display = 'none';
-      autoSaveToSheetDebounced();
+      saveToSheetImmediately('☁️ Đã lưu phân bổ khu vực về Google Sheet!');
     });
 
     // Bắt đầu Chế Độ Phân Bổ Trực Tiếp Trên Sơ Đồ
@@ -3643,7 +3803,7 @@
       });
 
       saveMapAllocations();
-      showToast('✅ Đã hoàn tất và lưu phân bổ khu vực trên sơ đồ!');
+      saveToSheetImmediately('✅ Đã lưu phân bổ khu vực về Google Sheet!');
     }
 
     function updateAllocatingCount() {
@@ -3746,31 +3906,12 @@
       }
     }
 
-    // AUTO SAVE DEBOUNCED
-    let saveTimeout = null;
+    // Lưu 15 ca trực tức thì về Google Sheet (không chờ độ trễ)
     function autoSaveToSheetDebounced() {
-      clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(saveAllToSheet, 1200);
+      saveToSheetImmediately();
     }
-
     function saveAllToSheet() {
-      const url = DEFAULT_CONFIG.webAppUrl;
-      if (!url) return;
-
-      fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        mode: 'no-cors',
-        body: JSON.stringify({
-          action: 'updateAllShifts',
-          sheetId: DEFAULT_CONFIG.sheetId,
-          shifts: state.shifts
-        })
-      }).then(() => {
-        showToast('☁️ Đã lưu 15 ca trực về tab "save data" trên Google Sheet');
-      }).catch(err => {
-        console.warn('Lỗi lưu ca trực về Sheet:', err);
-      });
+      saveToSheetImmediately();
     }
 
     let currentExportBlob = null;
