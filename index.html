@@ -1132,6 +1132,62 @@
       display: block;
     }
 
+
+    /* CHẾ ĐỘ PHÂN BỔ TRỰC TIẾP TRÊN SƠ ĐỒ */
+    .allocation-banner {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 2px solid #d97706;
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 4px 14px rgba(217, 119, 6, 0.18);
+      position: sticky;
+      top: 10px;
+      z-index: 100;
+      animation: bannerSlideIn 0.25s ease;
+    }
+    @keyframes bannerSlideIn {
+      from { transform: translateY(-10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .allocation-staff-name-badge {
+      background: var(--primary-gradient);
+      color: white;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 13px;
+      box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3);
+    }
+    .map-cell.in-allocation-target {
+      outline: 3px solid #16a34a !important;
+      background: #dcfce7 !important;
+      color: #166534 !important;
+      transform: scale(1.02);
+      z-index: 15;
+      box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35) !important;
+    }
+    .map-cell.in-allocation-target::after {
+      content: "✓";
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: 12px;
+      font-weight: 900;
+      color: #15803d;
+    }
+    .allocation-mode-active .map-cell {
+      cursor: pointer;
+    }
+    .allocation-mode-active .map-cell:hover {
+      outline: 2.5px dashed #d97706 !important;
+      transform: translateY(-2px);
+    }
+
   </style>
 </head>
 <body>
@@ -1202,9 +1258,14 @@
     <div class="tab-content active" id="floorMapTab">
       <div class="floorplan-card" id="floorPlanExportTarget">
         <div class="floorplan-header-strip">
-          <h2 style="font-size: 15px; font-weight: 800; color: #92400e;">
-            <i class="fa-solid fa-layer-group"></i> SƠ ĐỒ MẶT BẰNG BỐ TRÍ VỆ SINH SIÊU THỊ 1841
-          </h2>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <h2 style="font-size: 15px; font-weight: 800; color: #92400e;">
+              <i class="fa-solid fa-layer-group"></i> SƠ ĐỒ MẶT BẰNG BỐ TRÍ VỆ SINH SIÊU THỊ 1841
+            </h2>
+            <button class="btn btn-secondary" id="btnQuickAllocationMode" style="padding:4px 12px; font-size:12px;">
+              <i class="fa-solid fa-hand-pointer" style="color:#d97706;"></i> Phân Bổ Nhanh
+            </button>
+          </div>
           <div class="floorplan-legend">
             <span class="legend-item"><span class="legend-box" style="background:#dcfce7;border-color:#86efac;"></span> Vách Tủ Lạnh</span>
             <span class="legend-item"><span class="legend-box" style="background:#ffedd5;border-color:#fdba74;"></span> Tủ Lạnh / Gia Dụng</span>
@@ -1214,8 +1275,33 @@
           </div>
         </div>
 
+        <!-- BANNER CHẾ ĐỘ PHÂN BỔ TRỰC TIẾP -->
+        <div class="allocation-banner" id="allocationActiveBanner" style="display:none;">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <span class="live-dot" style="background:#d97706;"></span>
+            <span style="font-weight:800; color:#92400e; font-size:13.5px;">
+              🎯 ĐANG PHÂN BỔ CHO:
+            </span>
+            <span class="allocation-staff-name-badge" id="allocatingStaffNameBadge">TRANG</span>
+            <span style="font-size:12px; color:#78350f; font-weight:600;">
+              👉 Nhấp vào ô bất kỳ trên sơ đồ để Gán / Bỏ Gán khu vực!
+            </span>
+            <span class="badge-tag" id="allocatingAreaCountBadge" style="background:#fff; border:1px solid #d97706; color:#92400e;">
+              0 khu vực
+            </span>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary" id="btnFinishAllocation" style="padding:5px 14px; font-size:12.5px;">
+              <i class="fa-solid fa-check"></i> Xong & Lưu
+            </button>
+            <button class="btn btn-secondary" id="btnCancelAllocation" style="padding:5px 10px; font-size:12.5px;">
+              Thoát
+            </button>
+          </div>
+        </div>
+
         <!-- BẢN ĐỒ MẶT BẰNG CHUẨN HÌNH MẪU -->
-        <div class="store-layout-grid">
+        <div class="store-layout-grid" id="storeLayoutGridEl">
           <!-- HÀNG ĐỈNH (TOP BARRIER) -->
           <div class="top-barrier-row">
             <div class="map-cell bg-door-red">
@@ -1626,6 +1712,60 @@
     </div>
   </div>
 
+  <!-- MODAL PHÂN BỔ & THAY ĐỔI TÊN NHÂN VIÊN TRỰC TIẾP -->
+  <div class="modal-overlay" id="staffAllocationModal" style="display:none;">
+    <div class="modal-box" style="max-width:520px;">
+      <div class="modal-title">
+        <span style="display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-user-gear" style="color:#d97706;"></i> Phân Bổ Nhân Viên Khu Vực
+        </span>
+        <button class="btn-icon" id="btnCloseStaffModal" style="width:28px;height:28px;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- THÔNG TIN KHU VỰC HIỆN TẠI -->
+      <div style="background:#fffbeb; border:1.5px solid #fde68a; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+        <div style="font-size:11.5px; color:#78350f; font-weight:700; text-transform:uppercase;">Khu vực đã chọn:</div>
+        <div style="font-size:15px; font-weight:800; color:#1c1917; margin:2px 0 6px;" id="modalTargetAreaTitle">VÁCH TỦ LẠNH TOSHIBA</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; font-size:12.5px;">
+          <span>Nhân viên hiện tại: <strong id="modalCurrentStaffName" style="color:#d97706;">TRANG</strong></span>
+          <span class="badge-tag" id="modalCurrentStaffCountBadge" style="background:#fef3c7; color:#92400e;">Đang có 7 khu vực</span>
+        </div>
+      </div>
+
+      <!-- Ô CHỌN HOẶC NHẬP TÊN MỚI -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:5px;">
+          Chọn nhân viên mới (hoặc nhập tên):
+        </label>
+        <div style="display:flex; gap:8px;">
+          <select id="modalStaffDropdown" class="shift-field-select" style="flex:1;">
+            <option value="">-- Chọn từ 26 nhân viên siêu thị --</option>
+          </select>
+          <input type="text" id="modalStaffCustomInput" class="shift-field-input" placeholder="Hoặc gõ tên..." style="flex:1;">
+        </div>
+      </div>
+
+      <!-- CÁC HÀNH ĐỘNG -->
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:14px;">
+        <button class="btn btn-primary" id="btnApplyToAllStaffAreas" style="width:100%; justify-content:center; padding:10px;">
+          <i class="fa-solid fa-arrows-rotate"></i> Đổi trên TẤT CẢ các khu vực của <span id="modalBtnStaffTargetName">TRANG</span>
+        </button>
+        <button class="btn btn-secondary" id="btnApplyToSingleArea" style="width:100%; justify-content:center; padding:8px;">
+          <i class="fa-solid fa-pen"></i> Chỉ đổi riêng khu vực này
+        </button>
+      </div>
+
+      <!-- PHÂN BỔ TRỰC TIẾP TRÊN SƠ ĐỒ -->
+      <div style="border-top:1px dashed #fde68a; padding-top:12px;">
+        <button class="btn btn-secondary" id="btnStartDirectAllocation" style="width:100%; justify-content:center; padding:9px; background:#fffbeb; border-color:#d97706; color:#92400e; font-weight:700;">
+          <i class="fa-solid fa-hand-pointer" style="color:#d97706;"></i> Click chọn các khu vực trên sơ đồ cho <span id="modalBtnDirectStaffName">TRANG</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL CẤU HÌNH WEB APP URL -->
   <div class="modal-overlay" id="configModal">
     <div class="modal-box">
@@ -1816,6 +1956,7 @@
       state.employees[idx].marked = !state.employees[idx].marked;
       localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
       renderEmployees();
+    initMapCells();
       broadcastMqtt({ type: 'TOGGLE_ATTENDANCE', index: idx, marked: state.employees[idx].marked });
       autoSaveToSheetDebounced();
       showToast(`Đã cập nhật điểm danh: ${state.employees[idx].name}`);
@@ -1838,14 +1979,299 @@
       });
     });
 
-    // INTERACTION CHO TỪNG Ô BẢN ĐỒ
-    document.querySelectorAll('.map-cell').forEach(cell => {
-      cell.addEventListener('click', () => {
-        const title = cell.querySelector('.cell-title') ? cell.querySelector('.cell-title').textContent : cell.textContent.trim();
-        const staff = cell.querySelector('.cell-staff') ? cell.querySelector('.cell-staff').textContent : (cell.getAttribute('data-staff') || 'Chưa gán');
-        showToast(`📍 ${title} — Phụ trách: ${staff}`);
+    // ==========================================================================
+    // QUẢN LÝ PHÂN BỔ KHU VỰC VỆ SINH & THAY ĐỔI NHÂN VIÊN TRỰC TIẾP TRÊN SƠ ĐỒ
+    // ==========================================================================
+    state.selectedCellEl = null;
+    state.isAllocatingDirectly = false;
+    state.allocatingStaff = '';
+
+    // Khởi tạo các ô trên sơ đồ với ID duy nhất & nạp trạng thái đã lưu
+    function initMapCells() {
+      const cells = document.querySelectorAll('#storeLayoutGridEl .map-cell');
+      const savedAllocations = JSON.parse(localStorage.getItem('st1841_map_allocations') || '{}');
+
+      cells.forEach((cell, idx) => {
+        const cellId = 'cell_' + idx;
+        cell.setAttribute('data-cell-id', cellId);
+
+        const titleEl = cell.querySelector('.cell-title');
+        const staffEl = cell.querySelector('.cell-staff');
+
+        // Nếu đã có cấu hình lưu trước đó
+        if (savedAllocations[cellId]) {
+          const staffName = savedAllocations[cellId].staff || '';
+          cell.setAttribute('data-staff', staffName);
+          if (staffEl) {
+            staffEl.textContent = staffName;
+          }
+        }
+
+        // Gán sự kiện click cho từng ô
+        cell.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handleMapCellClick(cell);
+        });
       });
+    }
+
+    // Xử lý khi click vào ô trên sơ đồ
+    function handleMapCellClick(cell) {
+      const cellTitle = cell.querySelector('.cell-title') ? cell.querySelector('.cell-title').textContent.trim() : cell.textContent.trim();
+      const currentStaff = cell.getAttribute('data-staff') || (cell.querySelector('.cell-staff') ? cell.querySelector('.cell-staff').textContent.trim() : '');
+
+      // 1. Nếu đang ở CHẾ ĐỘ PHÂN BỔ TRỰC TIẾP
+      if (state.isAllocatingDirectly && state.allocatingStaff) {
+        const staffEl = cell.querySelector('.cell-staff');
+        
+        // Nếu ô đang thuộc nhân viên này -> Click lại sẽ bỏ gán
+        if (currentStaff.toUpperCase() === state.allocatingStaff.toUpperCase()) {
+          cell.setAttribute('data-staff', '');
+          if (staffEl) staffEl.textContent = '';
+          cell.classList.remove('in-allocation-target');
+          showToast('⚪ Đã hủy gán khu vực: ' + cellTitle);
+        } else {
+          // Gán khu vực cho nhân viên này
+          cell.setAttribute('data-staff', state.allocatingStaff);
+          if (staffEl) {
+            staffEl.textContent = state.allocatingStaff;
+          } else {
+            const newStaffSpan = document.createElement('span');
+            newStaffSpan.className = 'cell-staff';
+            newStaffSpan.textContent = state.allocatingStaff;
+            cell.appendChild(newStaffSpan);
+          }
+          cell.classList.add('in-allocation-target');
+          showToast('🎯 Đã gán [' + cellTitle + '] cho ' + state.allocatingStaff);
+        }
+
+        saveMapAllocations();
+        updateAllocatingCount();
+        broadcastMqtt({
+          type: 'UPDATE_MAP_CELL',
+          cellId: cell.getAttribute('data-cell-id'),
+          staff: cell.getAttribute('data-staff')
+        });
+        return;
+      }
+
+      // 2. Nếu ở chế độ bình thường -> Mở Modal Phân Bổ & Thay Đổi Tên Nhân Viên
+      openStaffAllocationModal(cell, cellTitle, currentStaff);
+    }
+
+    // Mở modal phân bổ & thay đổi nhân viên
+    function openStaffAllocationModal(cell, areaTitle, currentStaff) {
+      state.selectedCellEl = cell;
+      const modal = document.getElementById('staffAllocationModal');
+      
+      document.getElementById('modalTargetAreaTitle').textContent = areaTitle;
+      document.getElementById('modalCurrentStaffName').textContent = currentStaff || 'Chưa gán';
+      document.getElementById('modalBtnStaffTargetName').textContent = currentStaff || 'khu vực này';
+      document.getElementById('modalBtnDirectStaffName').textContent = currentStaff || 'nhân viên';
+
+      // Đếm số lượng khu vực nhân viên này đang phụ trách
+      const count = getStaffAreaCount(currentStaff);
+      document.getElementById('modalCurrentStaffCountBadge').textContent = 'Đang có ' + count + ' khu vực';
+
+      // Đổ danh sách 26 nhân viên vào dropdown
+      const dropdown = document.getElementById('modalStaffDropdown');
+      dropdown.innerHTML = '<option value="">-- Chọn từ 26 nhân viên siêu thị --</option>';
+      state.employees.forEach(emp => {
+        const opt = document.createElement('option');
+        opt.value = emp.name;
+        opt.textContent = emp.stt + '. ' + emp.name;
+        dropdown.appendChild(opt);
+      });
+
+      document.getElementById('modalStaffCustomInput').value = '';
+      modal.style.display = 'flex';
+    }
+
+    // Đếm số khu vực 1 nhân viên đang phụ trách
+    function getStaffAreaCount(staffName) {
+      if (!staffName || !staffName.trim()) return 0;
+      let count = 0;
+      document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+        const st = c.getAttribute('data-staff') || '';
+        if (st.trim().toUpperCase() === staffName.trim().toUpperCase()) {
+          count++;
+        }
+      });
+      return count;
+    }
+
+    // Lưu toàn bộ cấu hình sơ đồ vào localStorage
+    function saveMapAllocations() {
+      const allocations = {};
+      document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+        const cellId = c.getAttribute('data-cell-id');
+        const staff = c.getAttribute('data-staff') || '';
+        if (cellId) {
+          allocations[cellId] = { staff: staff };
+        }
+      });
+      localStorage.setItem('st1841_map_allocations', JSON.stringify(allocations));
+    }
+
+    // Đổi tên nhân viên trên TẤT CẢ các khu vực
+    document.getElementById('btnApplyToAllStaffAreas').addEventListener('click', () => {
+      const oldStaff = (document.getElementById('modalCurrentStaffName').textContent || '').trim();
+      const dropdownVal = document.getElementById('modalStaffDropdown').value.trim();
+      const customVal = document.getElementById('modalStaffCustomInput').value.trim();
+      const newStaff = customVal || dropdownVal;
+
+      if (!newStaff) {
+        showToast('⚠️ Vui lòng chọn hoặc nhập tên nhân viên mới!');
+        return;
+      }
+
+      if (!oldStaff || oldStaff === 'Chưa gán') {
+        // Nếu trước đó chưa gán thì chỉ gán cho ô hiện tại
+        if (state.selectedCellEl) {
+          state.selectedCellEl.setAttribute('data-staff', newStaff);
+          const staffEl = state.selectedCellEl.querySelector('.cell-staff');
+          if (staffEl) staffEl.textContent = newStaff;
+          saveMapAllocations();
+        }
+      } else {
+        // Thay đổi TẤT CẢ các ô có tên nhân viên này
+        let updatedCount = 0;
+        document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+          const st = (c.getAttribute('data-staff') || '').trim();
+          if (st.toUpperCase() === oldStaff.toUpperCase()) {
+            c.setAttribute('data-staff', newStaff);
+            const staffEl = c.querySelector('.cell-staff');
+            if (staffEl) staffEl.textContent = newStaff;
+            updatedCount++;
+          }
+        });
+
+        // Đồng bộ cập nhật cả bảng phân ca 15 vị trí nếu có tên cũ
+        state.shifts.forEach((s, idx) => {
+          if (s.nv && s.nv.trim().toUpperCase().includes(oldStaff.toUpperCase())) {
+            s.nv = s.nv.replace(new RegExp(oldStaff, 'gi'), newStaff);
+            updateShiftField(idx, 'nv', s.nv);
+          }
+        });
+        renderShifts();
+
+        saveMapAllocations();
+        broadcastMqtt({
+          type: 'BATCH_RENAME_STAFF',
+          oldStaff: oldStaff,
+          newStaff: newStaff
+        });
+
+        showToast('🔄 Đã đổi TẤT CẢ ' + updatedCount + ' khu vực của [' + oldStaff + '] thành [' + newStaff + ']!');
+      }
+
+      document.getElementById('staffAllocationModal').style.display = 'none';
+      autoSaveToSheetDebounced();
     });
+
+    // Chỉ đổi riêng khu vực đang chọn
+    document.getElementById('btnApplyToSingleArea').addEventListener('click', () => {
+      const dropdownVal = document.getElementById('modalStaffDropdown').value.trim();
+      const customVal = document.getElementById('modalStaffCustomInput').value.trim();
+      const newStaff = customVal || dropdownVal;
+
+      if (!newStaff) {
+        showToast('⚠️ Vui lòng chọn hoặc nhập tên nhân viên mới!');
+        return;
+      }
+
+      if (state.selectedCellEl) {
+        state.selectedCellEl.setAttribute('data-staff', newStaff);
+        const staffEl = state.selectedCellEl.querySelector('.cell-staff');
+        if (staffEl) staffEl.textContent = newStaff;
+        saveMapAllocations();
+        broadcastMqtt({
+          type: 'UPDATE_MAP_CELL',
+          cellId: state.selectedCellEl.getAttribute('data-cell-id'),
+          staff: newStaff
+        });
+        showToast('✓ Đã cập nhật khu vực cho: ' + newStaff);
+      }
+
+      document.getElementById('staffAllocationModal').style.display = 'none';
+      autoSaveToSheetDebounced();
+    });
+
+    // Bắt đầu Chế Độ Phân Bổ Trực Tiếp Trên Sơ Đồ
+    document.getElementById('btnStartDirectAllocation').addEventListener('click', () => {
+      const staffName = (document.getElementById('modalCurrentStaffName').textContent || '').trim();
+      if (!staffName || staffName === 'Chưa gán') {
+        showToast('⚠️ Vui lòng chọn một nhân viên cụ thể để bắt đầu phân bổ!');
+        return;
+      }
+      document.getElementById('staffAllocationModal').style.display = 'none';
+      enterDirectAllocationMode(staffName);
+    });
+
+    // Nút Phân Bổ Nhanh trên thanh công cụ sơ đồ
+    document.getElementById('btnQuickAllocationMode').addEventListener('click', () => {
+      const name = prompt('Nhập tên nhân viên cần click phân bổ trên sơ đồ (VD: TRANG, PHÚC, ÁI, MẠNH...):');
+      if (name && name.trim()) {
+        enterDirectAllocationMode(name.trim().toUpperCase());
+      }
+    });
+
+    function enterDirectAllocationMode(staffName) {
+      state.isAllocatingDirectly = true;
+      state.allocatingStaff = staffName;
+
+      document.getElementById('allocatingStaffNameBadge').textContent = staffName;
+      document.getElementById('allocationActiveBanner').style.display = 'flex';
+      document.getElementById('storeLayoutGridEl').classList.add('allocation-mode-active');
+
+      // Highlight tất cả các ô của nhân viên này
+      document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+        const st = (c.getAttribute('data-staff') || '').trim();
+        if (st.toUpperCase() === staffName.toUpperCase()) {
+          c.classList.add('in-allocation-target');
+        } else {
+          c.classList.remove('in-allocation-target');
+        }
+      });
+
+      updateAllocatingCount();
+      showToast('🎯 Bắt đầu phân bổ cho [' + staffName + ']: Click vào các ô trên sơ đồ để Gán hoặc Bỏ Gán!');
+
+      // Cuộn tới sơ đồ
+      document.getElementById('floorPlanExportTarget').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function exitDirectAllocationMode() {
+      state.isAllocatingDirectly = false;
+      state.allocatingStaff = '';
+
+      document.getElementById('allocationActiveBanner').style.display = 'none';
+      document.getElementById('storeLayoutGridEl').classList.remove('allocation-mode-active');
+
+      document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+        c.classList.remove('in-allocation-target');
+      });
+
+      saveMapAllocations();
+      showToast('✅ Đã hoàn tất và lưu phân bổ khu vực trên sơ đồ!');
+    }
+
+    function updateAllocatingCount() {
+      if (!state.allocatingStaff) return;
+      const count = getStaffAreaCount(state.allocatingStaff);
+      document.getElementById('allocatingAreaCountBadge').textContent = count + ' khu vực';
+    }
+
+    document.getElementById('btnFinishAllocation').onclick = exitDirectAllocationMode;
+    document.getElementById('btnCancelAllocation').onclick = exitDirectAllocationMode;
+    document.getElementById('btnCloseStaffModal').onclick = () => {
+      document.getElementById('staffAllocationModal').style.display = 'none';
+    };
+    document.getElementById('staffAllocationModal').onclick = (e) => {
+      if (e.target.id === 'staffAllocationModal') {
+        document.getElementById('staffAllocationModal').style.display = 'none';
+      }
+    };
 
     // TABS SWITCHING
     document.querySelectorAll('.nav-tab-btn').forEach(btn => {
@@ -1899,6 +2325,24 @@
       } else if (msg.type === 'TOGGLE_ATTENDANCE' && state.employees[msg.index]) {
         state.employees[msg.index].marked = msg.marked;
         renderEmployees();
+      } else if (msg.type === 'BATCH_RENAME_STAFF') {
+        document.querySelectorAll('#storeLayoutGridEl .map-cell').forEach(c => {
+          const st = (c.getAttribute('data-staff') || '').trim();
+          if (st.toUpperCase() === msg.oldStaff.toUpperCase()) {
+            c.setAttribute('data-staff', msg.newStaff);
+            const staffEl = c.querySelector('.cell-staff');
+            if (staffEl) staffEl.textContent = msg.newStaff;
+          }
+        });
+        saveMapAllocations();
+      } else if (msg.type === 'UPDATE_MAP_CELL') {
+        const c = document.querySelector('[data-cell-id="' + msg.cellId + '"]');
+        if (c) {
+          c.setAttribute('data-staff', msg.staff);
+          const staffEl = c.querySelector('.cell-staff');
+          if (staffEl) staffEl.textContent = msg.staff;
+          saveMapAllocations();
+        }
       }
     }
 
