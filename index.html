@@ -1970,10 +1970,6 @@
         <button class="nav-tab-btn active" data-tab="floorMapTab">
           <i class="fa-solid fa-map-location-dot"></i> Sơ Đồ Mặt Bằng
         </button>
-        <button class="nav-tab-btn" data-tab="shiftsTab">
-          <i class="fa-solid fa-clipboard-list"></i> Phân Ca (15 Vị Trí)
-          <span class="tab-badge" id="badgeShiftCount">15/15</span>
-        </button>
         <button class="nav-tab-btn" data-tab="employeesTab">
           <i class="fa-solid fa-users-gear"></i> Danh Sách NV/PG
           <span class="tab-badge" id="badgeEmpCount">26 NV/PG</span>
@@ -2248,12 +2244,6 @@
       </div>
     </div>
 
-    <!-- TAB 2: PHÂN CÔNG 15 VỊ TRÍ TRỰC (W17:Z31) -->
-    <div class="tab-content" id="shiftsTab">
-      <div class="shifts-grid" id="shiftsCardsContainer">
-        <!-- Render 15 thẻ ca trực tự động bằng JavaScript -->
-      </div>
-    </div>
 
         <!-- TAB 3: DANH SÁCH NV/PG (CỘT AC1:AE...) -->
     <div class="tab-content" id="employeesTab">
@@ -2787,8 +2777,14 @@
       }, 2600);
     }
 
-    // RENDER 15 CA TRỰC
+    // RENDER 15 CA TRỰC (NẾU CÓ CONTAINER)
     function renderShifts() {
+      const assignedCount = state.shifts.filter(s => s.nv && s.nv.trim() !== '').length;
+      const badgeShift = document.getElementById('badgeShiftCount');
+      if (badgeShift) {
+        badgeShift.textContent = `${assignedCount}/15 Vị trí`;
+      }
+
       const container = document.getElementById('shiftsCardsContainer');
       if (!container) return;
       container.innerHTML = '';
@@ -2823,9 +2819,6 @@
         `;
         container.appendChild(card);
       });
-
-      const assignedCount = state.shifts.filter(s => s.nv && s.nv.trim()).length;
-      document.getElementById('badgeShiftCount').textContent = `${assignedCount}/15 Vị trí`;
     }
 
     // HELPER: PHÂN LOẠI PG HÃNG HOẶC NHÂN VIÊN
