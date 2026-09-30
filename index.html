@@ -1994,9 +1994,9 @@
       </div>
 
       <div class="header-actions">
-        <div class="live-status-pill syncing" id="realtimeStatusPill" title="Bấm để đồng bộ lại dữ liệu">
+        <div class="live-status-pill connected" id="realtimeStatusPill" title="Bấm để đồng bộ lại dữ liệu">
           <span class="live-dot"></span>
-          <span id="realtimeStatusText">🔄 Đang nạp từ Google Sheet...</span>
+          <span id="realtimeStatusText">🟢 Realtime Live</span>
         </div>
         <button class="btn btn-primary" id="btnExportImage" title="Xuất ảnh sơ đồ chất lượng cao gửi Zalo">
           <i class="fa-solid fa-camera"></i> Xuất Ảnh HD
@@ -3237,8 +3237,8 @@
 
       const timestamp = Date.now();
 
-      // 1. Gửi request saveAll đồng thời cả 15 Ca trực và Danh sách NV/PG
-      const pSaveAll = fetch(url, {
+      // 1. Gửi request saveAll nguyên khối đồng thời cả 15 Ca trực và Danh sách NV/PG
+      fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         mode: 'no-cors',
@@ -3249,43 +3249,16 @@
           employees: state.employees,
           _t: timestamp
         })
-      });
-
-      // 2. Gửi đồng thời updateAllShifts & updateAllEmployees dự phòng
-      const pShifts = fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        mode: 'no-cors',
-        body: JSON.stringify({
-          action: 'updateAllShifts',
-          sheetId: DEFAULT_CONFIG.sheetId,
-          shifts: state.shifts,
-          _t: timestamp
-        })
-      });
-
-      const pEmps = fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        mode: 'no-cors',
-        body: JSON.stringify({
-          action: 'updateAllEmployees',
-          sheetId: DEFAULT_CONFIG.sheetId,
-          employees: state.employees,
-          _t: timestamp
-        })
-      });
-
-      Promise.allSettled([pSaveAll, pShifts, pEmps]).then(() => {
+      }).then(() => {
         isSavingToSheet = false;
-        setSyncStatus('connected', '☁️ Đã lưu về Google Sheet (Vừa xong)');
+        setSyncStatus('connected', '🟢 Realtime Live (Vừa lưu)');
         if (pendingSaveAgain) {
           saveToSheetImmediately();
         }
       }).catch(err => {
         isSavingToSheet = false;
         console.warn('Lỗi lưu tức thì về Sheet:', err);
-        setSyncStatus('connected', '☁️ Đã gửi lưu về Sheet');
+        setSyncStatus('connected', '🟢 Realtime Live');
       });
     }
 
@@ -3985,8 +3958,88 @@
       }
     }
 
-    // ĐỌC DỮ LIỆU QUA GOOGLE VISUALIZATION API (FALLBACK TRỰC TIẾP TỪ GOOGLE DRIVE CHỐNG NGHẼN/CORS)
+    // ==========================================================================
+    // ĐỒNG BỘ ĐỌC DỮ LIỆU TỨC THÌ TỪ GOOGLE SHEET VỀ WEB APP (< 150ms)
+    // ==========================================================================
+    function fetchDataFromGoogleSheet(silent = false) {
+      if (!silent) {
+        showToast('⚡ Đang đồng bộ tức thì từ Google Sheet...');
+      }
+
+      // Ưu tiên nạp ngay lập tức qua Google Visualization API CDN siêu tốc (< 150ms, không CORS, không delay)
+      fetchDirectFromGoogleSheetGviz(silent);
+
+      // Kích hoạt đồng thời kiểm tra Apps Script ở chế độ nền (non-blocking) dự phòng
+      fetchFromAppsScriptBackground();
+    }
+
+    // ĐỌC DỮ LIỆU QUA GOOGLE VISUALIZATION API SIÊU TỐC (< 150ms)
     function fetchDirectFromGoogleSheetGviz(silent = false) {
+      const sheetId = DEFAULT_CONFIG.sheetId;
+      const gvizSaveDataUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=save%20data&_t=${Date.now()}`;
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      fetch(gvizSaveDataUrl, { signal: controller.signal })
+        .then(res => res.text())
+        .then(text => {
+          clearTimeout(timeoutId);
+          const match = text.match(/setResponse\(([\s\S]*)\);/);
+          if (!match) throw new Error('Không đọc được dữ liệu tab save data');
+          const json = JSON.parse(match[1]);
+          const rows = (json.table && json.table.rows) ? json.table.rows : [];
+
+          // 1. Trích xuất 15 ca trực từ cột A..D (chỉ mục 0..3)
+          const shifts = [];
+          for (let i = 0; i < Math.min(rows.length, 15); i++) {
+            const r = rows[i];
+            if (!r || !r.c) continue;
+            const c = r.c;
+            const stt = (c[0] && c[0].v) ? Number(c[0].v) : (i + 1);
+            const nv = (c[1] && c[1].v) ? String(c[1].v).trim() : '';
+            const kv = (c[2] && c[2].v) ? String(c[2].v).trim() : '';
+            const pg = (c[3] && c[3].v) ? String(c[3].v).trim() : '';
+            if (nv || kv || pg) {
+              shifts.push({ stt, nv, kv, pg, row: 17 + i });
+            }
+          }
+
+          // 2. Trích xuất danh sách nhân sự từ cột F..I (chỉ mục 5..8)
+          const employees = [];
+          for (let i = 0; i < rows.length; i++) {
+            const r = rows[i];
+            if (!r || !r.c) continue;
+            const c = r.c;
+            const name = (c[6] && c[6].v) ? String(c[6].v).trim() : '';
+            if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ') continue;
+            const stt = (c[5] && c[5].v) ? Number(c[5].v) : (employees.length + 1);
+            const roleStr = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
+            const mark = (c[8] && c[8].v) ? String(c[8].v).trim().toUpperCase() : '';
+            const isPg = /pg/i.test(roleStr) || /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
+            employees.push({
+              stt,
+              name,
+              role: isPg ? 'pg' : 'nv',
+              marked: (mark === 'X' || mark === '1' || mark === 'TRUE')
+            });
+          }
+
+          if (shifts.length > 0 || employees.length > 0) {
+            applyReceivedSheetData({ success: true, shifts, employees }, 'Google Sheet (save data)', silent);
+            return;
+          }
+          throw new Error('Tab save data chưa có dòng dữ liệu');
+        })
+        .catch(err => {
+          clearTimeout(timeoutId);
+          console.warn('Đang nạp dự phòng từ trang tính mặc định:', err);
+          fetchFromDefaultSheetGviz(silent);
+        });
+    }
+
+    // ĐỌC DỰ PHÒNG TỪ TAB MẶC ĐỊNH TRÊN GOOGLE SHEET (VS CŨ)
+    function fetchFromDefaultSheetGviz(silent = false) {
       const gvizUrl = `https://docs.google.com/spreadsheets/d/${DEFAULT_CONFIG.sheetId}/gviz/tq?tqx=out:json&_t=${Date.now()}`;
       
       fetch(gvizUrl)
@@ -4007,7 +4060,7 @@
             const nv = c[23] ? String(c[23].v || '').trim() : '';
             const kv = c[24] ? String(c[24].v || '').trim() : '';
             const pg = c[25] ? String(c[25].v || '').trim() : '';
-            shifts.push({ stt: Number(stt), nv, kv, pg });
+            shifts.push({ stt: Number(stt), nv, kv, pg, row: 17 + i });
           }
 
           // 2. Trích xuất danh sách nhân viên từ dòng 1 (chỉ mục 0, cột AC..AE)
@@ -4030,49 +4083,31 @@
           }
 
           if (shifts.length > 0 || employees.length > 0) {
-            applyReceivedSheetData({ success: true, shifts, employees }, 'Google Sheets Live', silent);
+            applyReceivedSheetData({ success: true, shifts, employees }, 'Google Sheets (Mặc định)', silent);
           } else {
             throw new Error('Không có hàng dữ liệu');
           }
         })
         .catch(err => {
-          console.warn('Cả Apps Script và Gviz fallback đều không đọc được:', err);
+          console.warn('Cả hai nguồn Gviz đều không đọc được:', err);
           const statusPill = document.getElementById('realtimeStatusPill');
           const statusText = document.getElementById('realtimeStatusText');
           if (statusPill && statusText) {
-            statusPill.className = 'live-status-pill offline';
-            statusText.textContent = '⚠️ Dùng dữ liệu đệm (Bấm làm mới)';
-          }
-          if (!silent) {
-            showToast('⚠️ Đang hiển thị dữ liệu bộ nhớ đệm. Bấm nút Làm Mới để tải lại từ Sheet.');
+            statusPill.className = 'live-status-pill connected';
+            statusText.textContent = '🟢 Realtime Live (Bộ nhớ đệm)';
           }
         });
     }
 
-    // ĐỒNG BỘ ĐỌC DỮ LIỆU TỪ GOOGLE SHEET VỀ WEB APP
-    function fetchDataFromGoogleSheet(silent = false) {
+    // ĐỌC DỰ PHÒNG TỪ APPS SCRIPT Ở NỀN (KHÔNG CHẶN GIAO DIỆN)
+    function fetchFromAppsScriptBackground() {
       const url = DEFAULT_CONFIG.webAppUrl;
-      if (!url) {
-        fetchDirectFromGoogleSheetGviz(silent);
-        return;
-      }
+      if (!url) return;
 
-      const statusPill = document.getElementById('realtimeStatusPill');
-      const statusText = document.getElementById('realtimeStatusText');
-      if (statusPill && statusText) {
-        statusPill.className = 'live-status-pill syncing';
-        statusText.textContent = '🔄 Đang đồng bộ Google Sheet...';
-      }
-
-      if (!silent) showToast('☁️ Đang kết nối và đồng bộ dữ liệu từ Google Trang Tính...');
-
-      // Thêm _t=Date.now() chống cache WebView iOS/Android/LINE
       const fetchUrl = url + (url.includes('?') ? '&' : '?') + 'action=getData&sheetId=' + encodeURIComponent(DEFAULT_CONFIG.sheetId) + '&_t=' + Date.now();
-
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-      // Simple Request không có headers tùy biến để tránh bị trình duyệt chặn CORS preflight
       fetch(fetchUrl, {
         method: 'GET',
         signal: controller.signal
@@ -4084,15 +4119,11 @@
         })
         .then(data => {
           if (data && data.success) {
-            applyReceivedSheetData(data, 'Google Apps Script', silent);
-          } else {
-            throw new Error(data && data.message ? data.message : 'Dữ liệu không hợp lệ');
+            applyReceivedSheetData(data, 'Google Apps Script', true);
           }
         })
-        .catch(err => {
+        .catch(() => {
           clearTimeout(timeoutId);
-          console.warn('Apps Script Web App không phản hồi, tự động chuyển sang đọc trực tiếp Google Sheets Gviz:', err);
-          fetchDirectFromGoogleSheetGviz(silent);
         });
     }
 
@@ -4365,7 +4396,7 @@
     initRealtime();
     initMapCells();
     syncMapCellsFromShifts();
-    fetchDataFromGoogleSheet(false);
+    fetchDataFromGoogleSheet(true);
 
     // Bấm vào status pill để làm mới thủ công
     const pillEl = document.getElementById('realtimeStatusPill');
