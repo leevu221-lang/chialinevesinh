@@ -2187,10 +2187,11 @@
   <script>
     const DEFAULT_CONFIG = {
       sheetId: "1z6vAzHRIrYihI91Yw1dMnluPPL0BuAYiZarPBD5qNfw",
-      webAppUrl: localStorage.getItem('phancong_webapp_url') || "",
+      webAppUrl: "https://script.google.com/macros/s/AKfycbx0FkqSMkIymq7Le4L3lkHJ_33y35zQOfAev-4b-BMJdL1MCUIIVGvjLqd9dk8PIhwjSw/exec",
       mqttBroker: "wss://broker.emqx.io:8084/mqtt",
       mqttTopic: "st1841/vesinh/realtime_sync"
     };
+    localStorage.setItem('phancong_webapp_url', DEFAULT_CONFIG.webAppUrl);
 
     const state = {
       activeTab: 'floorMapTab',
@@ -2647,7 +2648,7 @@
 
       fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         mode: 'no-cors',
         body: JSON.stringify({
           action: 'updateAllEmployees',
@@ -2655,9 +2656,9 @@
           employees: state.employees
         })
       }).then(() => {
-        showToast('☁️ Đã đồng bộ danh sách NV/PG về Google Sheet');
+        showToast('☁️ Đã lưu danh sách NV/PG về Google Sheet (Cột AC..AE)');
       }).catch(err => {
-        console.warn('Lỗi lưu danh sách nhân viên:', err);
+        console.warn('Lỗi lưu danh sách NV/PG về Sheet:', err);
       });
     }
 
@@ -3068,7 +3069,7 @@
 
       fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         mode: 'no-cors',
         body: JSON.stringify({
           action: 'updateAllShifts',
@@ -3076,14 +3077,55 @@
           shifts: state.shifts
         })
       }).then(() => {
-        showToast('☁️ Đã lưu đồng bộ dữ liệu về Google Sheet');
+        showToast('☁️ Đã lưu 15 vị trí phân công về Google Sheet');
       }).catch(err => {
-        console.warn('Lỗi lưu sheet:', err);
+        console.warn('Lỗi lưu ca trực về Sheet:', err);
       });
     }
 
     let currentExportBlob = null;
     let currentExportDataUrl = "";
+
+
+    // ĐỒNG BỘ ĐỌC DỮ LIỆU TỪ GOOGLE SHEET VỀ WEB APP
+    function fetchDataFromGoogleSheet(silent = false) {
+      const url = DEFAULT_CONFIG.webAppUrl;
+      if (!url) return;
+
+      if (!silent) showToast('☁️ Đang đồng bộ dữ liệu từ Google Trang Tính...');
+
+      fetch(url + '?action=getData&sheetId=' + DEFAULT_CONFIG.sheetId)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success) {
+            let hasUpdated = false;
+
+            // Cập nhật 15 ca trực nếu có
+            if (Array.isArray(data.shifts) && data.shifts.length > 0) {
+              state.shifts = data.shifts;
+              localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
+              renderShifts();
+              hasUpdated = true;
+            }
+
+            // Cập nhật danh sách NV/PG nếu có
+            if (Array.isArray(data.employees) && data.employees.length > 0) {
+              state.employees = data.employees;
+              localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+              renderEmployees();
+              if (typeof initModalDropdowns === 'function') initModalDropdowns();
+              hasUpdated = true;
+            }
+
+            if (hasUpdated) {
+              showToast('✅ Đã nạp thành công dữ liệu mới nhất từ Google Trang Tính!');
+            }
+          }
+        })
+        .catch(err => {
+          console.warn('Không thể đọc trực tiếp từ Sheet, sử dụng dữ liệu bộ nhớ đệm:', err);
+        });
+    }
 
     // NÚT XUẤT ẢNH HD: KHÔNG AUTO TẢI VỀ, HIỂN THỊ POPUP VÀ AUTO COPY
     document.getElementById('btnExportImage').addEventListener('click', () => {
@@ -3169,16 +3211,23 @@
       if (e.target.id === 'imagePreviewModal') closePreviewModal();
     };
 
-    // LÀM MỚI TRANG
+    // LÀM MỚI & ĐỒNG BỘ TỪ GOOGLE SHEET
     document.getElementById('btnReloadPage').addEventListener('click', () => {
-      window.location.reload();
+      fetchDataFromGoogleSheet(false);
     });
 
-    // NÚT LƯU VỀ SHEET
-    document.getElementById('btnSaveToSheetMain').addEventListener('click', saveAllToSheet);
+    // NÚT LƯU VỀ SHEET (LƯU CẢ CA TRỰC VÀ DANH SÁCH NV/PG)
+    document.getElementById('btnSaveToSheetMain').addEventListener('click', () => {
+      showToast('☁️ Đang lưu toàn bộ ca trực & danh sách NV/PG về Google Sheet...');
+      saveAllToSheet();
+      saveAllEmployeesToSheet();
+    });
 
     // MODAL CÀI ĐẶT
-    document.getElementById('btnOpenConfigModal').onclick = () => document.getElementById('configModal').style.display = 'flex';
+    document.getElementById('btnOpenConfigModal').onclick = () => {
+      document.getElementById('cfgWebAppUrl').value = DEFAULT_CONFIG.webAppUrl;
+      document.getElementById('configModal').style.display = 'flex';
+    };
     document.getElementById('btnCloseConfigModal').onclick = () => document.getElementById('configModal').style.display = 'none';
     document.getElementById('btnSaveConfig').onclick = () => {
       const url = document.getElementById('cfgWebAppUrl').value.trim();
@@ -3193,6 +3242,7 @@
     renderEmployees();
     initRealtime();
     initMapCells();
+    fetchDataFromGoogleSheet(true);
   </script>
 </body>
 </html>
