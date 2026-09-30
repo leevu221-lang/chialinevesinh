@@ -779,6 +779,148 @@
     }
 
 
+
+    /* BỐ CỤC 2 CỘT: NHÂN VIÊN BÊN TRÁI, PG BÊN PHẢI */
+    .employees-dual-columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 14px;
+      align-items: start;
+    }
+    @media (max-width: 980px) {
+      .employees-dual-columns {
+        grid-template-columns: 1fr;
+      }
+    }
+    .emp-column-panel {
+      background: #ffffff;
+      border: 1.5px solid #fef08a;
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .emp-column-panel.panel-staff {
+      border-color: #bae6fd;
+      background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 65px);
+    }
+    .emp-column-panel.panel-pg {
+      border-color: #fbcfe8;
+      background: linear-gradient(180deg, #fdf2f8 0%, #ffffff 65px);
+    }
+    .emp-column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1.5px solid #f1f5f9;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .emp-column-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .emp-column-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .emp-column-icon.staff {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+    }
+    .emp-column-icon.pg {
+      background: #db2777;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(219, 39, 119, 0.25);
+    }
+    .emp-column-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+    }
+    .emp-column-panel.panel-staff .emp-column-title {
+      color: #0369a1;
+    }
+    .emp-column-panel.panel-pg .emp-column-title {
+      color: #be185d;
+    }
+    .emp-column-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    .emp-column-panel.panel-staff .emp-column-badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .emp-column-panel.panel-pg .emp-column-badge {
+      background: #fce7f3;
+      color: #be185d;
+      border: 1px solid #fbcfe8;
+    }
+    .btn-quick-add-column {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border: 1.5px solid transparent;
+      transition: all 0.2s ease;
+    }
+    .btn-quick-add-column.staff {
+      background: #e0f2fe;
+      color: #0284c7;
+      border-color: #bae6fd;
+    }
+    .btn-quick-add-column.staff:hover {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+    }
+    .btn-quick-add-column.pg {
+      background: #fce7f3;
+      color: #db2777;
+      border-color: #fbcfe8;
+    }
+    .btn-quick-add-column.pg:hover {
+      background: #db2777;
+      color: #ffffff;
+      border-color: #db2777;
+      box-shadow: 0 2px 6px rgba(219, 39, 119, 0.3);
+    }
+    .emp-column-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 120px;
+    }
+    @media (min-width: 1400px) {
+      .emp-column-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+    }
+
     /* QUẢN LÝ DANH SÁCH NV/PG */
     .employees-toolbar {
       background: #ffffff;
@@ -1678,9 +1820,49 @@
         </div>
       </div>
 
-      <!-- LƯỚI CARD NHÂN VIÊN & PG -->
-      <div class="employees-grid" id="employeesGridContainer">
-        <!-- Render danh sách NV/PG tự động bằng JavaScript -->
+      <!-- BỐ CỤC 2 CỘT: NHÂN VIÊN BÊN TRÁI, PG BÊN PHẢI -->
+      <div class="employees-dual-columns">
+        <!-- CỘT 1: NHÂN VIÊN SIÊU THỊ (BÊN TRÁI) -->
+        <div class="emp-column-panel panel-staff">
+          <div class="emp-column-header">
+            <div class="emp-column-title-wrap">
+              <div class="emp-column-icon staff">
+                <i class="fa-solid fa-user-tie"></i>
+              </div>
+              <div>
+                <span class="emp-column-title">NHÂN VIÊN SIÊU THỊ</span>
+                <span class="emp-column-badge" id="badgeColumnStaffCount">0 NV</span>
+              </div>
+            </div>
+            <button class="btn-quick-add-column staff" onclick="openAddEmployeeModal('nv')" title="Thêm Nhân Viên Siêu Thị Mới">
+              <i class="fa-solid fa-user-plus"></i> Thêm NV
+            </button>
+          </div>
+          <div class="emp-column-grid" id="staffNvGridContainer">
+            <!-- Render danh sách Nhân Viên Siêu Thị -->
+          </div>
+        </div>
+
+        <!-- CỘT 2: PG HỖ TRỢ HÃNG (BÊN PHẢI) -->
+        <div class="emp-column-panel panel-pg">
+          <div class="emp-column-header">
+            <div class="emp-column-title-wrap">
+              <div class="emp-column-icon pg">
+                <i class="fa-solid fa-handshake"></i>
+              </div>
+              <div>
+                <span class="emp-column-title">PG HỖ TRỢ HÃNG</span>
+                <span class="emp-column-badge" id="badgeColumnPgCount">0 PG</span>
+              </div>
+            </div>
+            <button class="btn-quick-add-column pg" onclick="openAddEmployeeModal('pg')" title="Thêm PG Hỗ Trợ Hãng Mới">
+              <i class="fa-solid fa-plus"></i> Thêm PG
+            </button>
+          </div>
+          <div class="emp-column-grid" id="staffPgGridContainer">
+            <!-- Render danh sách PG Hỗ Trợ Hãng -->
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2135,21 +2317,70 @@
       return pgKeywords.some(kw => name.includes(kw));
     }
 
-    // RENDER DANH SÁCH NV / PG
+    // HELPER TẠO CARD HTML CHO NHÂN SỰ
+    function createEmployeeCardElement(emp) {
+      const originalIdx = state.employees.indexOf(emp);
+      const isPg = isPgStaff(emp);
+      const card = document.createElement('div');
+      card.className = 'employee-card ' + (emp.marked ? 'present' : '');
+      card.innerHTML = `
+        <div class="emp-info">
+          <div class="emp-stt">${emp.stt}</div>
+          <div>
+            <div class="emp-name">${emp.name}</div>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">
+              <span class="emp-role-badge ${isPg ? 'role-pg' : 'role-nv'}">
+                ${isPg ? '<i class="fa-solid fa-handshake"></i> PG Hãng' : '<i class="fa-solid fa-user"></i> NV Siêu Thị'}
+              </span>
+              <span style="font-size:11px; color:var(--text-muted);">
+                ${emp.marked ? '<span style="color:#059669; font-weight:700;">✓ Có mặt</span>' : 'Vắng mặt'}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="emp-actions-group">
+          <button class="btn-toggle-attend ${emp.marked ? 'checked' : 'unchecked'}" onclick="toggleEmployeeAttendance(${originalIdx})" title="Điểm danh có mặt / vắng">
+            ${emp.marked ? '✓ Có mặt' : '○ Vắng'}
+          </button>
+          <button class="btn-action-icon edit" onclick="openEditEmployeeModal(${originalIdx})" title="Sửa thông tin">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button class="btn-action-icon delete" onclick="confirmDeleteEmployee(${originalIdx})" title="Xoá khỏi danh sách">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+      `;
+      return card;
+    }
+
+    // RENDER DANH SÁCH NV / PG CHIA LÀM 2 CỘT (NHÂN VIÊN BÊN TRÁI, PG BÊN PHẢI)
     function renderEmployees() {
-      const container = document.getElementById('employeesGridContainer');
-      if (!container) return;
-      container.innerHTML = '';
+      const staffContainer = document.getElementById('staffNvGridContainer');
+      const pgContainer = document.getElementById('staffPgGridContainer');
+      if (!staffContainer || !pgContainer) return;
+
+      staffContainer.innerHTML = '';
+      pgContainer.innerHTML = '';
 
       let presentCount = 0;
       let pgCount = 0;
+      let staffNvPresent = 0;
+      let staffPgPresent = 0;
 
       state.employees.forEach((emp) => {
+        const isPg = isPgStaff(emp);
+        if (isPg) {
+          pgCount++;
+          if (emp.marked) staffPgPresent++;
+        } else {
+          if (emp.marked) staffNvPresent++;
+        }
         if (emp.marked) presentCount++;
-        if (isPgStaff(emp)) pgCount++;
       });
 
-      const absentCount = Math.max(0, state.employees.length - presentCount);
+      const totalEmployees = state.employees.length;
+      const staffNvCount = totalEmployees - pgCount;
+      const absentCount = Math.max(0, totalEmployees - presentCount);
 
       // Lọc danh sách theo từ khóa tìm kiếm nếu có
       const kw = (state.empSearchKeyword || '').trim().toLowerCase();
@@ -2157,54 +2388,49 @@
         ? state.employees.filter(emp => (emp.name || '').toLowerCase().includes(kw))
         : state.employees;
 
-      if (displayList.length === 0) {
-        container.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #78716c; background: #fffdf5; border-radius: 12px; border: 1.5px dashed #fde68a;">
-            <i class="fa-solid fa-user-slash" style="font-size: 32px; color: #d97706; margin-bottom: 10px;"></i>
-            <div style="font-weight: 700; font-size: 15px; color: #92400e;">Không tìm thấy nhân sự nào phù hợp</div>
-            <div style="font-size: 12.5px; margin-top: 4px;">Thử nhập từ khóa khác hoặc bấm nút "Thêm NV / PG Mới" để tạo mới</div>
+      const staffNvList = displayList.filter(emp => !isPgStaff(emp));
+      const staffPgList = displayList.filter(emp => isPgStaff(emp));
+
+      // 1. Render Cột Nhân Viên Siêu Thị (Bên Trái)
+      if (staffNvList.length === 0) {
+        staffContainer.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 24px 14px; color: #78716c; background: #f8fafc; border-radius: 10px; border: 1.5px dashed #cbd5e1;">
+            <i class="fa-solid fa-user-slash" style="font-size: 24px; color: #94a3b8; margin-bottom: 6px;"></i>
+            <div style="font-weight: 700; font-size: 13.5px; color: #475569;">Không có nhân viên siêu thị nào</div>
+            <div style="font-size: 11.5px; margin-top: 2px;">Bấm "Thêm NV" để thêm nhân sự vào cột này</div>
           </div>
         `;
       } else {
-        displayList.forEach((emp) => {
-          const originalIdx = state.employees.indexOf(emp);
-          const isPg = isPgStaff(emp);
-          const card = document.createElement('div');
-          card.className = 'employee-card ' + (emp.marked ? 'present' : '');
-          card.innerHTML = `
-            <div class="emp-info">
-              <div class="emp-stt">${emp.stt}</div>
-              <div>
-                <div class="emp-name">${emp.name}</div>
-                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">
-                  <span class="emp-role-badge ${isPg ? 'role-pg' : 'role-nv'}">
-                    ${isPg ? '<i class="fa-solid fa-handshake"></i> PG Hãng' : '<i class="fa-solid fa-user"></i> NV Siêu Thị'}
-                  </span>
-                  <span style="font-size:11px; color:var(--text-muted);">
-                    ${emp.marked ? '<span style="color:#059669; font-weight:700;">✓ Có mặt</span>' : 'Vắng mặt'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div class="emp-actions-group">
-              <button class="btn-toggle-attend ${emp.marked ? 'checked' : 'unchecked'}" onclick="toggleEmployeeAttendance(${originalIdx})" title="Điểm danh có mặt / vắng">
-                ${emp.marked ? '✓ Có mặt' : '○ Vắng'}
-              </button>
-              <button class="btn-action-icon edit" onclick="openEditEmployeeModal(${originalIdx})" title="Sửa thông tin NV/PG">
-                <i class="fa-solid fa-pen-to-square"></i>
-              </button>
-              <button class="btn-action-icon delete" onclick="confirmDeleteEmployee(${originalIdx})" title="Xoá khỏi danh sách">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </div>
-          `;
-          container.appendChild(card);
+        staffNvList.forEach(emp => {
+          staffContainer.appendChild(createEmployeeCardElement(emp));
         });
       }
 
-      // Cập nhật các thẻ thống kê & badge
+      // 2. Render Cột PG Hỗ Trợ Hãng (Bên Phải)
+      if (staffPgList.length === 0) {
+        pgContainer.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 24px 14px; color: #78716c; background: #fff5f8; border-radius: 10px; border: 1.5px dashed #fbcfe8;">
+            <i class="fa-solid fa-handshake-slash" style="font-size: 24px; color: #f472b6; margin-bottom: 6px;"></i>
+            <div style="font-weight: 700; font-size: 13.5px; color: #9d174d;">Không có PG hãng nào</div>
+            <div style="font-size: 11.5px; margin-top: 2px;">Bấm "Thêm PG" để thêm PG vào cột này</div>
+          </div>
+        `;
+      } else {
+        staffPgList.forEach(emp => {
+          pgContainer.appendChild(createEmployeeCardElement(emp));
+        });
+      }
+
+      // 3. Cập nhật Badge số lượng từng cột
+      const badgeStaff = document.getElementById('badgeColumnStaffCount');
+      if (badgeStaff) badgeStaff.textContent = `${staffNvCount} NV (${staffNvPresent} có mặt)`;
+
+      const badgePg = document.getElementById('badgeColumnPgCount');
+      if (badgePg) badgePg.textContent = `${pgCount} PG (${staffPgPresent} có mặt)`;
+
+      // 4. Cập nhật các thẻ thống kê tổng
       const totalEl = document.getElementById('statTotalEmployees');
-      if (totalEl) totalEl.textContent = state.employees.length;
+      if (totalEl) totalEl.textContent = totalEmployees;
 
       const presentEl = document.getElementById('statPresentCount');
       if (presentEl) presentEl.textContent = presentCount;
@@ -2216,7 +2442,7 @@
       if (absentEl) absentEl.textContent = absentCount;
 
       const badgeEl = document.getElementById('badgeEmpCount');
-      if (badgeEl) badgeEl.textContent = `${state.employees.length} NV/PG`;
+      if (badgeEl) badgeEl.textContent = `${totalEmployees} NV/PG`;
     }
 
     // CẬP NHẬT 1 TRƯỜNG CA TRỰC
@@ -2243,15 +2469,23 @@
     // CHỨC NĂNG THÊM / SỬA / XÓA NHÂN VIÊN & PG
     // ==========================================================================
 
-    // MỞ MODAL THÊM NV/PG
-    window.openAddEmployeeModal = function() {
+    // MỞ MODAL THÊM NV/PG (HỖ TRỢ MẶC ĐỊNH VAI TRÒ)
+    window.openAddEmployeeModal = function(defaultRole) {
+      const role = (defaultRole === 'pg') ? 'pg' : 'nv';
       document.getElementById('empEditIndex').value = "-1";
       document.getElementById('empInputName').value = "";
-      document.getElementById('empInputRole').value = "nv";
+      document.getElementById('empInputRole').value = role;
       const radios = document.querySelectorAll('input[name="empStatusRadio"]');
       radios.forEach(r => r.checked = (r.value === 'present'));
       document.getElementById('empRenameAllocationsRow').style.display = 'none';
-      document.getElementById('employeeModalTitle').innerHTML = '<i class="fa-solid fa-user-plus" style="color:#d97706;"></i> Thêm NV / PG Mới';
+      
+      const titleEl = document.getElementById('employeeModalTitle');
+      if (role === 'pg') {
+        titleEl.innerHTML = '<i class="fa-solid fa-handshake" style="color:#db2777;"></i> Thêm PG Hãng Mới';
+      } else {
+        titleEl.innerHTML = '<i class="fa-solid fa-user-plus" style="color:#0284c7;"></i> Thêm Nhân Viên Siêu Thị';
+      }
+      
       document.getElementById('employeeModal').style.display = 'flex';
       setTimeout(() => document.getElementById('empInputName').focus(), 100);
     };
