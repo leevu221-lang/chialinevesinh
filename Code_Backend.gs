@@ -108,6 +108,15 @@ function handleApiOrHtml(e) {
       .setMimeType(ContentService.MimeType.JSON);
   }
 
+  // API: Cập nhật toàn bộ danh sách Nhân viên & PG (Thêm/Sửa/Xóa)
+  if (params && params.action === "updateAllEmployees") {
+    const employees = params.employees || (postBody && postBody.employees) || [];
+    const targetSheetId = params.sheetId || (postBody && postBody.sheetId) || SPREADSHEET_ID;
+    const res = updateAllEmployees(employees, targetSheetId);
+    return ContentService.createTextOutput(JSON.stringify(res))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   // Trả về giao diện người dùng
   return getAppHtmlOutput();
 }
@@ -169,24 +178,22 @@ function getShiftData(targetSheetId) {
       }
     }
 
-    // 2. Đọc Bảng 2: Danh sách 26 Nhân viên siêu thị (Dòng 1..26 => index 0..25)
-    // Cột AC: STT (index 28), Cột AD: Tên (29), Cột AE: Đánh dấu (30)
+    // 2. Đọc Bảng 2: Danh sách Nhân viên & PG (Cột AC: STT, Cột AD: Tên, Cột AE: Đánh dấu)
     const employees = [];
-    for (let r = 0; r <= 25; r++) {
-      if (r < values.length) {
-        const row = values[r];
-        const name = row[29] ? String(row[29]).trim() : "";
-        if (name) {
-          const stt = row[28] ? parseInt(row[28], 10) : (r + 1);
-          const mark = row[30] ? String(row[30]).trim().toUpperCase() : "";
-          const isMarked = mark === "X" || mark === "TRUE" || mark === "1";
-          employees.push({
-            stt: stt,
-            rowInSheet: r + 1,
-            name: name,
-            marked: isMarked
-          });
-        }
+    const maxEmpRow = Math.min(values.length, 60);
+    for (let r = 0; r < maxEmpRow; r++) {
+      const row = values[r];
+      const name = row[29] ? String(row[29]).trim() : "";
+      if (name) {
+        const stt = row[28] ? parseInt(row[28], 10) : (employees.length + 1);
+        const mark = row[30] ? String(row[30]).trim().toUpperCase() : "";
+        const isMarked = mark === "X" || mark === "TRUE" || mark === "1";
+        employees.push({
+          stt: stt,
+          rowInSheet: r + 1,
+          name: name,
+          marked: isMarked
+        });
       }
     }
 
@@ -300,12 +307,49 @@ function toggleEmployeeAttendance(stt, isMarked, targetSheetId) {
 }
 
 /**
- * 9. Trả về giao diện HTML
+ * 9. Cập nhật toàn bộ danh sách Nhân viên & PG (Thêm/Sửa/Xóa)
+ */
+function updateAllEmployees(employees, targetSheetId) {
+  try {
+    const sheet = getTargetSheet(targetSheetId);
+    if (!sheet) return { success: false, message: "Không tìm thấy trang tính!" };
+    if (!Array.isArray(employees)) {
+      return { success: false, message: "Dữ liệu danh sách NV/PG không hợp lệ" };
+    }
+
+    // Xóa vùng dữ liệu nhân viên cũ trong Sheet (Cột AC..AE, dòng 1..60)
+    sheet.getRange(1, 29, 60, 3).clearContent();
+
+    if (employees.length > 0) {
+      const rowData = [];
+      for (let i = 0; i < employees.length; i++) {
+        const emp = employees[i] || {};
+        const stt = emp.stt || (i + 1);
+        const name = emp.name ? String(emp.name).trim() : "";
+        const mark = (emp.marked === true || emp.marked === "X" || emp.marked === "1") ? "X" : "";
+        rowData.push([stt, name, mark]);
+      }
+      sheet.getRange(1, 29, rowData.length, 3).setValues(rowData);
+    }
+    SpreadsheetApp.flush();
+
+    return {
+      success: true,
+      totalUpdated: employees.length,
+      message: "Đã cập nhật danh sách " + employees.length + " NV/PG vào Google Sheet!"
+    };
+  } catch (err) {
+    return { success: false, message: err.toString() };
+  }
+}
+
+/**
+ * 10. Trả về giao diện HTML
  */
 function getAppHtmlOutput() {
   try {
     return HtmlService.createHtmlOutputFromFile("Index")
-      .setTitle("Phân Công Trực Siêu Thị 1841 - Tone Tím Pastel")
+      .setTitle("Phân Công Trực Siêu Thị 1841 - Tone Vàng Pastel")
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
       .addMetaTag("viewport", "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no");
   } catch (e) {

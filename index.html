@@ -778,6 +778,108 @@
       border-color: #e7e5e4;
     }
 
+
+    /* QUẢN LÝ DANH SÁCH NV/PG */
+    .employees-toolbar {
+      background: #ffffff;
+      border: 1.5px solid #fef08a;
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      margin-bottom: 14px;
+      box-shadow: var(--card-shadow);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .emp-search-wrap {
+      position: relative;
+      width: 250px;
+    }
+    .emp-search-wrap i {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #b45309;
+      font-size: 12.5px;
+    }
+    .emp-search-wrap input {
+      width: 100%;
+      padding: 7px 12px 7px 32px;
+      border: 1.5px solid #fde68a;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: #fffbeb;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .emp-search-wrap input:focus {
+      border-color: #f59e0b;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+    }
+    .emp-role-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    .emp-role-badge.role-nv {
+      background: #e0f2fe;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+    .emp-role-badge.role-pg {
+      background: #fce7f3;
+      color: #be185d;
+      border: 1px solid #fbcfe8;
+    }
+    .emp-actions-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-action-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12.5px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-action-icon.edit {
+      background: #fef3c7;
+      border-color: #fde68a;
+      color: #b45309;
+    }
+    .btn-action-icon.edit:hover {
+      background: #fde68a;
+      color: #92400e;
+      transform: translateY(-1px);
+    }
+    .btn-action-icon.delete {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+    .btn-action-icon.delete:hover {
+      background: #fee2e2;
+      color: #991b1b;
+      transform: translateY(-1px);
+    }
+
     /* TOAST */
     .toast-container {
       position: fixed;
@@ -1241,8 +1343,8 @@
           <span class="tab-badge" id="badgeShiftCount">15/15</span>
         </button>
         <button class="nav-tab-btn" data-tab="employeesTab">
-          <i class="fa-solid fa-users"></i> Điểm Danh Nhân Viên
-          <span class="tab-badge" id="badgeEmpCount">26 NV</span>
+          <i class="fa-solid fa-users-gear"></i> Danh Sách NV/PG
+          <span class="tab-badge" id="badgeEmpCount">26 NV/PG</span>
         </button>
         <button class="nav-tab-btn" data-tab="rulesTab">
           <i class="fa-solid fa-scroll"></i> Quy Ước
@@ -1513,16 +1615,38 @@
       </div>
     </div>
 
-    <!-- TAB 3: ĐIỂM DANH & 26 NHÂN VIÊN (AC1:AE26) -->
+        <!-- TAB 3: DANH SÁCH NV/PG (CỘT AC1:AE...) -->
     <div class="tab-content" id="employeesTab">
-      <div class="employees-stats-row">
+      <!-- THANH CÔNG CỤ QUẢN LÝ NV/PG -->
+      <div class="employees-toolbar">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <h2 style="font-size: 15px; font-weight: 800; color: #92400e; margin: 0; display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-users-gear"></i> QUẢN LÝ DANH SÁCH NHÂN VIÊN & PG
+          </h2>
+          <span class="badge-tag" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a; font-size:11px;">
+            <i class="fa-solid fa-table-cells"></i> Cột AC - AE Google Sheet
+          </span>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div class="emp-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="employeeSearchInput" placeholder="Tìm tên NV hoặc PG...">
+          </div>
+          <button class="btn btn-primary" id="btnOpenAddEmployeeModal" style="background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 3px 10px rgba(217, 119, 6, 0.3); padding:7px 15px; font-size:12.5px;">
+            <i class="fa-solid fa-user-plus"></i> Thêm NV / PG Mới
+          </button>
+        </div>
+      </div>
+
+      <!-- HÀNG THỐNG KÊ NHÂN SỰ -->
+      <div class="employees-stats-row" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
         <div class="stat-card">
           <div class="stat-icon" style="background:#f59e0b;">
             <i class="fa-solid fa-users"></i>
           </div>
           <div>
             <div class="stat-value" id="statTotalEmployees">26</div>
-            <div class="stat-label">Tổng Nhân Viên</div>
+            <div class="stat-label">Tổng Nhân Sự (NV+PG)</div>
           </div>
         </div>
         <div class="stat-card">
@@ -1539,14 +1663,24 @@
             <i class="fa-solid fa-handshake"></i>
           </div>
           <div>
-            <div class="stat-value">10</div>
+            <div class="stat-value" id="statPgCount">10</div>
             <div class="stat-label">PG Hỗ Trợ Hãng</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#64748b;">
+            <i class="fa-solid fa-user-xmark"></i>
+          </div>
+          <div>
+            <div class="stat-value" id="statAbsentCount">0</div>
+            <div class="stat-label">Vắng Mặt / Nghỉ Ca</div>
           </div>
         </div>
       </div>
 
+      <!-- LƯỚI CARD NHÂN VIÊN & PG -->
       <div class="employees-grid" id="employeesGridContainer">
-        <!-- Render danh sách 26 nhân viên tự động bằng JavaScript -->
+        <!-- Render danh sách NV/PG tự động bằng JavaScript -->
       </div>
     </div>
 
@@ -1767,6 +1901,85 @@
     </div>
   </div>
 
+  <!-- MODAL THÊM / CHỈNH SỬA NV / PG -->
+  <div class="modal-overlay" id="employeeModal">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-title">
+        <span id="employeeModalTitle"><i class="fa-solid fa-user-plus" style="color:#d97706;"></i> Thêm NV / PG Mới</span>
+        <button class="btn-icon" id="btnCloseEmployeeModal" style="width:28px;height:28px;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:16px; margin-top:14px;">
+        <input type="hidden" id="empEditIndex" value="-1">
+        <div>
+          <label style="display:block; font-size:12.5px; font-weight:700; color:#78350f; margin-bottom:6px;">
+            Họ và Tên Nhân Viên / PG <span style="color:#ef4444;">*</span>
+          </label>
+          <input type="text" id="empInputName" class="shift-field-input" placeholder="Ví dụ: Huỳnh Hoàng Phúc hoặc Oanh LG" style="width:100%; font-size:13.5px; font-weight:600;">
+        </div>
+
+        <div>
+          <label style="display:block; font-size:12.5px; font-weight:700; color:#78350f; margin-bottom:6px;">
+            Phân Loại Nhân Sự
+          </label>
+          <select id="empInputRole" class="shift-field-select" style="width:100%; font-size:13.5px; font-weight:600;">
+            <option value="nv">👤 Nhân viên siêu thị</option>
+            <option value="pg">🤝 PG Hãng hỗ trợ</option>
+          </select>
+        </div>
+
+        <div>
+          <label style="display:block; font-size:12.5px; font-weight:700; color:#78350f; margin-bottom:8px;">
+            Trạng Thái Điểm Danh
+          </label>
+          <div style="display:flex; gap:20px; align-items:center;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; font-weight:600;">
+              <input type="radio" name="empStatusRadio" value="present" checked> <span style="color:#059669;">✓ Có mặt / Đang trực</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:13px; font-weight:600;">
+              <input type="radio" name="empStatusRadio" value="absent"> <span style="color:#78716c;">○ Vắng mặt</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="empRenameAllocationsRow" style="display:none; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:10px 12px;">
+          <label style="display:flex; align-items:flex-start; gap:8px; cursor:pointer; font-size:12px; color:#92400e; font-weight:600; line-height:1.4;">
+            <input type="checkbox" id="empSyncAllocationName" checked style="margin-top:2px;">
+            <span>Đồng thời cập nhật tên mới vào tất cả 15 ca trực và các ô sơ đồ mặt bằng đã gán tên này</span>
+          </label>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:18px;">
+        <button class="btn btn-secondary" id="btnCancelEmployeeModal">Hủy</button>
+        <button class="btn btn-primary" id="btnSaveEmployeeModal" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+          <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL XÁC NHẬN XÓA NV / PG -->
+  <div class="modal-overlay" id="deleteEmployeeModal">
+    <div class="modal-box" style="max-width: 440px;">
+      <div class="modal-title">
+        <span style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> Xác Nhận Xóa Nhân Sự</span>
+        <button class="btn-icon" id="btnCloseDeleteModal" style="width:28px;height:28px;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div style="font-size:13.5px; color:#44403c; line-height:1.6; margin-top:12px;">
+        <p>Bạn có chắc chắn muốn xóa nhân sự <strong id="deleteEmpNameSpan" style="color:#dc2626; font-size:14.5px;"></strong> khỏi danh sách?</p>
+        <div style="font-size:12px; color:#78716c; margin-top:10px; background:#fef2f2; padding:10px 12px; border-radius:8px; border:1px solid #fecaca; display:flex; gap:8px; align-items:flex-start;">
+          <i class="fa-solid fa-circle-info" style="color:#dc2626; margin-top:2px;"></i>
+          <span>Hệ thống sẽ tự động cập nhật lại số thứ tự (STT) liên tục và đồng bộ lên Google Sheet.</span>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:18px;">
+        <button class="btn btn-secondary" id="btnCancelDeleteModal">Hủy Bỏ</button>
+        <button class="btn btn-primary" id="btnConfirmDeleteModal" style="background:#dc2626; border-color:#b91c1c;">
+          <i class="fa-solid fa-trash-can"></i> Xóa Khỏi Danh Sách
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL CẤU HÌNH WEB APP URL -->
   <div class="modal-overlay" id="configModal">
     <div class="modal-box">
@@ -1801,7 +2014,9 @@
       activeTab: 'floorMapTab',
       shifts: [],
       employees: [],
-      searchKeyword: ''
+      searchKeyword: '',
+      empSearchKeyword: '',
+      pendingDeleteEmpIndex: -1
     };
 
     // Khởi tạo 15 ca trực mặc định từ Sheet
@@ -1910,37 +2125,98 @@
       document.getElementById('badgeShiftCount').textContent = `${assignedCount}/15 Vị trí`;
     }
 
-    // RENDER 26 NHÂN VIÊN
+    // HELPER: PHÂN LOẠI PG HÃNG HOẶC NHÂN VIÊN
+    function isPgStaff(emp) {
+      if (!emp) return false;
+      if (emp.role === 'pg') return true;
+      if (emp.role === 'nv') return false;
+      const name = (emp.name || '').toLowerCase();
+      const pgKeywords = ['pg', 'tcl', 'lg', 'oppo', 'vivo', 'realme', 'xiaomi', 'aqua', 'toshiba', 'sunhouse', 'bluestone', 'karofi', 'mutosi', 'sony', 'samsung'];
+      return pgKeywords.some(kw => name.includes(kw));
+    }
+
+    // RENDER DANH SÁCH NV / PG
     function renderEmployees() {
       const container = document.getElementById('employeesGridContainer');
       if (!container) return;
       container.innerHTML = '';
 
       let presentCount = 0;
-      state.employees.forEach((emp, idx) => {
+      let pgCount = 0;
+
+      state.employees.forEach((emp) => {
         if (emp.marked) presentCount++;
-        const card = document.createElement('div');
-        card.className = 'employee-card ' + (emp.marked ? 'present' : '');
-        card.innerHTML = `
-          <div class="emp-info">
-            <div class="emp-stt">${emp.stt}</div>
-            <div>
-              <div class="emp-name">${emp.name}</div>
-              <div style="font-size:11px; color:var(--text-muted);">
-                ${emp.marked ? '<span style="color:#059669; font-weight:700;">✓ Có mặt / Đang trực</span>' : 'Vắng mặt'}
-              </div>
-            </div>
-          </div>
-          <button class="btn-toggle-attend ${emp.marked ? 'checked' : 'unchecked'}" onclick="toggleEmployeeAttendance(${idx})">
-            ${emp.marked ? '✓ Có mặt' : '○ Vắng'}
-          </button>
-        `;
-        container.appendChild(card);
+        if (isPgStaff(emp)) pgCount++;
       });
 
-      document.getElementById('statTotalEmployees').textContent = state.employees.length;
-      document.getElementById('statPresentCount').textContent = presentCount;
-      document.getElementById('badgeEmpCount').textContent = `${state.employees.length} NV`;
+      const absentCount = Math.max(0, state.employees.length - presentCount);
+
+      // Lọc danh sách theo từ khóa tìm kiếm nếu có
+      const kw = (state.empSearchKeyword || '').trim().toLowerCase();
+      const displayList = kw 
+        ? state.employees.filter(emp => (emp.name || '').toLowerCase().includes(kw))
+        : state.employees;
+
+      if (displayList.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #78716c; background: #fffdf5; border-radius: 12px; border: 1.5px dashed #fde68a;">
+            <i class="fa-solid fa-user-slash" style="font-size: 32px; color: #d97706; margin-bottom: 10px;"></i>
+            <div style="font-weight: 700; font-size: 15px; color: #92400e;">Không tìm thấy nhân sự nào phù hợp</div>
+            <div style="font-size: 12.5px; margin-top: 4px;">Thử nhập từ khóa khác hoặc bấm nút "Thêm NV / PG Mới" để tạo mới</div>
+          </div>
+        `;
+      } else {
+        displayList.forEach((emp) => {
+          const originalIdx = state.employees.indexOf(emp);
+          const isPg = isPgStaff(emp);
+          const card = document.createElement('div');
+          card.className = 'employee-card ' + (emp.marked ? 'present' : '');
+          card.innerHTML = `
+            <div class="emp-info">
+              <div class="emp-stt">${emp.stt}</div>
+              <div>
+                <div class="emp-name">${emp.name}</div>
+                <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">
+                  <span class="emp-role-badge ${isPg ? 'role-pg' : 'role-nv'}">
+                    ${isPg ? '<i class="fa-solid fa-handshake"></i> PG Hãng' : '<i class="fa-solid fa-user"></i> NV Siêu Thị'}
+                  </span>
+                  <span style="font-size:11px; color:var(--text-muted);">
+                    ${emp.marked ? '<span style="color:#059669; font-weight:700;">✓ Có mặt</span>' : 'Vắng mặt'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div class="emp-actions-group">
+              <button class="btn-toggle-attend ${emp.marked ? 'checked' : 'unchecked'}" onclick="toggleEmployeeAttendance(${originalIdx})" title="Điểm danh có mặt / vắng">
+                ${emp.marked ? '✓ Có mặt' : '○ Vắng'}
+              </button>
+              <button class="btn-action-icon edit" onclick="openEditEmployeeModal(${originalIdx})" title="Sửa thông tin NV/PG">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button class="btn-action-icon delete" onclick="confirmDeleteEmployee(${originalIdx})" title="Xoá khỏi danh sách">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+
+      // Cập nhật các thẻ thống kê & badge
+      const totalEl = document.getElementById('statTotalEmployees');
+      if (totalEl) totalEl.textContent = state.employees.length;
+
+      const presentEl = document.getElementById('statPresentCount');
+      if (presentEl) presentEl.textContent = presentCount;
+
+      const pgEl = document.getElementById('statPgCount');
+      if (pgEl) pgEl.textContent = pgCount;
+
+      const absentEl = document.getElementById('statAbsentCount');
+      if (absentEl) absentEl.textContent = absentCount;
+
+      const badgeEl = document.getElementById('badgeEmpCount');
+      if (badgeEl) badgeEl.textContent = `${state.employees.length} NV/PG`;
     }
 
     // CẬP NHẬT 1 TRƯỜNG CA TRỰC
@@ -1954,13 +2230,202 @@
 
     // TOGGLE ĐIỂM DANH
     window.toggleEmployeeAttendance = function(idx) {
+      if (!state.employees[idx]) return;
       state.employees[idx].marked = !state.employees[idx].marked;
       localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
       renderEmployees();
       broadcastMqtt({ type: 'TOGGLE_ATTENDANCE', index: idx, marked: state.employees[idx].marked });
-      autoSaveToSheetDebounced();
+      autoSaveEmployeesToSheetDebounced();
       showToast(`Đã cập nhật điểm danh: ${state.employees[idx].name}`);
     };
+
+    // ==========================================================================
+    // CHỨC NĂNG THÊM / SỬA / XÓA NHÂN VIÊN & PG
+    // ==========================================================================
+
+    // MỞ MODAL THÊM NV/PG
+    window.openAddEmployeeModal = function() {
+      document.getElementById('empEditIndex').value = "-1";
+      document.getElementById('empInputName').value = "";
+      document.getElementById('empInputRole').value = "nv";
+      const radios = document.querySelectorAll('input[name="empStatusRadio"]');
+      radios.forEach(r => r.checked = (r.value === 'present'));
+      document.getElementById('empRenameAllocationsRow').style.display = 'none';
+      document.getElementById('employeeModalTitle').innerHTML = '<i class="fa-solid fa-user-plus" style="color:#d97706;"></i> Thêm NV / PG Mới';
+      document.getElementById('employeeModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('empInputName').focus(), 100);
+    };
+
+    // MỞ MODAL SỬA NV/PG
+    window.openEditEmployeeModal = function(idx) {
+      const emp = state.employees[idx];
+      if (!emp) return;
+      document.getElementById('empEditIndex').value = String(idx);
+      document.getElementById('empInputName').value = emp.name;
+      document.getElementById('empInputRole').value = emp.role || (isPgStaff(emp) ? 'pg' : 'nv');
+      const radios = document.querySelectorAll('input[name="empStatusRadio"]');
+      radios.forEach(r => r.checked = (emp.marked ? r.value === 'present' : r.value === 'absent'));
+      document.getElementById('empRenameAllocationsRow').style.display = 'block';
+      document.getElementById('empSyncAllocationName').checked = true;
+      document.getElementById('employeeModalTitle').innerHTML = `<i class="fa-solid fa-user-pen" style="color:#d97706;"></i> Chỉnh Sửa: ${emp.name}`;
+      document.getElementById('employeeModal').style.display = 'flex';
+      setTimeout(() => document.getElementById('empInputName').focus(), 100);
+    };
+
+    // ĐÓNG MODAL NV/PG
+    function closeEmployeeModal() {
+      document.getElementById('employeeModal').style.display = 'none';
+    }
+    const btnCloseEmpModal = document.getElementById('btnCloseEmployeeModal');
+    if (btnCloseEmpModal) btnCloseEmpModal.onclick = closeEmployeeModal;
+    const btnCancelEmpModal = document.getElementById('btnCancelEmployeeModal');
+    if (btnCancelEmpModal) btnCancelEmpModal.onclick = closeEmployeeModal;
+    const employeeModalEl = document.getElementById('employeeModal');
+    if (employeeModalEl) {
+      employeeModalEl.onclick = (e) => {
+        if (e.target.id === 'employeeModal') closeEmployeeModal();
+      };
+    }
+
+    const btnOpenAddEmp = document.getElementById('btnOpenAddEmployeeModal');
+    if (btnOpenAddEmp) btnOpenAddEmp.onclick = window.openAddEmployeeModal;
+
+    // LƯU MODAL THÊM / SỬA NV/PG
+    const btnSaveEmpModal = document.getElementById('btnSaveEmployeeModal');
+    if (btnSaveEmpModal) {
+      btnSaveEmpModal.onclick = function() {
+        const idx = parseInt(document.getElementById('empEditIndex').value, 10);
+        const newName = document.getElementById('empInputName').value.trim();
+        if (!newName) {
+          alert('Vui lòng nhập Họ và Tên Nhân Viên / PG!');
+          document.getElementById('empInputName').focus();
+          return;
+        }
+
+        const role = document.getElementById('empInputRole').value;
+        let isMarked = true;
+        const checkedRadio = document.querySelector('input[name="empStatusRadio"]:checked');
+        if (checkedRadio && checkedRadio.value === 'absent') isMarked = false;
+
+        if (idx === -1) {
+          // THÊM MỚI
+          const newEmp = {
+            stt: state.employees.length + 1,
+            name: newName,
+            role: role,
+            marked: isMarked
+          };
+          state.employees.push(newEmp);
+          showToast(`✅ Đã thêm NV/PG mới: ${newName}`);
+        } else if (idx >= 0 && state.employees[idx]) {
+          // SỬA THÔNG TIN
+          const oldName = state.employees[idx].name;
+          state.employees[idx].name = newName;
+          state.employees[idx].role = role;
+          state.employees[idx].marked = isMarked;
+
+          // Nếu có tick đổi tên liên quan trên các line ca trực và sơ đồ
+          const syncNameEl = document.getElementById('empSyncAllocationName');
+          if (syncNameEl && syncNameEl.checked && oldName.trim().toUpperCase() !== newName.trim().toUpperCase()) {
+            if (typeof updateAllAssignmentsWithNewName === 'function') {
+              updateAllAssignmentsWithNewName(oldName, newName);
+            }
+          }
+          showToast(`✅ Đã cập nhật: ${newName}`);
+        }
+
+        localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+        renderEmployees();
+        if (typeof initModalDropdowns === 'function') initModalDropdowns();
+        broadcastMqtt({ type: 'SYNC_EMPLOYEES', employees: state.employees });
+        autoSaveEmployeesToSheetDebounced();
+        closeEmployeeModal();
+      };
+    }
+
+    // XOÁ NHÂN VIÊN / PG
+    window.confirmDeleteEmployee = function(idx) {
+      const emp = state.employees[idx];
+      if (!emp) return;
+      state.pendingDeleteEmpIndex = idx;
+      const spanEl = document.getElementById('deleteEmpNameSpan');
+      if (spanEl) spanEl.textContent = `${emp.name} (STT ${emp.stt})`;
+      const delModal = document.getElementById('deleteEmployeeModal');
+      if (delModal) delModal.style.display = 'flex';
+    };
+
+    function closeDeleteModal() {
+      const delModal = document.getElementById('deleteEmployeeModal');
+      if (delModal) delModal.style.display = 'none';
+      state.pendingDeleteEmpIndex = -1;
+    }
+    const btnCloseDel = document.getElementById('btnCloseDeleteModal');
+    if (btnCloseDel) btnCloseDel.onclick = closeDeleteModal;
+    const btnCancelDel = document.getElementById('btnCancelDeleteModal');
+    if (btnCancelDel) btnCancelDel.onclick = closeDeleteModal;
+    const deleteModalEl = document.getElementById('deleteEmployeeModal');
+    if (deleteModalEl) {
+      deleteModalEl.onclick = (e) => {
+        if (e.target.id === 'deleteEmployeeModal') closeDeleteModal();
+      };
+    }
+
+    const btnConfirmDel = document.getElementById('btnConfirmDeleteModal');
+    if (btnConfirmDel) {
+      btnConfirmDel.onclick = function() {
+        const idx = state.pendingDeleteEmpIndex;
+        if (idx >= 0 && idx < state.employees.length) {
+          const deleted = state.employees.splice(idx, 1)[0];
+          // Đánh lại số thứ tự (STT) liên tục từ 1..N
+          state.employees.forEach((emp, i) => {
+            emp.stt = i + 1;
+          });
+          localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+          renderEmployees();
+          if (typeof initModalDropdowns === 'function') initModalDropdowns();
+          broadcastMqtt({ type: 'SYNC_EMPLOYEES', employees: state.employees });
+          autoSaveEmployeesToSheetDebounced();
+          showToast(`🗑️ Đã xóa "${deleted.name}" khỏi danh sách`);
+        }
+        closeDeleteModal();
+      };
+    }
+
+    // TÌM KIẾM NHANH TRONG TAB NV/PG
+    const empSearchInput = document.getElementById('employeeSearchInput');
+    if (empSearchInput) {
+      empSearchInput.addEventListener('input', function(e) {
+        state.empSearchKeyword = e.target.value.trim().toLowerCase();
+        renderEmployees();
+      });
+    }
+
+    // TỰ ĐỘNG LƯU DANH SÁCH NV/PG VỀ SHEET DEBOUNCED
+    let empSaveTimeout = null;
+    function autoSaveEmployeesToSheetDebounced() {
+      clearTimeout(empSaveTimeout);
+      empSaveTimeout = setTimeout(saveAllEmployeesToSheet, 1200);
+    }
+
+    function saveAllEmployeesToSheet() {
+      const url = DEFAULT_CONFIG.webAppUrl;
+      if (!url) return;
+
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'no-cors',
+        body: JSON.stringify({
+          action: 'updateAllEmployees',
+          sheetId: DEFAULT_CONFIG.sheetId,
+          employees: state.employees
+        })
+      }).then(() => {
+        showToast('☁️ Đã đồng bộ danh sách NV/PG về Google Sheet');
+      }).catch(err => {
+        console.warn('Lỗi lưu danh sách nhân viên:', err);
+      });
+    }
 
     // TÌM KIẾM VÀ HIGHLIGHT TRÊN SƠ ĐỒ MẶT BẰNG
     document.getElementById('globalSearchInput').addEventListener('input', function(e) {
@@ -2329,6 +2794,12 @@
       } else if (msg.type === 'TOGGLE_ATTENDANCE' && state.employees[msg.index]) {
         state.employees[msg.index].marked = msg.marked;
         renderEmployees();
+      } else if (msg.type === 'SYNC_EMPLOYEES' && Array.isArray(msg.employees)) {
+        state.employees = msg.employees;
+        localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+        renderEmployees();
+        if (typeof initModalDropdowns === 'function') initModalDropdowns();
+        showToast('👥 Danh sách NV/PG vừa được cập nhật từ thiết bị khác');
       } else if (msg.type === 'BATCH_RENAME_STAFF') {
         document.querySelectorAll('.map-cell').forEach(c => {
           const st = (c.getAttribute('data-staff') || '').trim();
