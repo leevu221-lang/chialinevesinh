@@ -3082,13 +3082,149 @@
       notifyLocalDataChange('UPDATE_SHIFT', { index: idx, data: state.shifts[idx] });
     };
 
+    // HÀM ESCAPE REGEX AN TOÀN
+    function escapeRegExp(str) {
+      if (!str) return '';
+      return String(str).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    // CHUẨN HOÁ CHUỖI ĐỂ SO SÁNH TÊN KHÔNG DẤU VÀ TÌM TỪ CHÍNH XÁC
+    function normalizeNameForMatch(str) {
+      if (!str) return '';
+      return String(str).toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    // SO SÁNH TÊN THÔNG MINH (CHÍNH XÁC, VIẾT HOA/THƯỜNG, HOẶC BIẾN THỂ TÊN GỌI)
+    function isStaffNameMatch(candidate, target) {
+      if (!candidate || !target) return false;
+      const c = String(candidate).trim().toUpperCase();
+      const t = String(target).trim().toUpperCase();
+      if (c === t) return true;
+
+      const normC = normalizeNameForMatch(candidate);
+      const normT = normalizeNameForMatch(target);
+      if (!normC || !normT) return false;
+      if (normC === normT) return true;
+
+      // Kiểm tra khớp từ nguyên vẹn hoặc chứa tên nhau
+      if (normT.length >= 3 && new RegExp('(^|\\s)' + escapeRegExp(normT) + '($|\\s)').test(normC)) return true;
+      if (normC.length >= 3 && new RegExp('(^|\\s)' + escapeRegExp(normC) + '($|\\s)').test(normT)) return true;
+      if (c.includes(t) && t.length >= 3) return true;
+      if (t.includes(c) && c.length >= 3) return true;
+
+      return false;
+    }
+
+    // KHỞI TẠO VÀ CẬP NHẬT TẤT CẢ DROPDOWN DANH SÁCH NHÂN SỰ
+    function initModalDropdowns() {
+      const dropdown = document.getElementById('modalStaffDropdown');
+      if (dropdown) {
+        const curVal = dropdown.value;
+        dropdown.innerHTML = '<option value="">-- Chọn từ ' + (state.employees ? state.employees.length : 26) + ' NV/PG siêu thị --</option>';
+        (state.employees || []).forEach(emp => {
+          const opt = document.createElement('option');
+          opt.value = emp.name;
+          opt.textContent = emp.stt + '. ' + emp.name + (emp.role === 'pg' ? ' [PG]' : '');
+          dropdown.appendChild(opt);
+        });
+        if (curVal) dropdown.value = curVal;
+      }
+    }
+
+    // CẬP NHẬT TÊN NHÂN VIÊN MỚI TRÊN TOÀN BỘ 15 CA TRỰC VÀ SƠ ĐỒ MẶT BẰNG
+    function updateAllAssignmentsWithNewName(oldName, newName) {
+      if (!oldName || !newName) return;
+      const oName = String(oldName).trim();
+      const nName = String(newName).trim();
+      if (!oName || !nName || oName.toUpperCase() === nName.toUpperCase()) return;
+
+      const reg = new RegExp(escapeRegExp(oName), 'gi');
+
+      // 1. Cập nhật trong 15 ca trực (cả trường NV và PG)
+      let shiftsModified = false;
+      if (Array.isArray(state.shifts)) {
+        state.shifts.forEach(s => {
+          if (s.nv) {
+            if (s.nv.trim().toUpperCase() === oName.toUpperCase()) {
+              s.nv = nName;
+              shiftsModified = true;
+            } else if (reg.test(s.nv)) {
+              s.nv = s.nv.replace(reg, nName);
+              shiftsModified = true;
+            } else if (isStaffNameMatch(s.nv, oName)) {
+              s.nv = nName;
+              shiftsModified = true;
+            }
+          }
+          if (s.pg) {
+            if (s.pg.trim().toUpperCase() === oName.toUpperCase()) {
+              s.pg = nName;
+              shiftsModified = true;
+            } else if (reg.test(s.pg)) {
+              s.pg = s.pg.replace(reg, nName);
+              shiftsModified = true;
+            } else if (isStaffNameMatch(s.pg, oName)) {
+              s.pg = nName;
+              shiftsModified = true;
+            }
+          }
+        });
+      }
+
+      if (shiftsModified) {
+        localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
+        renderShifts();
+      }
+
+      // 2. Cập nhật trên tất cả các ô sơ đồ mặt bằng (.map-cell)
+      let mapModified = false;
+      document.querySelectorAll('.map-cell').forEach(c => {
+        const staffAttr = (c.getAttribute('data-staff') || '').trim();
+        if (!staffAttr) return;
+        if (staffAttr.toUpperCase() === oName.toUpperCase()) {
+          c.setAttribute('data-staff', nName);
+          const staffEl = c.querySelector('.cell-staff');
+          if (staffEl) staffEl.textContent = nName;
+          mapModified = true;
+        } else if (reg.test(staffAttr)) {
+          const updatedStaff = staffAttr.replace(reg, nName);
+          c.setAttribute('data-staff', updatedStaff);
+          const staffEl = c.querySelector('.cell-staff');
+          if (staffEl) staffEl.textContent = updatedStaff;
+          mapModified = true;
+        } else if (isStaffNameMatch(staffAttr, oName)) {
+          c.setAttribute('data-staff', nName);
+          const staffEl = c.querySelector('.cell-staff');
+          if (staffEl) staffEl.textContent = nName;
+          mapModified = true;
+        }
+      });
+
+      // 3. Đồng bộ lại sơ đồ theo 15 ca trực và lưu cấu hình
+      syncMapCellsFromShifts();
+      saveMapAllocations();
+
+      // 4. Cập nhật lại dropdown danh sách
+      initModalDropdowns();
+    }
+
     // TOGGLE ĐIỂM DANH
     window.toggleEmployeeAttendance = function(idx) {
       if (!state.employees[idx]) return;
       state.employees[idx].marked = !state.employees[idx].marked;
       localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
       renderEmployees();
-      notifyLocalDataChange('TOGGLE_ATTENDANCE', { index: idx, marked: state.employees[idx].marked });
+      notifyLocalDataChange('TOGGLE_ATTENDANCE', {
+        index: idx,
+        marked: state.employees[idx].marked,
+        employees: state.employees,
+        shifts: state.shifts
+      });
+      debouncedSaveToSheet();
     };
 
     // ==========================================================================
@@ -3167,6 +3303,7 @@
         const checkedRadio = document.querySelector('input[name="empStatusRadio"]:checked');
         if (checkedRadio && checkedRadio.value === 'absent') isMarked = false;
 
+        let oldName = '';
         if (idx === -1) {
           // THÊM MỚI
           const newEmp = {
@@ -3179,25 +3316,33 @@
           showToast(`✅ Đã thêm NV/PG mới: ${newName}`);
         } else if (idx >= 0 && state.employees[idx]) {
           // SỬA THÔNG TIN
-          const oldName = state.employees[idx].name;
+          oldName = state.employees[idx].name;
           state.employees[idx].name = newName;
           state.employees[idx].role = role;
           state.employees[idx].marked = isMarked;
 
-          // Nếu có tick đổi tên liên quan trên các line ca trực và sơ đồ
+          // Cập nhật tên liên quan trên các line ca trực và sơ đồ
           const syncNameEl = document.getElementById('empSyncAllocationName');
-          if (syncNameEl && syncNameEl.checked && oldName.trim().toUpperCase() !== newName.trim().toUpperCase()) {
-            if (typeof updateAllAssignmentsWithNewName === 'function') {
-              updateAllAssignmentsWithNewName(oldName, newName);
-            }
+          if (!syncNameEl || syncNameEl.checked) {
+            updateAllAssignmentsWithNewName(oldName, newName);
           }
           showToast(`✅ Đã cập nhật: ${newName}`);
         }
 
         localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
         renderEmployees();
-        if (typeof initModalDropdowns === 'function') initModalDropdowns();
-        notifyLocalDataChange('SYNC_EMPLOYEES', { employees: state.employees });
+        initModalDropdowns();
+
+        // Đồng bộ realtime tức thì ra các tab / thiết bị
+        notifyLocalDataChange('RENAME_EMPLOYEE', {
+          oldName: oldName,
+          newName: newName,
+          employees: state.employees,
+          shifts: state.shifts
+        });
+
+        // Lưu ngay lập tức về Google Sheet không độ trễ
+        saveToSheetImmediately();
         closeEmployeeModal();
       };
     }
@@ -3241,8 +3386,9 @@
           });
           localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
           renderEmployees();
-          if (typeof initModalDropdowns === 'function') initModalDropdowns();
-          notifyLocalDataChange('SYNC_EMPLOYEES', { employees: state.employees });
+          initModalDropdowns();
+          notifyLocalDataChange('SYNC_EMPLOYEES', { employees: state.employees, shifts: state.shifts });
+          saveToSheetImmediately();
           showToast(`🗑️ Đã xóa "${deleted.name}" khỏi danh sách`);
         }
         closeDeleteModal();
@@ -3293,6 +3439,7 @@
       }
 
       const timestamp = Date.now();
+      lastLocalEditTime = timestamp;
       const currentShiftsPayload = state.shifts.slice();
       const currentEmployeesPayload = state.employees.slice();
 
@@ -3321,6 +3468,7 @@
           shifts: currentShiftsPayload.map(s => [s.nv, s.kv, s.pg]),
           emps: currentEmployeesPayload.map(e => [e.name, e.marked])
         });
+        lastKnownDefSig = lastKnownSaveSig;
 
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
@@ -3742,17 +3890,37 @@
         // Đồng bộ cập nhật cả bảng phân ca 15 vị trí nếu có tên cũ
         state.shifts.forEach((s, idx) => {
           if (s.nv && s.nv.trim().toUpperCase().includes(oldStaff.toUpperCase())) {
-            s.nv = s.nv.replace(new RegExp(oldStaff, 'gi'), newStaff);
+            s.nv = s.nv.replace(new RegExp(escapeRegExp(oldStaff), 'gi'), newStaff);
+          }
+          if (s.pg && s.pg.trim().toUpperCase().includes(oldStaff.toUpperCase())) {
+            s.pg = s.pg.replace(new RegExp(escapeRegExp(oldStaff), 'gi'), newStaff);
           }
         });
         localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
         renderShifts();
 
+        // Cập nhật tên trong danh sách nhân sự nếu khớp
+        let empUpdated = false;
+        state.employees.forEach(emp => {
+          if (emp.name && (emp.name.trim().toUpperCase() === oldStaff.toUpperCase() || isStaffNameMatch(emp.name, oldStaff))) {
+            emp.name = emp.name.replace(new RegExp(escapeRegExp(oldStaff), 'gi'), newStaff);
+            empUpdated = true;
+          }
+        });
+        if (empUpdated) {
+          localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+          renderEmployees();
+          initModalDropdowns();
+        }
+
         saveMapAllocations();
         notifyLocalDataChange('BATCH_RENAME_STAFF', {
           oldStaff: oldStaff,
-          newStaff: newStaff
+          newStaff: newStaff,
+          shifts: state.shifts,
+          employees: state.employees
         });
+        saveToSheetImmediately();
 
         showToast('🔄 Đã đổi TẤT CẢ ' + updatedCount + ' khu vực của [' + oldStaff + '] thành [' + newStaff + ']!');
       }
@@ -3786,8 +3954,11 @@
         saveMapAllocations();
         notifyLocalDataChange('UPDATE_MAP_CELL', {
           cellId: state.selectedCellEl.getAttribute('data-cell-id'),
-          staff: newStaff
+          staff: newStaff,
+          shifts: state.shifts,
+          employees: state.employees
         });
+        saveToSheetImmediately();
         showToast('✓ Đã cập nhật khu vực cho: ' + newStaff);
       }
 
@@ -4039,6 +4210,12 @@
 
       let updated = false;
 
+      // Xử lý sự kiện đổi tên cụ thể
+      if (data.type === 'RENAME_EMPLOYEE' && data.payload && data.payload.oldName && data.payload.newName) {
+        updateAllAssignmentsWithNewName(data.payload.oldName, data.payload.newName);
+        updated = true;
+      }
+
       // Cập nhật 15 ca trực nếu có
       if (Array.isArray(data.shifts) && data.shifts.length > 0) {
         const curSig = JSON.stringify(state.shifts.map(s => [s.nv, s.kv, s.pg]));
@@ -4060,7 +4237,7 @@
           state.employees = data.employees;
           localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
           renderEmployees();
-          if (typeof initModalDropdowns === 'function') initModalDropdowns();
+          initModalDropdowns();
           updated = true;
         }
       }
@@ -4509,8 +4686,8 @@
         if (saveSig) lastKnownSaveSig = saveSig;
         if (defSig) lastKnownDefSig = defSig;
 
-        // Nếu người dùng vừa sửa cục bộ trên Web App trong vòng 4 giây, KHÔNG để dữ liệu cũ từ Sheet đè lên
-        if (Date.now() - lastLocalEditTime < 4000) {
+        // Nếu người dùng vừa sửa cục bộ trên Web App trong vòng 5 giây, KHÔNG để dữ liệu cũ từ Sheet đè lên
+        if (Date.now() - lastLocalEditTime < 5000) {
           stopReloadButtonSpin();
           return;
         }
