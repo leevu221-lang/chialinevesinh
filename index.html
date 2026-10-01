@@ -2759,11 +2759,19 @@
 
   <!-- JAVASCRIPT LOGIC & REALTIME SYNC -->
   <script>
+    const CLIENT_ID = 'client_1841_' + Math.random().toString(36).substring(2, 9);
+    let lastLocalEditTime = 0;
+
     const DEFAULT_CONFIG = {
       sheetId: "1z6vAzHRIrYihI91Yw1dMnluPPL0BuAYiZarPBD5qNfw",
       webAppUrl: "https://script.google.com/macros/s/AKfycbx0FkqSMkIymq7Le4L3lkHJ_33y35zQOfAev-4b-BMJdL1MCUIIVGvjLqd9dk8PIhwjSw/exec",
-      mqttBroker: "wss://broker.emqx.io:8084/mqtt",
-      mqttTopic: "st1841/vesinh/realtime_sync"
+      mqttBrokers: [
+        "wss://broker.hivemq.com:8884/mqtt",
+        "wss://broker.emqx.io:8084/mqtt",
+        "wss://test.mosquitto.org:8081/mqtt"
+      ],
+      mqttBroker: "wss://broker.hivemq.com:8884/mqtt",
+      mqttTopic: "st1841/vesinh/realtime_sync_v2"
     };
     localStorage.setItem('phancong_webapp_url', DEFAULT_CONFIG.webAppUrl);
 
@@ -3071,8 +3079,7 @@
       state.shifts[idx][field] = value.trim();
       localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
       if (typeof syncMapCellsFromShifts === 'function') syncMapCellsFromShifts();
-      broadcastMqtt({ type: 'UPDATE_SHIFT', index: idx, data: state.shifts[idx] });
-      saveToSheetImmediately(`☁️ Đã lưu thay đổi vị trí ${state.shifts[idx].stt} về Google Sheet!`);
+      notifyLocalDataChange('UPDATE_SHIFT', { index: idx, data: state.shifts[idx] });
     };
 
     // TOGGLE ĐIỂM DANH
@@ -3081,8 +3088,7 @@
       state.employees[idx].marked = !state.employees[idx].marked;
       localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
       renderEmployees();
-      broadcastMqtt({ type: 'TOGGLE_ATTENDANCE', index: idx, marked: state.employees[idx].marked });
-      saveToSheetImmediately(`☁️ Đã lưu điểm danh: ${state.employees[idx].name} về Google Sheet!`);
+      notifyLocalDataChange('TOGGLE_ATTENDANCE', { index: idx, marked: state.employees[idx].marked });
     };
 
     // ==========================================================================
@@ -3191,8 +3197,7 @@
         localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
         renderEmployees();
         if (typeof initModalDropdowns === 'function') initModalDropdowns();
-        broadcastMqtt({ type: 'SYNC_EMPLOYEES', employees: state.employees });
-        autoSaveEmployeesToSheetDebounced();
+        notifyLocalDataChange('SYNC_EMPLOYEES', { employees: state.employees });
         closeEmployeeModal();
       };
     }
@@ -3237,8 +3242,7 @@
           localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
           renderEmployees();
           if (typeof initModalDropdowns === 'function') initModalDropdowns();
-          broadcastMqtt({ type: 'SYNC_EMPLOYEES', employees: state.employees });
-          autoSaveEmployeesToSheetDebounced();
+          notifyLocalDataChange('SYNC_EMPLOYEES', { employees: state.employees });
           showToast(`🗑️ Đã xóa "${deleted.name}" khỏi danh sách`);
         }
         closeDeleteModal();
@@ -3259,6 +3263,17 @@
     // ==========================================================================
     let isSavingToSheet = false;
     let pendingSaveAgain = false;
+    let saveDebounceTimer = null;
+
+    function debouncedSaveToSheet(customToastMsg) {
+      if (customToastMsg) {
+        showToast(customToastMsg);
+      }
+      clearTimeout(saveDebounceTimer);
+      saveDebounceTimer = setTimeout(() => {
+        saveToSheetImmediately();
+      }, 180);
+    }
 
     function saveToSheetImmediately(customToastMsg) {
       const url = DEFAULT_CONFIG.webAppUrl;
@@ -3278,41 +3293,64 @@
       }
 
       const timestamp = Date.now();
+      const currentShiftsPayload = state.shifts.slice();
+      const currentEmployeesPayload = state.employees.slice();
 
-      // 1. Gửi request saveAll nguyên khối đồng thời cả 15 Ca trực và Danh sách NV/PG
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6500);
+
+      // Gửi request saveAll nguyên khối đồng thời cả 15 Ca trực và Danh sách NV/PG
       fetch(url, {
+        signal: controller.signal,
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         mode: 'no-cors',
         body: JSON.stringify({
           action: 'saveAll',
           sheetId: DEFAULT_CONFIG.sheetId,
-          shifts: state.shifts,
-          employees: state.employees,
+          shifts: currentShiftsPayload,
+          employees: currentEmployeesPayload,
           _t: timestamp
         })
       }).then(() => {
+        clearTimeout(timeoutId);
         isSavingToSheet = false;
-        setSyncStatus('connected', '🟢 Realtime Live (Vừa lưu)');
+
+        // Cập nhật mốc nhận diện thành công để vòng polling không đè dữ liệu
+        lastKnownSaveSig = JSON.stringify({
+          shifts: currentShiftsPayload.map(s => [s.nv, s.kv, s.pg]),
+          emps: currentEmployeesPayload.map(e => [e.name, e.marked])
+        });
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        setSyncStatus('connected', `🟢 Tự động đồng bộ (${timeStr})`);
+
         if (pendingSaveAgain) {
+          pendingSaveAgain = false;
           saveToSheetImmediately();
         }
       }).catch(err => {
+        clearTimeout(timeoutId);
         isSavingToSheet = false;
-        console.warn('Lỗi lưu tức thì về Sheet:', err);
-        setSyncStatus('connected', '🟢 Realtime Live');
+        console.warn('Lỗi lưu về Sheet:', err);
+        setSyncStatus('connected', '🟢 Tự động đồng bộ');
+        if (pendingSaveAgain) {
+          pendingSaveAgain = false;
+          saveToSheetImmediately();
+        }
       });
     }
 
     // Các hàm tương thích ngược để gọi tức thì không độ trễ
     function autoSaveEmployeesToSheetDebounced() {
-      saveToSheetImmediately();
+      debouncedSaveToSheet();
     }
     function saveAllEmployeesToSheet() {
       saveToSheetImmediately();
     }
     function autoSaveToSheetDebounced() {
-      saveToSheetImmediately();
+      debouncedSaveToSheet();
     }
     function saveAllToSheet() {
       saveToSheetImmediately();
@@ -3424,12 +3462,10 @@
 
         saveMapAllocations();
         updateAllocatingCount();
-        broadcastMqtt({
-          type: 'UPDATE_MAP_CELL',
+        notifyLocalDataChange('UPDATE_MAP_CELL', {
           cellId: cell.getAttribute('data-cell-id'),
           staff: cell.getAttribute('data-staff')
         });
-        saveToSheetImmediately();
         return;
       }
 
@@ -3713,8 +3749,7 @@
         renderShifts();
 
         saveMapAllocations();
-        broadcastMqtt({
-          type: 'BATCH_RENAME_STAFF',
+        notifyLocalDataChange('BATCH_RENAME_STAFF', {
           oldStaff: oldStaff,
           newStaff: newStaff
         });
@@ -3723,7 +3758,6 @@
       }
 
       document.getElementById('staffAllocationModal').style.display = 'none';
-      saveToSheetImmediately('☁️ Đã lưu cập nhật tất cả khu vực về Google Sheet!');
     });
 
     // Chỉ đổi riêng khu vực đang chọn
@@ -3750,8 +3784,7 @@
         }
         updateShiftForCell(state.selectedCellEl, newStaff);
         saveMapAllocations();
-        broadcastMqtt({
-          type: 'UPDATE_MAP_CELL',
+        notifyLocalDataChange('UPDATE_MAP_CELL', {
           cellId: state.selectedCellEl.getAttribute('data-cell-id'),
           staff: newStaff
         });
@@ -3759,7 +3792,6 @@
       }
 
       document.getElementById('staffAllocationModal').style.display = 'none';
-      saveToSheetImmediately('☁️ Đã lưu phân bổ khu vực về Google Sheet!');
     });
 
     // Bắt đầu Chế Độ Phân Bổ Trực Tiếp Trên Sơ Đồ
@@ -3818,7 +3850,10 @@
       });
 
       saveMapAllocations();
-      saveToSheetImmediately('✅ Đã lưu phân bổ khu vực về Google Sheet!');
+      notifyLocalDataChange('SYNC_DATA', {
+        shifts: state.shifts,
+        employees: state.employees
+      });
     }
 
     function updateAllocatingCount() {
@@ -3862,113 +3897,204 @@
       });
     });
 
-    // REALTIME MQTT CLIENT
-    let mqttClient = null;
-    function initRealtime() {
-      try {
-        if (typeof mqtt !== 'undefined') {
-          mqttClient = mqtt.connect(DEFAULT_CONFIG.mqttBroker, {
-            clientId: 'client_1841_' + Math.random().toString(16).substring(2, 8),
-            clean: true,
-            connectTimeout: 4000
-          });
-
-          mqttClient.on('connect', () => {
-            console.log('MQTT Realtime Connected');
-            mqttClient.subscribe(DEFAULT_CONFIG.mqttTopic);
-            document.getElementById('realtimeStatusText').textContent = 'Realtime Live (Đã kết nối)';
-          });
-
-          mqttClient.on('message', (topic, payload) => {
-            try {
-              const msg = JSON.parse(payload.toString());
-              handleRealtimeMessage(msg);
-            } catch (err) {}
-          });
-        }
-      } catch (e) {}
-    }
-
-    function broadcastMqtt(msg) {
-      if (mqttClient && mqttClient.connected) {
-        mqttClient.publish(DEFAULT_CONFIG.mqttTopic, JSON.stringify(msg));
-      }
-    }
-
-    function handleRealtimeMessage(msg) {
-      if (msg.type === 'UPDATE_SHIFT' && state.shifts[msg.index]) {
-        state.shifts[msg.index] = msg.data;
-        renderShifts();
-      } else if (msg.type === 'TOGGLE_ATTENDANCE' && state.employees[msg.index]) {
-        state.employees[msg.index].marked = msg.marked;
-        renderEmployees();
-      } else if (msg.type === 'SYNC_EMPLOYEES' && Array.isArray(msg.employees)) {
-        state.employees = msg.employees;
-        localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
-        renderEmployees();
-        if (typeof initModalDropdowns === 'function') initModalDropdowns();
-      } else if (msg.type === 'BATCH_RENAME_STAFF') {
-        document.querySelectorAll('.map-cell').forEach(c => {
-          const st = (c.getAttribute('data-staff') || '').trim();
-          if (st.toUpperCase() === msg.oldStaff.toUpperCase()) {
-            c.setAttribute('data-staff', msg.newStaff);
-            const staffEl = c.querySelector('.cell-staff');
-            if (staffEl) staffEl.textContent = msg.newStaff;
-          }
-        });
-        saveMapAllocations();
-      } else if (msg.type === 'UPDATE_MAP_CELL') {
-        const c = document.querySelector('[data-cell-id="' + msg.cellId + '"]');
-        if (c) {
-          c.setAttribute('data-staff', msg.staff);
-          const staffEl = c.querySelector('.cell-staff');
-          if (staffEl) staffEl.textContent = msg.staff;
-          saveMapAllocations();
-        }
-      }
-    }
-
-    // Lưu 15 ca trực tức thì về Google Sheet (không chờ độ trễ)
-    function autoSaveToSheetDebounced() {
-      saveToSheetImmediately();
-    }
-    function saveAllToSheet() {
-      saveToSheetImmediately();
-    }
-
-    let currentExportBlob = null;
-    let currentExportDataUrl = "";
-
-
     // ==========================================================================
-    // CƠ CHẾ ĐỒNG BỘ TỰ ĐỘNG 100% (AUTO-SYNC REALTIME) KHÔNG CẦN BẤM NÚT
+    // CƠ CHẾ ĐỒNG BỘ REALTIME ĐA TẦNG: BROADCAST CHANNEL + STORAGE EVENT + MQTT
     // ==========================================================================
 
-    // KÊNH ĐỒNG BỘ TRUYỀN TIN TỨC THÌ GIỮA CÁC TAB (BROADCAST CHANNEL)
+    // KÊNH ĐỒNG BỘ TRUYỀN TIN TỨC THÌ GIỮA CÁC TAB CÙNG TRÌNH DUYỆT (0ms)
     let syncBroadcastChannel = null;
     try {
       if (typeof BroadcastChannel !== 'undefined') {
         syncBroadcastChannel = new BroadcastChannel('st1841_sync_channel');
         syncBroadcastChannel.onmessage = (e) => {
-          if (e && e.data && e.data.type === 'SYNC_DATA') {
-            if (Array.isArray(e.data.shifts)) {
-              state.shifts = e.data.shifts;
-              localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
-              renderShifts();
-              syncMapCellsFromShifts();
-            }
-            if (Array.isArray(e.data.employees)) {
-              state.employees = e.data.employees;
-              localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
-              renderEmployees();
-              if (typeof initModalDropdowns === 'function') initModalDropdowns();
-            }
-            startReloadButtonSpin();
-            setTimeout(stopReloadButtonSpin, 600);
+          if (e && e.data) {
+            handleIncomingRealtimeSync(e.data);
           }
         };
       }
     } catch(err) {}
+
+    // LẮNG NGHE STORAGE EVENT (DỰ PHÒNG TỨC THÌ GIỮA CÁC TAB - 0ms)
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'st1841_sync_event' && e.newValue) {
+        try {
+          const syncPacket = JSON.parse(e.newValue);
+          handleIncomingRealtimeSync(syncPacket);
+        } catch(err) {}
+      }
+    });
+
+    // MQTT REALTIME CLIENT (ĐỒNG BỘ TỨC THÌ LIÊN THIẾT BỊ < 150ms)
+    const MQTT_BROKERS = (DEFAULT_CONFIG.mqttBrokers && DEFAULT_CONFIG.mqttBrokers.length > 0)
+      ? DEFAULT_CONFIG.mqttBrokers
+      : ["wss://broker.hivemq.com:8884/mqtt", "wss://broker.emqx.io:8084/mqtt"];
+    let currentBrokerIdx = 0;
+    let mqttClient = null;
+    let mqttConnectTimeout = null;
+
+    function initRealtime() {
+      if (typeof mqtt === 'undefined') return;
+      connectToMqttBroker();
+    }
+
+    function connectToMqttBroker() {
+      if (mqttClient) {
+        try { mqttClient.end(true); } catch(e) {}
+      }
+      clearTimeout(mqttConnectTimeout);
+
+      const brokerUrl = MQTT_BROKERS[currentBrokerIdx];
+      try {
+        mqttClient = mqtt.connect(brokerUrl, {
+          clientId: CLIENT_ID,
+          clean: true,
+          connectTimeout: 4000,
+          reconnectPeriod: 6000
+        });
+
+        mqttConnectTimeout = setTimeout(() => {
+          if (!mqttClient || !mqttClient.connected) {
+            switchMqttBroker();
+          }
+        }, 4500);
+
+        mqttClient.on('connect', () => {
+          clearTimeout(mqttConnectTimeout);
+          mqttClient.subscribe(DEFAULT_CONFIG.mqttTopic);
+        });
+
+        mqttClient.on('message', (topic, payload) => {
+          try {
+            const msg = JSON.parse(payload.toString());
+            handleIncomingRealtimeSync(msg);
+          } catch (err) {}
+        });
+
+        mqttClient.on('error', () => {
+          switchMqttBroker();
+        });
+      } catch (e) {
+        switchMqttBroker();
+      }
+    }
+
+    function switchMqttBroker() {
+      clearTimeout(mqttConnectTimeout);
+      currentBrokerIdx = (currentBrokerIdx + 1) % MQTT_BROKERS.length;
+      setTimeout(() => {
+        if (!mqttClient || !mqttClient.connected) {
+          connectToMqttBroker();
+        }
+      }, 1500);
+    }
+
+    function broadcastMqtt(msg) {
+      if (mqttClient && mqttClient.connected) {
+        try {
+          mqttClient.publish(DEFAULT_CONFIG.mqttTopic, JSON.stringify(msg));
+        } catch(e) {}
+      }
+    }
+
+    // THÔNG BÁO THAY ĐỔI CỤC BỘ RA MỌI KÊNH (TỨC THÌ 0ms - 100ms)
+    function notifyLocalDataChange(changeType, payload = {}) {
+      lastLocalEditTime = Date.now();
+
+      const syncPacket = {
+        senderId: CLIENT_ID,
+        type: changeType,
+        shifts: state.shifts,
+        employees: state.employees,
+        payload: payload,
+        time: Date.now()
+      };
+
+      // 1. Gửi qua BroadcastChannel (0ms tới các tab khác)
+      if (syncBroadcastChannel) {
+        try {
+          syncBroadcastChannel.postMessage(syncPacket);
+        } catch (e) {}
+      }
+
+      // 2. Gửi qua storage event (0ms dự phòng)
+      try {
+        localStorage.setItem('st1841_sync_event', JSON.stringify(syncPacket));
+      } catch (e) {}
+
+      // 3. Gửi qua MQTT (tức thì tới các thiết bị khác)
+      broadcastMqtt(syncPacket);
+
+      // 4. Lưu về Google Sheet (đã tối ưu gom đợt)
+      debouncedSaveToSheet();
+    }
+
+    // ÁP DỤNG DỮ LIỆU ĐỒNG BỘ ĐẾN TỪ CÁC TAB HOẶC THIẾT BỊ KHÁC
+    function handleIncomingRealtimeSync(data) {
+      if (!data || data.senderId === CLIENT_ID) return;
+
+      // Nếu tab này vừa chỉnh sửa cục bộ trong vòng 1.5s, không để tin nhắn cũ đè lên
+      if (Date.now() - lastLocalEditTime < 1500 && data.time && data.time < lastLocalEditTime) {
+        return;
+      }
+
+      let updated = false;
+
+      // Cập nhật 15 ca trực nếu có
+      if (Array.isArray(data.shifts) && data.shifts.length > 0) {
+        const curSig = JSON.stringify(state.shifts.map(s => [s.nv, s.kv, s.pg]));
+        const newSig = JSON.stringify(data.shifts.map(s => [s.nv, s.kv, s.pg]));
+        if (curSig !== newSig) {
+          state.shifts = data.shifts;
+          localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
+          renderShifts();
+          syncMapCellsFromShifts();
+          updated = true;
+        }
+      }
+
+      // Cập nhật danh sách NV/PG nếu có
+      if (Array.isArray(data.employees) && data.employees.length > 0) {
+        const curSig = JSON.stringify(state.employees.map(e => [e.name, e.role, e.marked]));
+        const newSig = JSON.stringify(data.employees.map(e => [e.name, e.role, e.marked]));
+        if (curSig !== newSig) {
+          state.employees = data.employees;
+          localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+          renderEmployees();
+          if (typeof initModalDropdowns === 'function') initModalDropdowns();
+          updated = true;
+        }
+      }
+
+      // Cập nhật ô sơ đồ nếu có
+      if (data.type === 'UPDATE_MAP_CELL' && data.payload) {
+        const c = document.querySelector('[data-cell-id="' + data.payload.cellId + '"]');
+        if (c) {
+          c.setAttribute('data-staff', data.payload.staff || '');
+          const staffEl = c.querySelector('.cell-staff');
+          if (staffEl) staffEl.textContent = data.payload.staff || '';
+          saveMapAllocations();
+        }
+      } else if (data.type === 'BATCH_RENAME_STAFF' && data.payload) {
+        document.querySelectorAll('.map-cell').forEach(c => {
+          const st = (c.getAttribute('data-staff') || '').trim();
+          if (st.toUpperCase() === (data.payload.oldStaff || '').toUpperCase()) {
+            c.setAttribute('data-staff', data.payload.newStaff || '');
+            const staffEl = c.querySelector('.cell-staff');
+            if (staffEl) staffEl.textContent = data.payload.newStaff || '';
+          }
+        });
+        saveMapAllocations();
+      }
+
+      if (updated) {
+        startReloadButtonSpin();
+        setTimeout(stopReloadButtonSpin, 600);
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        const statusText = document.getElementById('realtimeStatusText');
+        if (statusText) statusText.textContent = `🟢 Tự động đồng bộ (${timeStr})`;
+      }
+    }
 
     // THEO DÕI THAO TÁC CỦA NGƯỜI DÙNG: Chỉ hoãn cập nhật DOM khi đang trực tiếp gõ phím
     let lastUserKeypressTime = 0;
@@ -4361,73 +4487,52 @@
           emps: (dataDefault.employees || []).map(e => [e.name, e.marked])
         }) : null;
 
-        let chosenData = null;
-        let chosenSource = 'Google Sheet Realtime';
-
-        // 1. Trường hợp lần đầu nạp (Baseline initialization)
+        // 1. Lần đầu mở trang: khởi tạo mốc signature và nạp dữ liệu ban đầu
         if (lastKnownSaveSig === null && lastKnownDefSig === null) {
-          if (saveSig && saveSig !== curAppSig) {
-            chosenData = dataSave;
-            chosenSource = 'Google Sheet (save data)';
-          } else if (defSig && defSig !== curAppSig) {
-            chosenData = dataDefault;
-            chosenSource = 'Google Sheet (VS Cũ)';
-          } else if (dataSave && (dataSave.shifts.length > 0 || dataSave.employees.length > 0)) {
-            chosenData = dataSave;
-            chosenSource = 'Google Sheet (save data)';
-          } else if (dataDefault && (dataDefault.shifts.length > 0 || dataDefault.employees.length > 0)) {
-            chosenData = dataDefault;
-            chosenSource = 'Google Sheet (VS Cũ)';
-          }
-        } else {
-          // 2. Kiểm tra tab nào vừa có sự thay đổi mới
-          const saveChanged = (saveSig && saveSig !== lastKnownSaveSig);
-          const defChanged = (defSig && defSig !== lastKnownDefSig);
+          lastKnownSaveSig = saveSig;
+          lastKnownDefSig = defSig;
 
-          if (defChanged && !saveChanged) {
-            // Người dùng vừa sửa trực tiếp trên sơ đồ sheet 'VS CŨ'
-            chosenData = dataDefault;
-            chosenSource = 'Google Sheet (Sơ đồ VS Cũ)';
-          } else if (saveChanged && !defChanged) {
-            // Tab 'save data' vừa được cập nhật
-            chosenData = dataSave;
-            chosenSource = 'Google Sheet (save data)';
-          } else if (defChanged && saveChanged) {
-            // Cả 2 đều thay đổi, ưu tiên save data nếu có đầy đủ
-            chosenData = dataSave || dataDefault;
-            chosenSource = 'Google Sheet Realtime';
-          } else if (saveSig && saveSig !== curAppSig) {
-            // Fallback nếu app đang lệch với save data
-            chosenData = dataSave;
-            chosenSource = 'Google Sheet (save data)';
-          } else if (defSig && defSig !== curAppSig) {
-            // Fallback nếu app đang lệch với VS Cũ
-            chosenData = dataDefault;
-            chosenSource = 'Google Sheet (VS Cũ)';
+          if (dataSave && (dataSave.shifts.length > 0 || dataSave.employees.length > 0)) {
+            applyReceivedSheetData(dataSave, 'Google Sheet (save data)', silent);
+          } else if (dataDefault && (dataDefault.shifts.length > 0 || dataDefault.employees.length > 0)) {
+            applyReceivedSheetData(dataDefault, 'Google Sheet (VS Cũ)', silent);
           }
+          stopReloadButtonSpin();
+          return;
         }
+
+        // 2. Kiểm tra xem Sheet có thực sự thay đổi so với lần poll trước hay không
+        const saveChanged = (saveSig && saveSig !== lastKnownSaveSig);
+        const defChanged = (defSig && defSig !== lastKnownDefSig);
 
         // Cập nhật lại mốc so sánh
         if (saveSig) lastKnownSaveSig = saveSig;
         if (defSig) lastKnownDefSig = defSig;
 
-        if (chosenData) {
-          const shifts = chosenData.shifts || [];
-          const employees = (chosenData.employees && chosenData.employees.length > 0) 
-            ? chosenData.employees 
-            : (dataSave && dataSave.employees && dataSave.employees.length > 0 ? dataSave.employees : (dataDefault ? dataDefault.employees : []));
-          applyReceivedSheetData({ success: true, shifts, employees }, chosenSource, silent);
+        // Nếu người dùng vừa sửa cục bộ trên Web App trong vòng 4 giây, KHÔNG để dữ liệu cũ từ Sheet đè lên
+        if (Date.now() - lastLocalEditTime < 4000) {
+          stopReloadButtonSpin();
+          return;
+        }
+
+        if (defChanged && !saveChanged) {
+          // Người dùng vừa sửa trực tiếp trên sơ đồ sheet gốc 'VS CŨ'
+          applyReceivedSheetData(dataDefault, 'Google Sheet (Sơ đồ VS Cũ)', silent);
+        } else if (saveChanged) {
+          // Tab 'save data' vừa được cập nhật mới
+          applyReceivedSheetData(dataSave || dataDefault, 'Google Sheet (save data)', silent);
         } else {
-          // Luôn kiểm tra nếu DOM đang trống hoặc bấm làm mới thủ công (!silent), áp dụng dữ liệu mới nhất
-          const fallbackEmps = (dataSave && dataSave.employees && dataSave.employees.length > 0)
-            ? dataSave.employees
-            : (dataDefault && dataDefault.employees && dataDefault.employees.length > 0 ? dataDefault.employees : state.employees);
-          const fallbackShifts = (dataSave && dataSave.shifts && dataSave.shifts.length > 0)
-            ? dataSave.shifts
-            : (dataDefault && dataDefault.shifts && dataDefault.shifts.length > 0 ? dataDefault.shifts : state.shifts);
-          
-          if (fallbackEmps && fallbackEmps.length > 0) {
-            applyReceivedSheetData({ success: true, shifts: fallbackShifts, employees: fallbackEmps }, 'Google Sheet Realtime', silent);
+          // Không có thay đổi từ Google Sheet: nếu dữ liệu local đang trống rỗng thì mới nạp
+          if (state.shifts.length === 0 || state.employees.length === 0) {
+            const fallbackEmps = (dataSave && dataSave.employees && dataSave.employees.length > 0)
+              ? dataSave.employees
+              : (dataDefault && dataDefault.employees && dataDefault.employees.length > 0 ? dataDefault.employees : state.employees);
+            const fallbackShifts = (dataSave && dataSave.shifts && dataSave.shifts.length > 0)
+              ? dataSave.shifts
+              : (dataDefault && dataDefault.shifts && dataDefault.shifts.length > 0 ? dataDefault.shifts : state.shifts);
+            if (fallbackEmps.length > 0 || fallbackShifts.length > 0) {
+              applyReceivedSheetData({ success: true, shifts: fallbackShifts, employees: fallbackEmps }, 'Google Sheet Realtime', silent);
+            }
           }
           stopReloadButtonSpin();
         }
@@ -4736,14 +4841,14 @@
     triggerReloadButton(true);
 
     // ==========================================================================
-    // AUTO-SYNC HOÀN TOÀN TỰ ĐỘNG 100%: MỖI 2.5 GIÂY & TỨC THÌ KHI FOCUS / MỞ TAB
+    // AUTO-SYNC HOÀN TOÀN TỰ ĐỘNG 100%: MỖI 2 GIÂY & TỨC THÌ KHI FOCUS / MỞ TAB
     // ==========================================================================
-    // 1. Tự động đồng bộ định kỳ mỗi 2.5 giây liên tục (hoàn toàn tự động, không cần bấm nút)
+    // 1. Tự động đồng bộ định kỳ mỗi 2 giây liên tục (hoàn toàn tự động, không cần bấm nút)
     setInterval(() => {
-      if (document.visibilityState === 'visible' && !isSavingToSheet) {
+      if (document.visibilityState === 'visible') {
         fetchDirectFromGoogleSheetGviz(true);
       }
-    }, 2500);
+    }, 2000);
 
     // 2. Tự động đồng bộ tức thì (0ms) ngay khi click chuột hoặc quay lại cửa sổ trình duyệt
     window.addEventListener('focus', () => {
