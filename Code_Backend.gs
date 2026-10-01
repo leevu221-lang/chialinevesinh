@@ -725,7 +725,7 @@ function onEdit(e) {
         const saveSheet = getSaveDataSheet();
         if (saveSheet) {
           const empRow = row + 2; // map sang dòng 3..62
-          const empCol = (col === 29 ? 7 : (col === 30 ? 8 : 9)); // G, H, I
+          const empCol = (col === 29 ? 6 : (col === 30 ? 7 : 9)); // F(STT), G(Họ tên), I(Điểm danh)
           saveSheet.getRange(empRow, empCol).setValue(e.range.getValue());
           saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
         }
@@ -742,12 +742,12 @@ function onEdit(e) {
           defSheet.getRange(origRow, origCol).setValue(e.range.getValue());
         }
       }
-      // Cột G..I dòng 3..60
-      if (row >= 3 && row <= 60 && col >= 7 && col <= 9) {
+      // Cột F, G, I dòng 3..60 (F: STT, G: Tên, I: Điểm danh)
+      if (row >= 3 && row <= 60 && ((col >= 6 && col <= 7) || col === 9)) {
         const defSheet = getTargetSheet();
         if (defSheet && defSheet.getName() !== "save data") {
           const origRow = row - 2;
-          const origCol = (col === 7 ? 29 : (col === 8 ? 30 : 31));
+          const origCol = (col === 6 ? 29 : (col === 7 ? 30 : 31));
           defSheet.getRange(origRow, origCol).setValue(e.range.getValue());
         }
       }
