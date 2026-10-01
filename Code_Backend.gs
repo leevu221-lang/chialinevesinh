@@ -137,8 +137,15 @@ function handleApiOrHtml(e) {
   // API: Cập nhật đồng thời cả 15 Ca trực và Danh sách NV/PG ngay lập tức
   if (params && (params.action === "saveAll" || params.action === "syncAll")) {
     const targetSheetId = params.sheetId || (postBody && postBody.sheetId) || SPREADSHEET_ID;
-    const shifts = params.shifts || (postBody && postBody.shifts) || [];
-    const employees = params.employees || (postBody && postBody.employees) || [];
+    let shifts = params.shifts || (postBody && postBody.shifts) || [];
+    let employees = params.employees || (postBody && postBody.employees) || [];
+
+    if (typeof shifts === "string") {
+      try { shifts = JSON.parse(shifts); } catch(e){}
+    }
+    if (typeof employees === "string") {
+      try { employees = JSON.parse(employees); } catch(e){}
+    }
 
     let resShifts = null;
     let resEmps = null;
@@ -154,7 +161,7 @@ function handleApiOrHtml(e) {
       success: true,
       shifts: resShifts,
       employees: resEmps,
-      message: "Đã lưu tức thì toàn bộ ca trực & danh sách NV/PG về Google Sheet!"
+      message: "Đã lưu tức thì toàn bộ ca trực & danh sách NV/PG về sheet 'save data'!"
     })).setMimeType(ContentService.MimeType.JSON);
   }
 
@@ -478,25 +485,36 @@ function getShiftData(targetSheetId) {
  */
 function updateShiftRow(stt, nv, kv, pg, targetSheetId) {
   try {
-    const sheet = getTargetSheet(targetSheetId);
-    if (!sheet) return { success: false, message: "Không tìm thấy trang tính!" };
+    const targetStt = parseInt(stt, 10);
 
-    const targetRow = 16 + parseInt(stt, 10);
-    // Cột W: STT (23), Cột X: NV (24), Cột Y: KV (25), Cột Z: PG (26)
-    if (nv !== undefined) sheet.getRange(targetRow, 24).setValue(nv);
-    if (kv !== undefined) sheet.getRange(targetRow, 25).setValue(kv);
-    if (pg !== undefined) sheet.getRange(targetRow, 26).setValue(pg);
+    // 1. Cập nhật trên tab 'save data' (A3:D17, dòng = targetStt + 2)
+    const saveSheet = getSaveDataSheet(targetSheetId);
+    if (saveSheet && targetStt >= 1 && targetStt <= 15) {
+      const saveRow = targetStt + 2;
+      if (nv !== undefined) saveSheet.getRange(saveRow, 2).setValue(nv);
+      if (kv !== undefined) saveSheet.getRange(saveRow, 3).setValue(kv);
+      if (pg !== undefined) saveSheet.getRange(saveRow, 4).setValue(pg);
+      saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
+    }
+
+    // 2. Cập nhật trên sheet gốc (W17:Z31, dòng = 16 + targetStt)
+    const sheet = getTargetSheet(targetSheetId);
+    if (sheet && sheet.getName() !== "save data") {
+      const targetRow = 16 + targetStt;
+      if (nv !== undefined) sheet.getRange(targetRow, 24).setValue(nv);
+      if (kv !== undefined) sheet.getRange(targetRow, 25).setValue(kv);
+      if (pg !== undefined) sheet.getRange(targetRow, 26).setValue(pg);
+    }
 
     SpreadsheetApp.flush();
 
     return {
       success: true,
-      stt: stt,
-      row: targetRow,
+      stt: targetStt,
       nv: nv,
       kv: kv,
       pg: pg,
-      message: "Đã cập nhật thành công vị trí " + stt
+      message: "Đã cập nhật thành công vị trí " + targetStt + " vào sheet 'save data'!"
     };
   } catch (err) {
     return { success: false, message: err.toString() };
@@ -508,6 +526,9 @@ function updateShiftRow(stt, nv, kv, pg, targetSheetId) {
  */
 function updateAllShifts(shifts, targetSheetId) {
   try {
+    if (typeof shifts === "string") {
+      try { shifts = JSON.parse(shifts); } catch(e){}
+    }
     if (!Array.isArray(shifts) || shifts.length === 0) {
       return { success: false, message: "Dữ liệu phân công không hợp lệ" };
     }
@@ -559,23 +580,32 @@ function updateAllShifts(shifts, targetSheetId) {
  */
 function toggleEmployeeAttendance(stt, isMarked, targetSheetId) {
   try {
-    const sheet = getTargetSheet(targetSheetId);
-    if (!sheet) return { success: false, message: "Không tìm thấy trang tính!" };
+    const targetStt = parseInt(stt, 10);
 
-    const targetRow = parseInt(stt, 10);
-    // Cột AE (cột 31): Đánh dấu 'X' hoặc để trống
-    const cell = sheet.getRange(targetRow, 31);
-    cell.setValue(isMarked ? "X" : "");
-    cell.setHorizontalAlignment("center");
+    // 1. Cập nhật trên tab 'save data'
+    const saveSheet = getSaveDataSheet(targetSheetId);
+    if (saveSheet && targetStt >= 1) {
+      const saveRow = targetStt + 2;
+      saveSheet.getRange(saveRow, 9).setValue(isMarked ? "X" : "");
+      saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
+    }
+
+    // 2. Cập nhật trên sheet gốc
+    const sheet = getTargetSheet(targetSheetId);
+    if (sheet && sheet.getName() !== "save data") {
+      const targetRow = targetStt + 2;
+      const cell = sheet.getRange(targetRow, 31);
+      cell.setValue(isMarked ? "X" : "");
+      cell.setHorizontalAlignment("center");
+    }
 
     SpreadsheetApp.flush();
 
     return {
       success: true,
-      stt: stt,
-      row: targetRow,
+      stt: targetStt,
       marked: !!isMarked,
-      message: "Đã cập nhật điểm danh nhân viên " + stt
+      message: "Đã cập nhật điểm danh nhân viên " + targetStt + " vào sheet 'save data'!"
     };
   } catch (err) {
     return { success: false, message: err.toString() };
@@ -587,6 +617,9 @@ function toggleEmployeeAttendance(stt, isMarked, targetSheetId) {
  */
 function updateAllEmployees(employees, targetSheetId) {
   try {
+    if (typeof employees === "string") {
+      try { employees = JSON.parse(employees); } catch(e){}
+    }
     if (!Array.isArray(employees)) {
       return { success: false, message: "Dữ liệu danh sách NV/PG không hợp lệ" };
     }
@@ -599,25 +632,33 @@ function updateAllEmployees(employees, targetSheetId) {
 
       if (employees.length > 0) {
         const rowData = [];
+        let presentCount = 0;
         for (let i = 0; i < employees.length; i++) {
           const emp = employees[i] || {};
           const stt = emp.stt || (i + 1);
           const name = emp.name ? String(emp.name).trim() : "";
           const isPg = emp.role === "pg" || /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
           const roleLabel = isPg ? "PG Hãng" : "NV Siêu Thị";
-          const mark = (emp.marked === true || emp.marked === "X" || emp.marked === "1") ? "X" : "";
+          const isMarked = (emp.marked === true || emp.marked === "X" || emp.marked === "1" || emp.marked === "TRUE");
+          if (isMarked) presentCount++;
+          const mark = isMarked ? "X" : "";
           rowData.push([stt, name, roleLabel, mark]);
         }
         saveSheet.getRange(3, 6, rowData.length, 4).setValues(rowData);
-        saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
+        saveSheet.getRange("L3:L6").setValues([
+          [new Date().toLocaleString("vi-VN")],
+          ["Web App GitHub Pages"],
+          [employees.length],
+          [presentCount]
+        ]);
       }
     }
 
-    // 2. Ghi song song vào cột AC..AE của sheet gốc (nếu có)
+    // 2. Ghi song song vào cột AC..AE của sheet gốc (nếu có, bắt đầu từ dòng 3 để tránh tiêu đề)
     try {
       const sheet = getTargetSheet(targetSheetId);
       if (sheet && sheet.getName() !== "save data") {
-        sheet.getRange(1, 29, 60, 3).clearContent();
+        sheet.getRange(3, 29, 80, 3).clearContent();
         if (employees.length > 0) {
           const rowDataOld = [];
           for (let i = 0; i < employees.length; i++) {
@@ -627,7 +668,7 @@ function updateAllEmployees(employees, targetSheetId) {
             const mark = (emp.marked === true || emp.marked === "X" || emp.marked === "1") ? "X" : "";
             rowDataOld.push([stt, name, mark]);
           }
-          sheet.getRange(1, 29, rowDataOld.length, 3).setValues(rowDataOld);
+          sheet.getRange(3, 29, rowDataOld.length, 3).setValues(rowDataOld);
         }
       }
     } catch(e) {}
@@ -720,11 +761,11 @@ function onEdit(e) {
           saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
         }
       }
-      // Vùng Danh sách NV/PG: AC1:AE60 (cột 29..31, dòng 1..60)
-      if (row >= 1 && row <= 60 && col >= 29 && col <= 31) {
+      // Vùng Danh sách NV/PG trên sheet gốc: AC3:AE60 (cột 29..31, dòng 3..60)
+      if (row >= 3 && row <= 60 && col >= 29 && col <= 31) {
         const saveSheet = getSaveDataSheet();
         if (saveSheet) {
-          const empRow = row + 2; // map sang dòng 3..62
+          const empRow = row; // Dòng 3 trên VS CŨ map trực tiếp dòng 3 trên save data
           const empCol = (col === 29 ? 6 : (col === 30 ? 7 : 9)); // F(STT), G(Họ tên), I(Điểm danh)
           saveSheet.getRange(empRow, empCol).setValue(e.range.getValue());
           saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
@@ -733,6 +774,12 @@ function onEdit(e) {
     }
     // 2. Nếu chỉnh sửa trên tab 'save data'
     else if (sheetName === "save data") {
+      // Cập nhật timestamp L3 nếu sửa trong bảng
+      const saveSheet = e.range.getSheet();
+      if (saveSheet && (col < 11 || col > 12)) {
+        saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
+      }
+
       // Cột A..D dòng 3..17
       if (row >= 3 && row <= 17 && col >= 1 && col <= 4) {
         const defSheet = getTargetSheet();
@@ -746,7 +793,7 @@ function onEdit(e) {
       if (row >= 3 && row <= 60 && ((col >= 6 && col <= 7) || col === 9)) {
         const defSheet = getTargetSheet();
         if (defSheet && defSheet.getName() !== "save data") {
-          const origRow = row - 2;
+          const origRow = row; // Dòng 3 trên save data map trực tiếp dòng 3 trên VS CŨ
           const origCol = (col === 6 ? 29 : (col === 7 ? 30 : 31));
           defSheet.getRange(origRow, origCol).setValue(e.range.getValue());
         }

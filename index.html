@@ -4149,7 +4149,7 @@
       pendingSaveAgain = false;
 
       // Cập nhật trạng thái hiển thị trên giao diện ngay lập tức
-      setSyncStatus('syncing', '⚡ Đang lưu về Google Sheet...');
+      setSyncStatus('syncing', '⚡ Đang lưu về Google Sheet (save data)...');
       if (customToastMsg) {
         showToast(customToastMsg);
       }
@@ -4160,7 +4160,15 @@
       const currentEmployeesPayload = state.employees.slice();
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6500);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const payload = {
+        action: 'saveAll',
+        sheetId: DEFAULT_CONFIG.sheetId,
+        shifts: currentShiftsPayload,
+        employees: currentEmployeesPayload,
+        _t: timestamp
+      };
 
       // Gửi request saveAll nguyên khối đồng thời cả 15 Ca trực và Danh sách NV/PG
       fetch(url, {
@@ -4168,13 +4176,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         mode: 'no-cors',
-        body: JSON.stringify({
-          action: 'saveAll',
-          sheetId: DEFAULT_CONFIG.sheetId,
-          shifts: currentShiftsPayload,
-          employees: currentEmployeesPayload,
-          _t: timestamp
-        })
+        body: JSON.stringify(payload)
       }).then(() => {
         clearTimeout(timeoutId);
         isSavingToSheet = false;
@@ -4188,7 +4190,11 @@
 
         const now = new Date();
         const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-        setSyncStatus('connected', `🟢 Tự động đồng bộ (${timeStr})`);
+        setSyncStatus('connected', `🟢 Đã lưu vào save data (${timeStr})`);
+
+        if (customToastMsg || pendingSaveAgain) {
+          showToast('☁️ Đã lưu thành công về Google Sheet (tab save data)!');
+        }
 
         if (pendingSaveAgain) {
           pendingSaveAgain = false;
@@ -5645,7 +5651,7 @@
 
     // HÀM XỬ LÝ VÀ HIỂN THỊ DỮ LIỆU ĐỌC ĐƯỢC TỪ SHEET (SMART DIFFING - TỰ ĐỘNG CẬP NHẬT 100%)
     function applyReceivedSheetData(data, sourceName = 'Google Sheet Realtime', silent = true) {
-      if (!data || !data.success) {
+      if (!data || data.success === false) {
         stopReloadButtonSpin();
         return;
       }
@@ -5698,6 +5704,9 @@
           localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
           renderShifts();
           syncMapCellsFromShifts();
+          renderFloorplanStaffControls();
+          applyColorByStaff();
+          if (state.spotlightStaff) setStaffSpotlight(state.spotlightStaff);
           shiftsChanged = true;
         }
       }
@@ -5854,7 +5863,7 @@
         });
       }
 
-      return { shifts, employees };
+      return { success: true, shifts, employees };
     }
 
     // Trích xuất dữ liệu từ tab gốc 'VS CŨ'
@@ -5937,7 +5946,7 @@
         });
       }
 
-      return { shifts, employees };
+      return { success: true, shifts, employees };
     }
 
     // ĐỌC DỮ LIỆU QUA GOOGLE VISUALIZATION API SIÊU TỐC (< 150ms) - ĐỒNG THỜI CẢ 2 TAB SHEET
@@ -5948,11 +5957,11 @@
       const sheetId = DEFAULT_CONFIG.sheetId;
       const t = Date.now();
       const r = Math.random().toString(36).substring(2, 8);
-      const gvizSaveDataUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json&sheet=save%20data&_t=' + t + '&_r=' + r;
-      const gvizDefaultUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json&_t=' + t + '&_r=' + r;
+      const gvizSaveDataUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json&sheet=save%20data&headers=0&_t=' + t + '&_r=' + r;
+      const gvizDefaultUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json&headers=0&_t=' + t + '&_r=' + r;
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4500);
+      const timeoutId = setTimeout(() => controller.abort(), 5500);
 
       const fetchOpts = {
         signal: controller.signal,
@@ -6009,7 +6018,7 @@
           lastKnownDefSig = defSig;
 
           if (dataSave && (dataSave.shifts.length > 0 || dataSave.employees.length > 0)) {
-            applyReceivedSheetData(dataSave, 'Google Sheet (save data)', silent);
+            applyReceivedSheetData(dataSave, 'Google Sheet (tab save data)', silent);
           } else if (dataDefault && (dataDefault.shifts.length > 0 || dataDefault.employees.length > 0)) {
             applyReceivedSheetData(dataDefault, 'Google Sheet (VS Cũ)', silent);
           }
@@ -6018,25 +6027,26 @@
         }
 
         // 2. Kiểm tra xem Sheet có thực sự thay đổi so với lần poll trước hay không
-        const saveChanged = (saveSig && saveSig !== lastKnownSaveSig);
-        const defChanged = (defSig && defSig !== lastKnownDefSig);
+        // Chú ý: saveSig chỉ coi là có thay đổi nếu nó KHÁC mốc đã biết VÀ KHÁC dữ liệu hiện tại của app (tránh cache cũ đè lên dữ liệu vừa lưu)
+        const saveChanged = (saveSig && saveSig !== lastKnownSaveSig && saveSig !== curAppSig);
+        const defChanged = (defSig && defSig !== lastKnownDefSig && defSig !== curAppSig);
 
         // Cập nhật lại mốc so sánh
         if (saveSig) lastKnownSaveSig = saveSig;
         if (defSig) lastKnownDefSig = defSig;
 
-        // Nếu người dùng vừa sửa cục bộ trên Web App trong vòng 5 giây, KHÔNG để dữ liệu cũ từ Sheet đè lên
-        if (Date.now() - lastLocalEditTime < 5000) {
+        // Nếu người dùng vừa sửa cục bộ trên Web App trong vòng 6 giây, KHÔNG để dữ liệu cũ từ Sheet đè lên
+        if (Date.now() - lastLocalEditTime < 6000) {
           stopReloadButtonSpin();
           return;
         }
 
-        if (defChanged && !saveChanged) {
+        if (saveChanged) {
+          // Ưu tiên cao nhất: Tab 'save data' vừa được cập nhật mới trên Google Sheet
+          applyReceivedSheetData(dataSave, 'Google Sheet (tab save data)', silent);
+        } else if (defChanged) {
           // Người dùng vừa sửa trực tiếp trên sơ đồ sheet gốc 'VS CŨ'
           applyReceivedSheetData(dataDefault, 'Google Sheet (Sơ đồ VS Cũ)', silent);
-        } else if (saveChanged) {
-          // Tab 'save data' vừa được cập nhật mới
-          applyReceivedSheetData(dataSave || dataDefault, 'Google Sheet (save data)', silent);
         } else {
           // Không có thay đổi từ Google Sheet: nếu dữ liệu local đang trống rỗng thì mới nạp
           if (state.shifts.length === 0 || state.employees.length === 0) {
@@ -6047,7 +6057,7 @@
               ? dataSave.shifts
               : (dataDefault && dataDefault.shifts && dataDefault.shifts.length > 0 ? dataDefault.shifts : state.shifts);
             if (fallbackEmps.length > 0 || fallbackShifts.length > 0) {
-              applyReceivedSheetData({ success: true, shifts: fallbackShifts, employees: fallbackEmps }, 'Google Sheet Realtime', silent);
+              applyReceivedSheetData({ success: true, shifts: fallbackShifts, employees: fallbackEmps }, 'Google Sheet (tab save data)', silent);
             }
           }
           stopReloadButtonSpin();
@@ -6292,9 +6302,7 @@
 
     // NÚT LƯU VỀ SHEET (LƯU CẢ CA TRỰC VÀ DANH SÁCH NV/PG)
     document.getElementById('btnSaveToSheetMain').addEventListener('click', () => {
-      showToast('☁️ Đang lưu toàn bộ ca trực & danh sách NV/PG về tab "save data" trên Google Sheet...');
-      saveAllToSheet();
-      saveAllEmployeesToSheet();
+      saveToSheetImmediately('☁️ Đang lưu toàn bộ ca trực & danh sách NV/PG về tab "save data" trên Google Sheet...');
     });
 
     // MODAL CÀI ĐẶT
