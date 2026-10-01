@@ -578,13 +578,36 @@
 
     .cell-title {
       font-weight: 800;
-      letter-spacing: -0.1px;
+      letter-spacing: -0.15px;
+      line-height: 1.22;
+      word-break: break-word;
     }
     .cell-staff {
-      font-size: 11px;
-      font-weight: 600;
-      margin-top: 2px;
-      opacity: 0.92;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+      margin-top: 3px;
+      padding: 1.5px 6px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.92);
+      color: #1e293b;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      white-space: nowrap;
+      max-width: 96%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: -0.1px;
+      transition: all 0.18s ease;
+      line-height: 1.25;
+    }
+    .map-cell:hover .cell-staff {
+      background: #ffffff;
+      border-color: #d97706;
+      color: #92400e;
+      box-shadow: 0 2px 5px rgba(217, 119, 6, 0.2);
     }
 
     /* MÀU SẮC PHÂN KHU CHUẨN THEO ẢNH */
@@ -1546,6 +1569,417 @@
       transform: translateY(-2px);
     }
 
+    /* ==========================================================================
+       BỘ CÔNG CỤ SOI SÁNG & PHÂN BIỆT KHU VỰC NHÂN VIÊN TRÊN SƠ ĐỒ
+       ========================================================================== */
+    .floorplan-controls-bar {
+      background: #ffffff;
+      border: 1.5px solid #fde68a;
+      border-radius: var(--radius-lg);
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 10px rgba(217, 119, 6, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .floorplan-controls-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .spotlight-selector-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 250px;
+      max-width: 440px;
+    }
+    .spotlight-selector-wrap i {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #d97706;
+      font-size: 13px;
+      pointer-events: none;
+    }
+    .staff-spotlight-select {
+      width: 100%;
+      padding: 8px 14px 8px 36px;
+      border-radius: 20px;
+      border: 1.5px solid #fde68a;
+      background: #fffdf5;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 700;
+      color: #78350f;
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .staff-spotlight-select:focus {
+      border-color: #d97706;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.16);
+    }
+    .floorplan-quick-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-control-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6.5px 13px;
+      border-radius: 20px;
+      border: 1.5px solid #fde68a;
+      background: #fffdf5;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 700;
+      color: #78350f;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .btn-control-chip:hover {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #92400e;
+      transform: translateY(-1px);
+    }
+    .btn-control-chip.active {
+      background: #d97706 !important;
+      border-color: #b45309 !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.28) !important;
+    }
+    .btn-control-chip.active i {
+      color: #ffffff !important;
+    }
+    .btn-control-chip.has-profile {
+      border-color: #f59e0b;
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    /* THANH CUỘN NGANG CÁC CHIP NHÂN SỰ */
+    .staff-quick-scroller-wrap {
+      overflow-x: auto;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+      padding: 2px 0;
+    }
+    .staff-quick-scroller-wrap::-webkit-scrollbar {
+      display: none;
+    }
+    .staff-quick-scroller {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: max-content;
+    }
+    .staff-filter-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4.5px 10px;
+      border-radius: 16px;
+      border: 1.2px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .staff-filter-pill .color-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .staff-filter-pill .area-count {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.07);
+      color: inherit;
+    }
+    .staff-filter-pill:hover {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #92400e;
+      transform: translateY(-1px);
+    }
+    .staff-filter-pill.active {
+      background: #92400e !important;
+      border-color: #78350f !important;
+      color: #ffffff !important;
+      box-shadow: 0 3px 10px rgba(146, 64, 14, 0.3) !important;
+      transform: scale(1.04);
+    }
+    .staff-filter-pill.active .area-count {
+      background: rgba(255, 255, 255, 0.28) !important;
+      color: #ffffff !important;
+    }
+    .staff-filter-pill.is-me {
+      border-color: #f59e0b;
+      font-weight: 800;
+    }
+
+    /* BANNER TIÊU ĐIỂM / SOI SÁNG */
+    .spotlight-active-summary {
+      background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+      border: 2px solid #d97706;
+      border-radius: var(--radius-lg);
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 16px rgba(217, 119, 6, 0.18);
+      animation: bannerSlideIn 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .spotlight-summary-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .spotlight-summary-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .spotlight-avatar-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--primary-gradient);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+      flex-shrink: 0;
+    }
+    .spotlight-name-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .spotlight-target-name {
+      font-size: 15px;
+      font-weight: 900;
+      color: #92400e;
+      letter-spacing: -0.2px;
+    }
+    .spotlight-count-badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 12px;
+      background: #ffffff;
+      border: 1px solid #d97706;
+      color: #92400e;
+      font-size: 11.5px;
+      font-weight: 800;
+    }
+    .spotlight-guide-text {
+      font-size: 12px;
+      color: #78350f;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .spotlight-summary-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-summary-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .btn-summary-action.pin {
+      background: #ffffff;
+      border-color: #d97706;
+      color: #92400e;
+    }
+    .btn-summary-action.pin:hover {
+      background: #fef3c7;
+      transform: translateY(-1px);
+    }
+    .btn-summary-action.edit {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #92400e;
+    }
+    .btn-summary-action.edit:hover {
+      background: #fde68a;
+      transform: translateY(-1px);
+    }
+    .btn-summary-action.close {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+    .btn-summary-action.close:hover {
+      background: #fecaca;
+      transform: translateY(-1px);
+    }
+
+    .spotlight-areas-list {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding-top: 4px;
+      border-top: 1px dashed #fde68a;
+    }
+    .spotlight-area-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      background: #ffffff;
+      border: 1.5px solid #d97706;
+      font-size: 12px;
+      font-weight: 700;
+      color: #92400e;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      box-shadow: 0 1px 4px rgba(217, 119, 6, 0.1);
+      font-family: var(--font-sans);
+    }
+    .spotlight-area-chip:hover {
+      background: #d97706;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(217, 119, 6, 0.28);
+    }
+    .spotlight-area-chip .seq-num {
+      background: #fef3c7;
+      color: #b45309;
+      font-weight: 900;
+      font-size: 10.5px;
+      border-radius: 50%;
+      width: 19px;
+      height: 19px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s ease;
+    }
+    .spotlight-area-chip:hover .seq-num {
+      background: rgba(255, 255, 255, 0.3);
+      color: #ffffff;
+    }
+
+    /* HIỆU ỨNG RỌI SÁNG & LÀM MỜ Ô TRÊN SƠ ĐỒ */
+    .map-cell.staff-spotlight {
+      outline: 3px solid #ea580c !important;
+      box-shadow: 0 0 0 5px rgba(234, 88, 12, 0.22), 0 8px 24px rgba(234, 88, 12, 0.42) !important;
+      transform: scale(1.04) !important;
+      z-index: 25 !important;
+      opacity: 1 !important;
+      filter: none !important;
+      animation: pulseSpotlight 1.8s infinite alternate ease-in-out;
+    }
+    @keyframes pulseSpotlight {
+      0% { box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.25), 0 8px 20px rgba(234, 88, 12, 0.35); }
+      100% { box-shadow: 0 0 0 8px rgba(234, 88, 12, 0.12), 0 12px 28px rgba(234, 88, 12, 0.55); }
+    }
+    .spotlight-order-tag {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: #ea580c;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 900;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      z-index: 30;
+      animation: popIn 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .map-cell.staff-dimmed {
+      opacity: 0.22 !important;
+      filter: grayscale(85%) contrast(85%) !important;
+      transform: scale(0.98);
+      transition: all 0.25s ease;
+    }
+    .map-cell.staff-dimmed:hover {
+      opacity: 0.72 !important;
+      filter: grayscale(20%) !important;
+      transform: scale(1);
+      cursor: pointer;
+    }
+    .map-cell.staff-peer-hover {
+      box-shadow: 0 0 0 3px #f59e0b, 0 4px 14px rgba(245, 158, 11, 0.35) !important;
+      transform: translateY(-2px);
+      z-index: 15;
+    }
+    .map-cell.cell-pulsing {
+      animation: intensePulse 1.2s 3 ease-in-out !important;
+      z-index: 50 !important;
+    }
+    @keyframes intensePulse {
+      0%, 100% { outline: 4px solid #ef4444; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); transform: scale(1.08); }
+      50% { outline: 4px solid #f59e0b; box-shadow: 0 0 0 14px rgba(245, 158, 11, 0); transform: scale(1.12); }
+    }
+    .cell-shift-tag {
+      position: absolute;
+      top: 2px;
+      left: 3px;
+      font-size: 9px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.12);
+      color: inherit;
+      line-height: 1;
+      opacity: 0.85;
+      letter-spacing: -0.2px;
+    }
+    .map-cell.has-staff-color {
+      background: var(--staff-bg) !important;
+      border-color: var(--staff-border) !important;
+      color: var(--staff-text) !important;
+    }
   
     /* ==========================================================================
        TỐI ƯU HÓA ĐẶC BIỆT CHO TRÌNH DUYỆT ĐIỆN THOẠI & LINE/ZALO IN-APP BROWSER
@@ -1779,6 +2213,37 @@
       }
       .allocation-banner > div:last-child {
         display: flex !important;
+        justify-content: flex-end !important;
+      }
+      .floorplan-controls-top-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+      }
+      .spotlight-selector-wrap {
+        max-width: 100% !important;
+        width: 100% !important;
+      }
+      .floorplan-quick-actions {
+        display: flex !important;
+        overflow-x: auto !important;
+        scrollbar-width: none !important;
+        padding-bottom: 2px !important;
+        gap: 6px !important;
+        width: 100% !important;
+      }
+      .floorplan-quick-actions::-webkit-scrollbar {
+        display: none !important;
+      }
+      .spotlight-active-summary {
+        padding: 10px 12px !important;
+      }
+      .spotlight-summary-top {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
+      }
+      .spotlight-summary-actions {
         justify-content: flex-end !important;
       }
 
@@ -2071,6 +2536,81 @@
             <span class="legend-item"><span class="legend-box" style="background:#dbeafe;border-color:#93c5fd;"></span> Máy Giặt</span>
             <span class="legend-item"><span class="legend-box" style="background:#fef08a;border-color:#eab308;"></span> Khu ICT / Điện Thoại</span>
             <span class="legend-item"><span class="legend-box" style="background:#ffe4e6;border-color:#fca5a5;"></span> Thu Ngân / HTKT</span>
+          </div>
+        </div>
+
+        <!-- BỘ CÔNG CỤ SOI SÁNG & PHÂN BIỆT KHU VỰC NHÂN VIÊN TRÊN SƠ ĐỒ -->
+        <div class="floorplan-controls-bar" id="floorplanControlsBar">
+          <div class="floorplan-controls-top-row">
+            <!-- Dropdown Tìm & Soi sáng khu vực nhân viên -->
+            <div class="spotlight-selector-wrap">
+              <i class="fa-solid fa-magnifying-glass-location"></i>
+              <select id="spotlightStaffSelect" class="staff-spotlight-select" title="Chọn nhân viên để soi sáng toàn bộ khu vực phụ trách">
+                <option value="">🔍 Soi sáng khu vực nhân viên (Chọn tên)...</option>
+              </select>
+            </div>
+
+            <!-- Các nút bật tắt chế độ trực quan -->
+            <div class="floorplan-quick-actions">
+              <button class="btn-control-chip" id="btnMyStaffSpotlight" title="Bật nhanh các khu vực thuộc về tôi (ghi nhớ trên thiết bị này)">
+                <i class="fa-solid fa-star" style="color:#d97706;"></i>
+                <span id="btnMyStaffLabel">Khu Vực Của Tôi</span>
+              </button>
+
+              <button class="btn-control-chip" id="btnToggleColorByStaff" title="Đổi màu các ô trên sơ đồ theo từng nhân viên để nhận biết trực quan">
+                <i class="fa-solid fa-palette" style="color:#2563eb;"></i>
+                <span id="btnToggleColorByStaffLabel">Tô màu theo nhân viên</span>
+              </button>
+
+              <button class="btn-control-chip" id="btnToggleShiftBadges" title="Hiện số thứ tự Ca trực (#1 - #15) trên từng ô">
+                <i class="fa-solid fa-hashtag" style="color:#16a34a;"></i>
+                <span id="btnToggleShiftBadgesLabel">Hiện số Ca</span>
+              </button>
+
+              <button class="btn-control-chip" id="btnResetSpotlight" title="Hiện lại toàn bộ sơ đồ bình thường" style="display:none;">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Hiện tất cả</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Thanh cuộn ngang các thẻ nhân sự trực ca -->
+          <div class="staff-quick-scroller-wrap" id="staffQuickScrollerWrap">
+            <div class="staff-quick-scroller" id="staffQuickScroller">
+              <!-- Được render tự động bằng JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- BANNER THÔNG TIN TIÊU ĐIỂM (KHI ĐANG SOI SÁNG 1 NHÂN VIÊN) -->
+        <div class="spotlight-active-summary" id="spotlightActiveSummary" style="display:none;">
+          <div class="spotlight-summary-top">
+            <div class="spotlight-summary-left">
+              <div class="spotlight-avatar-icon"><i class="fa-solid fa-bullseye"></i></div>
+              <div>
+                <div class="spotlight-name-line">
+                  <span class="spotlight-target-name" id="spotlightTargetName">KIM MỸ</span>
+                  <span class="spotlight-count-badge" id="spotlightCountBadge">5 khu vực</span>
+                </div>
+                <div class="spotlight-guide-text">
+                  <i class="fa-solid fa-arrow-pointer"></i> Nhấn vào từng vị trí bên dưới để phóng tới ô trên sơ đồ:
+                </div>
+              </div>
+            </div>
+            <div class="spotlight-summary-actions">
+              <button class="btn-summary-action pin" id="btnPinAsMyProfile" title="Ghi nhớ tôi là nhân viên này trên thiết bị này">
+                <i class="fa-solid fa-bookmark"></i> <span id="pinMyProfileLabel">Ghi nhớ tôi</span>
+              </button>
+              <button class="btn-summary-action edit" id="btnEditSpotlightStaff" title="Đổi nhân viên hoặc phân bổ lại cho các khu vực này">
+                <i class="fa-solid fa-user-pen"></i> Đổi người
+              </button>
+              <button class="btn-summary-action close" id="btnCloseSpotlight" title="Tắt soi sáng và xem lại toàn bộ sơ đồ">
+                <i class="fa-solid fa-xmark"></i> Bỏ soi
+              </button>
+            </div>
+          </div>
+          <div class="spotlight-areas-list" id="spotlightAreasList">
+            <!-- Danh sách các ô phân bổ sẽ hiện ở đây dạng chip bấm được -->
           </div>
         </div>
 
@@ -2794,8 +3334,42 @@
       employees: [],
       searchKeyword: '',
       empSearchKeyword: '',
-      pendingDeleteEmpIndex: -1
+      pendingDeleteEmpIndex: -1,
+      spotlightStaff: null,
+      colorByStaffMode: false,
+      showShiftTagsMode: false,
+      mySavedStaff: localStorage.getItem('st1841_my_staff') || ''
     };
+
+    // Bảng 14 hệ màu pastel hài hòa, tương phản cao để phân biệt các nhân sự
+    const STAFF_PALETTES = [
+      { name: 'Xanh Da Trời', bg: '#e0f2fe', border: '#7dd3fc', text: '#0369a1', dot: '#0ea5e9' },
+      { name: 'Tím Lavender', bg: '#f3e8ff', border: '#d8b4fe', text: '#6b21a8', dot: '#a855f7' },
+      { name: 'Xanh Bạc Hà', bg: '#dcfce7', border: '#86efac', text: '#166534', dot: '#22c55e' },
+      { name: 'Cam Hổ Phách', bg: '#ffedd5', border: '#fdba74', text: '#9a3412', dot: '#f97316' },
+      { name: 'Hồng Đào Coral', bg: '#ffe4e6', border: '#fda4af', text: '#9f1239', dot: '#f43f5e' },
+      { name: 'Xanh Ngọc (Teal)', bg: '#ccfbf1', border: '#5eead4', text: '#115e59', dot: '#14b8a6' },
+      { name: 'Vàng Mật Ong', bg: '#fef08a', border: '#facc15', text: '#854d0e', dot: '#eab308' },
+      { name: 'Xanh Chàm Indigo', bg: '#e0e7ff', border: '#a5b4fc', text: '#3730a3', dot: '#6366f1' },
+      { name: 'Hồng Cánh Sen', bg: '#fce7f3', border: '#f9a8d4', text: '#9d174d', dot: '#ec4899' },
+      { name: 'Xanh Lục Emerald', bg: '#ecfdf5', border: '#a7f3d0', text: '#047857', dot: '#059669' },
+      { name: 'Nâu Vàng Ấm', bg: '#fef3c7', border: '#fde68a', text: '#78350f', dot: '#d97706' },
+      { name: 'Tím Cẩm Quỳ', bg: '#ede9fe', border: '#c4b5fd', text: '#5b21b6', dot: '#8b5cf6' },
+      { name: 'Lam Đậm Slate', bg: '#f1f5f9', border: '#cbd5e1', text: '#334155', dot: '#64748b' },
+      { name: 'Xanh Biển Cyan', bg: '#cffafe', border: '#67e8f9', text: '#0e7490', dot: '#06b6d4' }
+    ];
+
+    function getPaletteForStaff(staffName) {
+      if (!staffName || !staffName.trim()) return STAFF_PALETTES[0];
+      const clean = staffName.trim().toUpperCase();
+      let hash = 0;
+      for (let i = 0; i < clean.length; i++) {
+        hash = (hash << 5) - hash + clean.charCodeAt(i);
+        hash |= 0;
+      }
+      const idx = Math.abs(hash) % STAFF_PALETTES.length;
+      return STAFF_PALETTES[idx];
+    }
 
     // Khởi tạo 15 ca trực mặc định từ Sheet
     const DEFAULT_SHIFTS = [
@@ -3528,6 +4102,383 @@
     state.isAllocatingDirectly = false;
     state.allocatingStaff = '';
 
+    // Kiểm tra xem 1 ô trên sơ đồ có thuộc nhân viên chỉ định hay không
+    function cellMatchesStaff(cell, targetStaff) {
+      if (!cell || !targetStaff) return false;
+      const staffAttr = (cell.getAttribute('data-staff') || '').trim();
+      const staffSpan = cell.querySelector('.cell-staff');
+      const spanText = staffSpan ? staffSpan.textContent.trim() : '';
+      return isStaffNameMatch(staffAttr, targetStaff) || isStaffNameMatch(spanText, targetStaff);
+    }
+
+    // Cuộn mượt và tạo hiệu ứng nhấp nháy làm nổi bật ô trên sơ đồ
+    function focusAndPulseCell(cell) {
+      if (!cell) return;
+      const viewport = document.querySelector('.floorplan-scroll-viewport');
+      if (viewport) {
+        const vRect = viewport.getBoundingClientRect();
+        const cRect = cell.getBoundingClientRect();
+        const targetLeft = viewport.scrollLeft + (cRect.left - vRect.left) - (viewport.clientWidth / 2) + (cRect.width / 2);
+        viewport.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+      }
+      cell.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      cell.classList.remove('cell-pulsing');
+      void cell.offsetWidth;
+      cell.classList.add('cell-pulsing');
+      setTimeout(() => cell.classList.remove('cell-pulsing'), 3200);
+    }
+
+    // Render bộ lọc danh sách nhân viên trên thanh điều khiển
+    function renderFloorplanStaffControls() {
+      const selectEl = document.getElementById('spotlightStaffSelect');
+      const scrollerEl = document.getElementById('staffQuickScroller');
+      if (!selectEl || !scrollerEl) return;
+
+      const cells = Array.from(document.querySelectorAll('.map-cell'));
+      const staffCountMap = new Map();
+      const totalCells = cells.length;
+
+      cells.forEach(c => {
+        const staff = (c.getAttribute('data-staff') || (c.querySelector('.cell-staff') ? c.querySelector('.cell-staff').textContent : '')).trim();
+        if (staff) {
+          let matchedKey = null;
+          for (let k of staffCountMap.keys()) {
+            if (isStaffNameMatch(k, staff)) {
+              matchedKey = k;
+              break;
+            }
+          }
+          if (matchedKey) {
+            staffCountMap.set(matchedKey, staffCountMap.get(matchedKey) + 1);
+          } else {
+            staffCountMap.set(staff, 1);
+          }
+        }
+      });
+
+      const sortedStaff = Array.from(staffCountMap.entries()).sort((a, b) => a[0].localeCompare(b[0], 'vi'));
+
+      // 1. Cập nhật Dropdown Select
+      selectEl.innerHTML = '<option value="">🔍 Soi sáng khu vực nhân viên (Chọn tên)...</option>';
+      sortedStaff.forEach(([staffName, count]) => {
+        const opt = document.createElement('option');
+        opt.value = staffName;
+        opt.textContent = `${staffName} (${count} vị trí)`;
+        if (state.spotlightStaff && isStaffNameMatch(state.spotlightStaff, staffName)) {
+          opt.selected = true;
+        }
+        selectEl.appendChild(opt);
+      });
+
+      // 2. Cập nhật thanh cuộn ngang các chip nhân sự
+      scrollerEl.innerHTML = '';
+
+      const allPill = document.createElement('button');
+      allPill.type = 'button';
+      allPill.className = `staff-filter-pill ${!state.spotlightStaff ? 'active' : ''}`;
+      allPill.innerHTML = `<span>🌟 Xem tất cả</span> <span class="area-count">${totalCells}</span>`;
+      allPill.onclick = () => setStaffSpotlight(null);
+      scrollerEl.appendChild(allPill);
+
+      sortedStaff.forEach(([staffName, count]) => {
+        const pal = getPaletteForStaff(staffName);
+        const isActive = state.spotlightStaff && isStaffNameMatch(state.spotlightStaff, staffName);
+        const isMyProfile = state.mySavedStaff && isStaffNameMatch(state.mySavedStaff, staffName);
+
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = `staff-filter-pill ${isActive ? 'active' : ''} ${isMyProfile ? 'is-me' : ''}`;
+        pill.setAttribute('data-staff', staffName);
+        pill.title = `Nhấn để soi sáng ${count} khu vực của ${staffName}`;
+        pill.innerHTML = `
+          <span class="color-dot" style="background:${pal.dot};"></span>
+          <span>${isMyProfile ? '⭐ ' : ''}${staffName}</span>
+          <span class="area-count">${count}</span>
+        `;
+        pill.onclick = () => {
+          if (isActive) {
+            setStaffSpotlight(null);
+          } else {
+            setStaffSpotlight(staffName);
+          }
+        };
+        scrollerEl.appendChild(pill);
+      });
+
+      // Cập nhật trạng thái nút "Khu Vực Của Tôi"
+      const myStaffBtn = document.getElementById('btnMyStaffSpotlight');
+      const myStaffLabel = document.getElementById('btnMyStaffLabel');
+      if (myStaffBtn && myStaffLabel) {
+        if (state.mySavedStaff) {
+          myStaffLabel.textContent = 'Tôi: ' + state.mySavedStaff;
+          myStaffBtn.classList.add('has-profile');
+        } else {
+          myStaffLabel.textContent = 'Khu Vực Của Tôi';
+          myStaffBtn.classList.remove('has-profile');
+        }
+      }
+    }
+
+    // Bật chế độ Tiêu Điểm / Soi Sáng cho 1 nhân viên cụ thể
+    function setStaffSpotlight(staffName) {
+      const cells = Array.from(document.querySelectorAll('.map-cell'));
+      const summaryBanner = document.getElementById('spotlightActiveSummary');
+      const resetBtn = document.getElementById('btnResetSpotlight');
+      const selectEl = document.getElementById('spotlightStaffSelect');
+
+      if (!staffName || staffName === 'ALL') {
+        state.spotlightStaff = null;
+        cells.forEach(cell => {
+          cell.classList.remove('staff-spotlight', 'staff-dimmed');
+          const orderTag = cell.querySelector('.spotlight-order-tag');
+          if (orderTag) orderTag.remove();
+        });
+        if (summaryBanner) summaryBanner.style.display = 'none';
+        if (resetBtn) resetBtn.style.display = 'none';
+        if (selectEl) selectEl.value = '';
+        renderFloorplanStaffControls();
+        return;
+      }
+
+      state.spotlightStaff = staffName;
+      if (resetBtn) resetBtn.style.display = 'inline-flex';
+      if (selectEl) selectEl.value = staffName;
+
+      // Tìm tất cả các ô khớp với nhân viên này
+      const matchingCells = [];
+      cells.forEach(cell => {
+        if (cellMatchesStaff(cell, staffName)) {
+          matchingCells.push(cell);
+        }
+      });
+
+      // Đánh số thứ tự & rọi sáng các ô tương ứng, làm mờ các ô còn lại
+      let orderIndex = 1;
+      cells.forEach(cell => {
+        const isMatch = matchingCells.includes(cell);
+        if (isMatch) {
+          cell.classList.remove('staff-dimmed');
+          cell.classList.add('staff-spotlight');
+
+          let orderTag = cell.querySelector('.spotlight-order-tag');
+          if (!orderTag) {
+            orderTag = document.createElement('span');
+            orderTag.className = 'spotlight-order-tag';
+            cell.appendChild(orderTag);
+          }
+          orderTag.textContent = '#' + orderIndex++;
+        } else {
+          cell.classList.remove('staff-spotlight');
+          cell.classList.add('staff-dimmed');
+          const orderTag = cell.querySelector('.spotlight-order-tag');
+          if (orderTag) orderTag.remove();
+        }
+      });
+
+      // Hiển thị banner tổng kết khu vực của nhân viên
+      if (summaryBanner) {
+        summaryBanner.style.display = 'flex';
+        const targetNameEl = document.getElementById('spotlightTargetName');
+        const countBadgeEl = document.getElementById('spotlightCountBadge');
+        const areasListEl = document.getElementById('spotlightAreasList');
+        const pinLabel = document.getElementById('pinMyProfileLabel');
+
+        if (targetNameEl) targetNameEl.textContent = staffName;
+        if (countBadgeEl) countBadgeEl.textContent = matchingCells.length + ' khu vực';
+
+        if (pinLabel) {
+          const isMe = state.mySavedStaff && isStaffNameMatch(state.mySavedStaff, staffName);
+          pinLabel.textContent = isMe ? 'Đã là tôi ✓' : 'Ghi nhớ tôi';
+        }
+
+        if (areasListEl) {
+          areasListEl.innerHTML = '';
+          matchingCells.forEach((c, idx) => {
+            const titleEl = c.querySelector('.cell-title');
+            const title = titleEl ? titleEl.textContent.trim() : c.textContent.trim();
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'spotlight-area-chip';
+            chip.title = `Nhấn để phóng tới vị trí: ${title}`;
+            chip.innerHTML = `<span class="seq-num">#${idx + 1}</span> <span>${title}</span> <i class="fa-solid fa-location-crosshairs"></i>`;
+            chip.onclick = () => focusAndPulseCell(c);
+            areasListEl.appendChild(chip);
+          });
+        }
+      }
+
+      // Cập nhật các nút filter
+      renderFloorplanStaffControls();
+
+      // Tự động cuộn tới ô đầu tiên của nhân viên
+      if (matchingCells.length > 0) {
+        focusAndPulseCell(matchingCells[0]);
+      }
+    }
+
+    // Bật/tắt chế độ tô màu riêng biệt theo từng nhân viên
+    function toggleColorByStaff() {
+      state.colorByStaffMode = !state.colorByStaffMode;
+      const btn = document.getElementById('btnToggleColorByStaff');
+      const label = document.getElementById('btnToggleColorByStaffLabel');
+
+      if (btn && label) {
+        if (state.colorByStaffMode) {
+          btn.classList.add('active');
+          label.textContent = 'Màu ngành hàng';
+          showToast('🎨 Đã bật tô màu riêng biệt theo từng nhân viên');
+        } else {
+          btn.classList.remove('active');
+          label.textContent = 'Tô màu theo nhân viên';
+          showToast('🏢 Đã quay về màu gốc theo ngành hàng');
+        }
+      }
+      applyColorByStaff();
+    }
+
+    function applyColorByStaff() {
+      const cells = document.querySelectorAll('.map-cell');
+      cells.forEach(cell => {
+        if (state.colorByStaffMode) {
+          const staff = (cell.getAttribute('data-staff') || (cell.querySelector('.cell-staff') ? cell.querySelector('.cell-staff').textContent : '')).trim();
+          if (staff) {
+            const pal = getPaletteForStaff(staff);
+            cell.style.setProperty('--staff-bg', pal.bg);
+            cell.style.setProperty('--staff-border', pal.border);
+            cell.style.setProperty('--staff-text', pal.text);
+            cell.classList.add('has-staff-color');
+          } else {
+            cell.classList.remove('has-staff-color');
+          }
+        } else {
+          cell.classList.remove('has-staff-color');
+          cell.style.removeProperty('--staff-bg');
+          cell.style.removeProperty('--staff-border');
+          cell.style.removeProperty('--staff-text');
+        }
+      });
+    }
+
+    // Bật/tắt huy hiệu hiển thị số Ca trực (#1 - #15)
+    function toggleShiftBadges() {
+      state.showShiftTagsMode = !state.showShiftTagsMode;
+      const btn = document.getElementById('btnToggleShiftBadges');
+      const label = document.getElementById('btnToggleShiftBadgesLabel');
+
+      if (btn && label) {
+        if (state.showShiftTagsMode) {
+          btn.classList.add('active');
+          label.textContent = 'Ẩn số Ca';
+          showToast('🔢 Đã hiện số thứ tự Ca trực (#1 - #15) trên từng ô');
+        } else {
+          btn.classList.remove('active');
+          label.textContent = 'Hiện số Ca';
+          showToast('Đã ẩn số Ca');
+        }
+      }
+      applyShiftBadges();
+    }
+
+    function applyShiftBadges() {
+      const cells = document.querySelectorAll('.map-cell');
+      cells.forEach(cell => {
+        let tag = cell.querySelector('.cell-shift-tag');
+        if (state.showShiftTagsMode) {
+          const sIdx = getShiftIndexForCell(cell);
+          if (sIdx >= 0) {
+            if (!tag) {
+              tag = document.createElement('span');
+              tag.className = 'cell-shift-tag';
+              cell.prepend(tag);
+            }
+            tag.textContent = '#' + (sIdx + 1);
+            tag.style.display = 'inline-block';
+          }
+        } else {
+          if (tag) tag.remove();
+        }
+      });
+    }
+
+    // Gắn sự kiện các nút điều khiển sơ đồ
+    function initFloorplanControlListeners() {
+      const selectEl = document.getElementById('spotlightStaffSelect');
+      if (selectEl && !selectEl._hasInitListener) {
+        selectEl._hasInitListener = true;
+        selectEl.addEventListener('change', function() {
+          setStaffSpotlight(this.value);
+        });
+      }
+
+      const resetBtn = document.getElementById('btnResetSpotlight');
+      if (resetBtn && !resetBtn._hasInitListener) {
+        resetBtn._hasInitListener = true;
+        resetBtn.addEventListener('click', () => setStaffSpotlight(null));
+      }
+
+      const closeSummaryBtn = document.getElementById('btnCloseSpotlight');
+      if (closeSummaryBtn && !closeSummaryBtn._hasInitListener) {
+        closeSummaryBtn._hasInitListener = true;
+        closeSummaryBtn.addEventListener('click', () => setStaffSpotlight(null));
+      }
+
+      const editBtn = document.getElementById('btnEditSpotlightStaff');
+      if (editBtn && !editBtn._hasInitListener) {
+        editBtn._hasInitListener = true;
+        editBtn.addEventListener('click', () => {
+          if (!state.spotlightStaff) return;
+          const firstCell = Array.from(document.querySelectorAll('.map-cell')).find(c => cellMatchesStaff(c, state.spotlightStaff));
+          const cellTitle = firstCell ? (firstCell.querySelector('.cell-title') ? firstCell.querySelector('.cell-title').textContent.trim() : firstCell.textContent.trim()) : 'Khu vực';
+          openStaffAllocationModal(firstCell || document.body, cellTitle, state.spotlightStaff);
+        });
+      }
+
+      const pinBtn = document.getElementById('btnPinAsMyProfile');
+      if (pinBtn && !pinBtn._hasInitListener) {
+        pinBtn._hasInitListener = true;
+        pinBtn.addEventListener('click', () => {
+          if (!state.spotlightStaff) return;
+          state.mySavedStaff = state.spotlightStaff;
+          localStorage.setItem('st1841_my_staff', state.spotlightStaff);
+          renderFloorplanStaffControls();
+          showToast('⭐ Đã ghi nhớ bạn là: ' + state.spotlightStaff + '. Mỗi lần vào web, chỉ cần bấm "Khu Vực Của Tôi" là sáng ngay!');
+          const pinLabel = document.getElementById('pinMyProfileLabel');
+          if (pinLabel) pinLabel.textContent = 'Đã là tôi ✓';
+        });
+      }
+
+      const myStaffBtn = document.getElementById('btnMyStaffSpotlight');
+      if (myStaffBtn && !myStaffBtn._hasInitListener) {
+        myStaffBtn._hasInitListener = true;
+        myStaffBtn.addEventListener('click', () => {
+          if (state.mySavedStaff) {
+            if (state.spotlightStaff && isStaffNameMatch(state.spotlightStaff, state.mySavedStaff)) {
+              setStaffSpotlight(null);
+            } else {
+              setStaffSpotlight(state.mySavedStaff);
+              showToast('🌟 Đang soi sáng khu vực của: ' + state.mySavedStaff);
+            }
+          } else {
+            showToast('ℹ️ Bạn chưa lưu tên. Vui lòng chọn tên trên sơ đồ và bấm "Ghi nhớ tôi"!');
+            const sel = document.getElementById('spotlightStaffSelect');
+            if (sel) sel.focus();
+          }
+        });
+      }
+
+      const colorToggleBtn = document.getElementById('btnToggleColorByStaff');
+      if (colorToggleBtn && !colorToggleBtn._hasInitListener) {
+        colorToggleBtn._hasInitListener = true;
+        colorToggleBtn.addEventListener('click', toggleColorByStaff);
+      }
+
+      const shiftToggleBtn = document.getElementById('btnToggleShiftBadges');
+      if (shiftToggleBtn && !shiftToggleBtn._hasInitListener) {
+        shiftToggleBtn._hasInitListener = true;
+        shiftToggleBtn.addEventListener('click', toggleShiftBadges);
+      }
+    }
+
     // Khởi tạo các ô trên sơ đồ với ID duy nhất & nạp trạng thái đã lưu
     function initMapCells() {
       const cells = document.querySelectorAll('.map-cell');
@@ -3542,7 +4493,7 @@
         const cellTitle = titleEl ? titleEl.textContent.trim() : (cell.textContent.trim() || 'Khu vực');
 
         // Gợi ý thao tác khi di chuột
-        cell.title = `Nhấp đúp (hoặc bấm) để sửa phân bổ: ${cellTitle}`;
+        cell.title = `Nhấp để soi sáng khu vực (nhấp đúp để đổi người): ${cellTitle}`;
 
         // Nếu đã có cấu hình lưu trước đó
         if (savedAllocations[cellId]) {
@@ -3561,7 +4512,7 @@
               e.preventDefault();
             }
           }
-          handleMapCellClick(cell);
+          handleMapCellClick(cell, e ? e.type : 'click');
         };
 
         // Gỡ bỏ handler cũ nếu có để tránh trùng lặp
@@ -3573,13 +4524,39 @@
 
         cell.addEventListener('click', onCellTrigger);
         cell.addEventListener('dblclick', onCellTrigger);
+
+        // Hiệu ứng tương tác liên kết khi rê chuột qua ô: sáng các ô cùng nhân viên
+        cell.addEventListener('mouseenter', () => {
+          if (state.spotlightStaff) return;
+          const staff = (cell.getAttribute('data-staff') || (cell.querySelector('.cell-staff') ? cell.querySelector('.cell-staff').textContent : '')).trim();
+          if (!staff) return;
+          document.querySelectorAll('.map-cell').forEach(other => {
+            if (other !== cell && cellMatchesStaff(other, staff)) {
+              other.classList.add('staff-peer-hover');
+            }
+          });
+        });
+
+        cell.addEventListener('mouseleave', () => {
+          document.querySelectorAll('.map-cell.staff-peer-hover').forEach(other => {
+            other.classList.remove('staff-peer-hover');
+          });
+        });
       });
+
+      initFloorplanControlListeners();
+      renderFloorplanStaffControls();
+      applyColorByStaff();
+      applyShiftBadges();
+      if (state.spotlightStaff) {
+        setStaffSpotlight(state.spotlightStaff);
+      }
     }
 
     // Xử lý khi click / double-click vào ô trên sơ đồ
-    function handleMapCellClick(cell) {
+    function handleMapCellClick(cell, triggerType) {
       const cellTitle = cell.querySelector('.cell-title') ? cell.querySelector('.cell-title').textContent.trim() : cell.textContent.trim();
-      const currentStaff = cell.getAttribute('data-staff') || (cell.querySelector('.cell-staff') ? cell.querySelector('.cell-staff').textContent.trim() : '');
+      const currentStaff = (cell.getAttribute('data-staff') || (cell.querySelector('.cell-staff') ? cell.querySelector('.cell-staff').textContent.trim() : '')).trim();
 
       // 1. Nếu đang ở CHẾ ĐỘ PHÂN BỔ TRỰC TIẾP
       if (state.isAllocatingDirectly && state.allocatingStaff) {
@@ -3610,6 +4587,8 @@
 
         saveMapAllocations();
         updateAllocatingCount();
+        renderFloorplanStaffControls();
+        applyColorByStaff();
         notifyLocalDataChange('UPDATE_MAP_CELL', {
           cellId: cell.getAttribute('data-cell-id'),
           staff: cell.getAttribute('data-staff')
@@ -3617,8 +4596,26 @@
         return;
       }
 
-      // 2. Nếu ở chế độ bình thường -> Mở Modal Phân Bổ & Thay Đổi Tên Nhân Viên
-      openStaffAllocationModal(cell, cellTitle, currentStaff);
+      // 2. Nếu nhấp đúp (dblclick) -> Mở trực tiếp Modal Phân Bổ & Thay Đổi Tên Nhân Viên
+      if (triggerType === 'dblclick') {
+        openStaffAllocationModal(cell, cellTitle, currentStaff);
+        return;
+      }
+
+      // 3. Nếu nhấp đơn (click):
+      if (currentStaff) {
+        // Nếu nhân viên này đã đang được rọi sáng rồi -> Nhấp tiếp sẽ mở modal phân bổ
+        if (state.spotlightStaff && isStaffNameMatch(state.spotlightStaff, currentStaff)) {
+          openStaffAllocationModal(cell, cellTitle, currentStaff);
+        } else {
+          // Bật rọi sáng ngay lập tức cho tất cả khu vực của nhân viên này
+          setStaffSpotlight(currentStaff);
+          showToast('🎯 Đang soi sáng các khu vực của: ' + currentStaff + ' (nhấp lại hoặc bấm "Đổi người" để phân bổ)');
+        }
+      } else {
+        // Ô chưa có nhân viên -> Mở modal để gán ngay
+        openStaffAllocationModal(cell, cellTitle, currentStaff);
+      }
     }
 
     // Mở modal phân bổ & thay đổi nhân viên
@@ -3922,6 +4919,16 @@
         });
         saveToSheetImmediately();
 
+        renderFloorplanStaffControls();
+        applyColorByStaff();
+        if (state.spotlightStaff) {
+          if (isStaffNameMatch(state.spotlightStaff, oldStaff)) {
+            setStaffSpotlight(newStaff);
+          } else {
+            setStaffSpotlight(state.spotlightStaff);
+          }
+        }
+
         showToast('🔄 Đã đổi TẤT CẢ ' + updatedCount + ' khu vực của [' + oldStaff + '] thành [' + newStaff + ']!');
       }
 
@@ -3959,6 +4966,11 @@
           employees: state.employees
         });
         saveToSheetImmediately();
+        renderFloorplanStaffControls();
+        applyColorByStaff();
+        if (state.spotlightStaff) {
+          setStaffSpotlight(state.spotlightStaff);
+        }
         showToast('✓ Đã cập nhật khu vực cho: ' + newStaff);
       }
 
@@ -4021,6 +5033,11 @@
       });
 
       saveMapAllocations();
+      renderFloorplanStaffControls();
+      applyColorByStaff();
+      if (state.spotlightStaff) {
+        setStaffSpotlight(state.spotlightStaff);
+      }
       notifyLocalDataChange('SYNC_DATA', {
         shifts: state.shifts,
         employees: state.employees
