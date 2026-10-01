@@ -3907,9 +3907,30 @@
     let currentExportDataUrl = "";
 
 
-    // HÀM XỬ LÝ VÀ HIỂN THỊ DỮ LIỆU ĐỌC ĐƯỢC TỪ SHEET
+    // KIỂM TRA NGƯỜI DÙNG CÓ ĐANG THAO TÁC KHÔNG (ĐỂ KHÔNG LÀM GIÁN ĐOẠN NHẬP LIỆU)
+    function isUserInteracting() {
+      const activeTag = document.activeElement ? document.activeElement.tagName : '';
+      if (activeTag === 'INPUT' || activeTag === 'SELECT' || activeTag === 'TEXTAREA') {
+        return true;
+      }
+      const allocModal = document.getElementById('staffAllocationModal');
+      if (allocModal && allocModal.style.display === 'flex') return true;
+      const cfgModal = document.getElementById('configModal');
+      if (cfgModal && cfgModal.style.display === 'flex') return true;
+      if (state.isAllocatingDirectly) return true;
+      if (isSavingToSheet) return true;
+      return false;
+    }
+
+    // HÀM XỬ LÝ VÀ HIỂN THỊ DỮ LIỆU ĐỌC ĐƯỢC TỪ SHEET (SMART DIFFING - TỰ ĐỘNG CẬP NHẬT)
     function applyReceivedSheetData(data, sourceName = 'Google Apps Script', silent = false) {
-      let hasUpdated = false;
+      if (isUserInteracting()) {
+        stopReloadButtonSpin();
+        return;
+      }
+
+      let shiftsChanged = false;
+      let empsChanged = false;
 
       // 1. Cập nhật 15 ca trực nếu có
       if (Array.isArray(data.shifts) && data.shifts.length > 0) {
@@ -3933,11 +3954,16 @@
           }
         }
 
-        state.shifts = validShifts;
-        localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
-        renderShifts();
-        syncMapCellsFromShifts();
-        hasUpdated = true;
+        const currentShiftsSig = JSON.stringify(state.shifts.map(s => [s.nv, s.kv, s.pg]));
+        const newShiftsSig = JSON.stringify(validShifts.map(s => [s.nv, s.kv, s.pg]));
+
+        if (currentShiftsSig !== newShiftsSig) {
+          state.shifts = validShifts;
+          localStorage.setItem('st1841_shifts', JSON.stringify(state.shifts));
+          renderShifts();
+          syncMapCellsFromShifts();
+          shiftsChanged = true;
+        }
       }
 
       // 2. Cập nhật danh sách NV/PG nếu có
@@ -3952,11 +3978,16 @@
           marked: (emp.marked === true || emp.marked === 'X' || emp.marked === '1')
         }));
 
-        state.employees = validEmps;
-        localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
-        renderEmployees();
-        if (typeof initModalDropdowns === 'function') initModalDropdowns();
-        hasUpdated = true;
+        const currentEmpsSig = JSON.stringify(state.employees.map(e => [e.name, e.role, e.marked]));
+        const newEmpsSig = JSON.stringify(validEmps.map(e => [e.name, e.role, e.marked]));
+
+        if (currentEmpsSig !== newEmpsSig) {
+          state.employees = validEmps;
+          localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+          renderEmployees();
+          if (typeof initModalDropdowns === 'function') initModalDropdowns();
+          empsChanged = true;
+        }
       }
 
       // 3. Cập nhật trạng thái hiển thị
@@ -3969,8 +4000,13 @@
         statusText.textContent = `🟢 Realtime Live (${timeStr})`;
       }
 
-      if (hasUpdated && !silent) {
-        showToast(`☁️ Đã đồng bộ dữ liệu mới nhất từ Google Trang Tính! (${sourceName})`);
+      // 4. Nếu có thay đổi dữ liệu thật sự từ Sheet, báo hiệu xoay nhẹ nút làm mới
+      if (shiftsChanged || empsChanged) {
+        startReloadButtonSpin();
+        setTimeout(stopReloadButtonSpin, 800);
+        showToast(`🔄 Tự động đồng bộ: Đã cập nhật thay đổi mới nhất từ Google Sheet! (${sourceName})`);
+      } else if (!silent) {
+        showToast(`✓ Dữ liệu hiện tại đã khớp mới nhất với Google Sheet!`);
       }
       stopReloadButtonSpin();
     }
@@ -4010,131 +4046,164 @@
       fetchFromAppsScriptBackground();
     }
 
-    // ĐỌC DỮ LIỆU QUA GOOGLE VISUALIZATION API SIÊU TỐC (< 150ms)
-    function fetchDirectFromGoogleSheetGviz(silent = false) {
-      const sheetId = DEFAULT_CONFIG.sheetId;
-      const gvizSaveDataUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=save%20data&_t=${Date.now()}`;
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3500);
+    function parseRowsFromSaveData(rows) {
+      const shifts = [];
+      for (let i = 0; i < Math.min(rows.length, 15); i++) {
+        const r = rows[i];
+        if (!r || !r.c) continue;
+        const c = r.c;
+        const stt = (c[0] && c[0].v) ? Number(c[0].v) : (i + 1);
+        const nv = (c[1] && c[1].v) ? String(c[1].v).trim() : '';
+        const kv = (c[2] && c[2].v) ? String(c[2].v).trim() : '';
+        const pg = (c[3] && c[3].v) ? String(c[3].v).trim() : '';
+        if (nv || kv || pg) {
+          shifts.push({ stt, nv, kv, pg, row: 17 + i });
+        }
+      }
 
-      fetch(gvizSaveDataUrl, { signal: controller.signal })
-        .then(res => res.text())
-        .then(text => {
-          clearTimeout(timeoutId);
-          const match = text.match(/setResponse\(([\s\S]*)\);/);
-          if (!match) throw new Error('Không đọc được dữ liệu tab save data');
-          const json = JSON.parse(match[1]);
-          const rows = (json.table && json.table.rows) ? json.table.rows : [];
-
-          // 1. Trích xuất 15 ca trực từ cột A..D (chỉ mục 0..3)
-          const shifts = [];
-          for (let i = 0; i < Math.min(rows.length, 15); i++) {
-            const r = rows[i];
-            if (!r || !r.c) continue;
-            const c = r.c;
-            const stt = (c[0] && c[0].v) ? Number(c[0].v) : (i + 1);
-            const nv = (c[1] && c[1].v) ? String(c[1].v).trim() : '';
-            const kv = (c[2] && c[2].v) ? String(c[2].v).trim() : '';
-            const pg = (c[3] && c[3].v) ? String(c[3].v).trim() : '';
-            if (nv || kv || pg) {
-              shifts.push({ stt, nv, kv, pg, row: 17 + i });
-            }
-          }
-
-          // 2. Trích xuất danh sách nhân sự từ cột F..I (chỉ mục 5..8)
-          const employees = [];
-          for (let i = 0; i < rows.length; i++) {
-            const r = rows[i];
-            if (!r || !r.c) continue;
-            const c = r.c;
-            const name = (c[6] && c[6].v) ? String(c[6].v).trim() : '';
-            if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ') continue;
-            const stt = (c[5] && c[5].v) ? Number(c[5].v) : (employees.length + 1);
-            const roleStr = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
-            const mark = (c[8] && c[8].v) ? String(c[8].v).trim().toUpperCase() : '';
-            const isPg = /pg/i.test(roleStr) || /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
-            employees.push({
-              stt,
-              name,
-              role: isPg ? 'pg' : 'nv',
-              marked: (mark === 'X' || mark === '1' || mark === 'TRUE')
-            });
-          }
-
-          if (shifts.length > 0 || employees.length > 0) {
-            applyReceivedSheetData({ success: true, shifts, employees }, 'Google Sheet (save data)', silent);
-            return;
-          }
-          throw new Error('Tab save data chưa có dòng dữ liệu');
-        })
-        .catch(err => {
-          clearTimeout(timeoutId);
-          console.warn('Đang nạp dự phòng từ trang tính mặc định:', err);
-          fetchFromDefaultSheetGviz(silent);
+      const employees = [];
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || !r.c) continue;
+        const c = r.c;
+        const name = (c[6] && c[6].v) ? String(c[6].v).trim() : '';
+        if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ') continue;
+        const stt = (c[5] && c[5].v) ? Number(c[5].v) : (employees.length + 1);
+        const roleStr = (c[7] && c[7].v) ? String(c[7].v).trim() : '';
+        const mark = (c[8] && c[8].v) ? String(c[8].v).trim().toUpperCase() : '';
+        const isPg = /pg/i.test(roleStr) || /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
+        employees.push({
+          stt,
+          name,
+          role: isPg ? 'pg' : 'nv',
+          marked: (mark === 'X' || mark === '1' || mark === 'TRUE')
         });
+      }
+      return { shifts, employees };
     }
 
-    // ĐỌC DỰ PHÒNG TỪ TAB MẶC ĐỊNH TRÊN GOOGLE SHEET (VS CŨ)
-    function fetchFromDefaultSheetGviz(silent = false) {
-      const gvizUrl = `https://docs.google.com/spreadsheets/d/${DEFAULT_CONFIG.sheetId}/gviz/tq?tqx=out:json&_t=${Date.now()}`;
-      
-      fetch(gvizUrl)
-        .then(res => res.text())
-        .then(text => {
-          const match = text.match(/setResponse\(([\s\S]*)\);/);
-          if (!match) throw new Error('Không đọc được định dạng Google Visualization');
-          const json = JSON.parse(match[1]);
-          const rows = (json.table && json.table.rows) ? json.table.rows : [];
+    function parseRowsFromDefaultSheet(rows) {
+      const shifts = [];
+      for (let i = 0; i < 15; i++) {
+        const r = rows[16 + i];
+        if (!r || !r.c) continue;
+        const c = r.c;
+        const stt = (c[22] && c[22].v) ? Number(c[22].v) : (i + 1);
+        const nv = (c[23] && c[23].v) ? String(c[23].v).trim() : '';
+        const kv = (c[24] && c[24].v) ? String(c[24].v).trim() : '';
+        const pg = (c[25] && c[25].v) ? String(c[25].v).trim() : '';
+        if (nv || kv || pg) {
+          shifts.push({ stt, nv, kv, pg, row: 17 + i });
+        }
+      }
 
-          // 1. Trích xuất 15 ca trực từ dòng 17 (chỉ mục 16, cột W..Z)
-          const shifts = [];
-          for (let i = 0; i < 15; i++) {
-            const r = rows[16 + i];
-            if (!r || !r.c) continue;
-            const c = r.c;
-            const stt = c[22] ? (c[22].v || (i + 1)) : (i + 1);
-            const nv = c[23] ? String(c[23].v || '').trim() : '';
-            const kv = c[24] ? String(c[24].v || '').trim() : '';
-            const pg = c[25] ? String(c[25].v || '').trim() : '';
-            shifts.push({ stt: Number(stt), nv, kv, pg, row: 17 + i });
-          }
-
-          // 2. Trích xuất danh sách nhân viên từ dòng 1 (chỉ mục 0, cột AC..AE)
-          const employees = [];
-          for (let i = 0; i < rows.length; i++) {
-            const r = rows[i];
-            if (!r || !r.c) continue;
-            const c = r.c;
-            const name = c[29] ? String(c[29].v || '').trim() : '';
-            if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ') continue;
-            const stt = c[28] ? (c[28].v || (employees.length + 1)) : (employees.length + 1);
-            const mark = c[30] ? String(c[30].v || '').trim().toUpperCase() : '';
-            const isPg = /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
-            employees.push({
-              stt: Number(stt),
-              name,
-              role: isPg ? 'pg' : 'nv',
-              marked: (mark === 'X' || mark === '1' || mark === 'TRUE')
-            });
-          }
-
-          if (shifts.length > 0 || employees.length > 0) {
-            applyReceivedSheetData({ success: true, shifts, employees }, 'Google Sheets (Mặc định)', silent);
-          } else {
-            throw new Error('Không có hàng dữ liệu');
-          }
-        })
-        .catch(err => {
-          console.warn('Cả hai nguồn Gviz đều không đọc được:', err);
-          const statusPill = document.getElementById('realtimeStatusPill');
-          const statusText = document.getElementById('realtimeStatusText');
-          if (statusPill && statusText) {
-            statusPill.className = 'live-status-pill connected';
-            statusText.textContent = '🟢 Realtime Live (Bộ nhớ đệm)';
-          }
-          stopReloadButtonSpin();
+      const employees = [];
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || !r.c) continue;
+        const c = r.c;
+        const name = (c[29] && c[29].v) ? String(c[29].v).trim() : '';
+        if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ') continue;
+        const stt = (c[28] && c[28].v) ? Number(c[28].v) : (employees.length + 1);
+        const mark = (c[30] && c[30].v) ? String(c[30].v).trim().toUpperCase() : '';
+        const isPg = /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
+        employees.push({
+          stt,
+          name,
+          role: isPg ? 'pg' : 'nv',
+          marked: (mark === 'X' || mark === '1' || mark === 'TRUE')
         });
+      }
+      return { shifts, employees };
+    }
+
+    let isFetchingSheet = false;
+
+    // ĐỌC DỮ LIỆU QUA GOOGLE VISUALIZATION API SIÊU TỐC (< 150ms) - ĐỒNG THỜI CẢ 2 TAB SHEET
+    function fetchDirectFromGoogleSheetGviz(silent = false) {
+      if (isFetchingSheet) return;
+      isFetchingSheet = true;
+
+      const sheetId = DEFAULT_CONFIG.sheetId;
+      const t = Date.now();
+      const gvizSaveDataUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json&sheet=save%20data&_t=' + t;
+      const gvizDefaultUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:json&_t=' + t;
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+      Promise.allSettled([
+        fetch(gvizSaveDataUrl, { signal: controller.signal }).then(r => r.text()),
+        fetch(gvizDefaultUrl, { signal: controller.signal }).then(r => r.text())
+      ]).then(results => {
+        clearTimeout(timeoutId);
+        isFetchingSheet = false;
+
+        let dataSave = null;
+        let dataDefault = null;
+
+        if (results[0].status === 'fulfilled' && results[0].value) {
+          const match = results[0].value.match(/setResponse(([sS]*));/);
+          if (match) {
+            try {
+              const json = JSON.parse(match[1]);
+              const rows = (json.table && json.table.rows) ? json.table.rows : [];
+              dataSave = parseRowsFromSaveData(rows);
+            } catch(e) {}
+          }
+        }
+
+        if (results[1].status === 'fulfilled' && results[1].value) {
+          const match = results[1].value.match(/setResponse(([sS]*));/);
+          if (match) {
+            try {
+              const json = JSON.parse(match[1]);
+              const rows = (json.table && json.table.rows) ? json.table.rows : [];
+              dataDefault = parseRowsFromDefaultSheet(rows);
+            } catch(e) {}
+          }
+        }
+
+        // Quyết định dữ liệu nguồn:
+        let chosenData = null;
+        let chosenSource = 'Google Sheet Realtime';
+
+        // 1. Nếu trên sơ đồ tab gốc 'VS CŨ' có thay đổi khác với state hiện tại (sửa trực tiếp trên Google Sheet)
+        if (dataDefault && dataDefault.shifts.length > 0) {
+          const defSig = JSON.stringify(dataDefault.shifts.map(s => [s.nv, s.kv, s.pg]));
+          const currentSig = JSON.stringify(state.shifts.map(s => [s.nv, s.kv, s.pg]));
+          if (defSig !== currentSig) {
+            chosenData = dataDefault;
+            chosenSource = 'Google Sheet (Sơ đồ VS Cũ)';
+          }
+        }
+
+        // 2. Nếu không, ưu tiên tab 'save data'
+        if (!chosenData && dataSave && (dataSave.shifts.length > 0 || dataSave.employees.length > 0)) {
+          chosenData = dataSave;
+          chosenSource = 'Google Sheet (save data)';
+        }
+
+        // 3. Fallback sang tab mặc định
+        if (!chosenData && dataDefault && (dataDefault.shifts.length > 0 || dataDefault.employees.length > 0)) {
+          chosenData = dataDefault;
+          chosenSource = 'Google Sheet (VS Cũ)';
+        }
+
+        if (chosenData) {
+          const shifts = chosenData.shifts || [];
+          const employees = (chosenData.employees && chosenData.employees.length > 0) 
+            ? chosenData.employees 
+            : (dataSave && dataSave.employees.length > 0 ? dataSave.employees : (dataDefault ? dataDefault.employees : []));
+          applyReceivedSheetData({ success: true, shifts, employees }, chosenSource, silent);
+        } else {
+          stopReloadButtonSpin();
+        }
+      }).catch(err => {
+        clearTimeout(timeoutId);
+        isFetchingSheet = false;
+        stopReloadButtonSpin();
+      });
     }
 
     // ĐỌC DỰ PHÒNG TỪ APPS SCRIPT Ở NỀN (KHÔNG CHẶN GIAO DIỆN)
@@ -4436,32 +4505,42 @@
     syncMapCellsFromShifts();
     triggerReloadButton(true);
 
-    // TỰ ĐỘNG CHẠY NÚT LÀM MỚI KHI F5 XONG (PAGE LOAD)
+    // ==========================================================================
+    // AUTO-SYNC HOÀN TOÀN TỰ ĐỘNG: ĐỊNH KỲ MỖI 4 GIÂY & KHI FOCUS / CHUYỂN TAB
+    // ==========================================================================
+    // 1. Tự động đồng bộ định kỳ mỗi 4 giây (hoàn toàn tự động, không cần bấm nút)
+    setInterval(() => {
+      if (document.visibilityState === 'visible' && !isUserInteracting()) {
+        fetchDataFromGoogleSheet(true);
+      }
+    }, 4000);
+
+    // 2. Tự động đồng bộ tức thì ngay khi click lại vào cửa sổ / chuyển từ tab Google Sheet sang
+    window.addEventListener('focus', () => {
+      if (!isUserInteracting()) {
+        fetchDataFromGoogleSheet(true);
+      }
+    });
+
+    // 3. Tự động đồng bộ ngay khi tab trình duyệt hiển thị lại
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && !isUserInteracting()) {
+        fetchDataFromGoogleSheet(true);
+      }
+    });
+
+    // 4. Tự động đồng bộ khi vừa mở trang hoặc F5 xong
     window.addEventListener('load', () => {
       triggerReloadButton(true);
     });
 
-    // Bấm vào status pill để làm mới thủ công
+    // 5. Bấm thủ công vào status pill nếu muốn làm mới chủ động
     const pillEl = document.getElementById('realtimeStatusPill');
     if (pillEl) {
       pillEl.addEventListener('click', () => {
         triggerReloadButton(false);
       });
     }
-
-    // Tự động đồng bộ khi chuyển lại tab / mở lại app
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        triggerReloadButton(true);
-      }
-    });
-
-    // Tự động đồng bộ định kỳ mỗi 45 giây nếu đang mở trang
-    setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        triggerReloadButton(true);
-      }
-    }, 45000);
   </script>
   <!-- NÚT CUỘN LÊN ĐẦU TRANG TRÊN MOBILE -->
   <button class="btn-scroll-top" id="btnScrollTop" title="Lên đầu trang">

@@ -696,3 +696,63 @@ function menuInitSaveDataSheet() {
     ui.alert("Lỗi", err.toString(), ui.ButtonSet.OK);
   }
 }
+
+/**
+ * 11. Tự động đồng bộ 2 chiều ngay lập tức khi ai đó chỉnh sửa trực tiếp trên Google Sheet
+ */
+function onEdit(e) {
+  try {
+    if (!e || !e.range) return;
+    const sheet = e.range.getSheet();
+    const sheetName = sheet.getName().trim().toLowerCase();
+    const row = e.range.getRow();
+    const col = e.range.getColumn();
+
+    // 1. Nếu chỉnh sửa trên sơ đồ 'VS CŨ'
+    if (sheetName !== "save data") {
+      // Vùng 15 ca trực: W17:Z31 (cột 23..26, dòng 17..31)
+      if (row >= 17 && row <= 31 && col >= 23 && col <= 26) {
+        const saveSheet = getSaveDataSheet();
+        if (saveSheet) {
+          const shiftRow = row - 17 + 3; // map sang dòng 3..17 trên save data
+          const shiftCol = col - 23 + 1; // map sang cột 1..4 (A..D)
+          saveSheet.getRange(shiftRow, shiftCol).setValue(e.range.getValue());
+          saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
+        }
+      }
+      // Vùng Danh sách NV/PG: AC1:AE60 (cột 29..31, dòng 1..60)
+      if (row >= 1 && row <= 60 && col >= 29 && col <= 31) {
+        const saveSheet = getSaveDataSheet();
+        if (saveSheet) {
+          const empRow = row + 2; // map sang dòng 3..62
+          const empCol = (col === 29 ? 7 : (col === 30 ? 8 : 9)); // G, H, I
+          saveSheet.getRange(empRow, empCol).setValue(e.range.getValue());
+          saveSheet.getRange("L3").setValue(new Date().toLocaleString("vi-VN"));
+        }
+      }
+    }
+    // 2. Nếu chỉnh sửa trên tab 'save data'
+    else if (sheetName === "save data") {
+      // Cột A..D dòng 3..17
+      if (row >= 3 && row <= 17 && col >= 1 && col <= 4) {
+        const defSheet = getTargetSheet();
+        if (defSheet && defSheet.getName() !== "save data") {
+          const origRow = row - 3 + 17;
+          const origCol = col - 1 + 23;
+          defSheet.getRange(origRow, origCol).setValue(e.range.getValue());
+        }
+      }
+      // Cột G..I dòng 3..60
+      if (row >= 3 && row <= 60 && col >= 7 && col <= 9) {
+        const defSheet = getTargetSheet();
+        if (defSheet && defSheet.getName() !== "save data") {
+          const origRow = row - 2;
+          const origCol = (col === 7 ? 29 : (col === 8 ? 30 : 31));
+          defSheet.getRange(origRow, origCol).setValue(e.range.getValue());
+        }
+      }
+    }
+  } catch(err) {
+    console.warn("Lỗi onEdit tự động đồng bộ:", err);
+  }
+}
