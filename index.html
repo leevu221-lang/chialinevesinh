@@ -2037,7 +2037,7 @@
         </button>
         <button class="nav-tab-btn" data-tab="employeesTab">
           <i class="fa-solid fa-users-gear"></i> Danh Sách NV/PG
-          <span class="tab-badge" id="badgeEmpCount">26 NV/PG</span>
+          <span class="tab-badge" id="badgeEmpCount">21 NV/PG</span>
         </button>
         <button class="nav-tab-btn" data-tab="rulesTab">
           <i class="fa-solid fa-scroll"></i> Quy Ước
@@ -2343,7 +2343,7 @@
             <i class="fa-solid fa-users"></i>
           </div>
           <div>
-            <div class="stat-value" id="statTotalEmployees">26</div>
+            <div class="stat-value" id="statTotalEmployees">21</div>
             <div class="stat-label">Tổng Nhân Sự (NV+PG)</div>
           </div>
         </div>
@@ -2352,7 +2352,7 @@
             <i class="fa-solid fa-user-check"></i>
           </div>
           <div>
-            <div class="stat-value" id="statPresentCount">0</div>
+            <div class="stat-value" id="statPresentCount">21</div>
             <div class="stat-label">Đang Trực / Có Mặt</div>
           </div>
         </div>
@@ -2361,7 +2361,7 @@
             <i class="fa-solid fa-handshake"></i>
           </div>
           <div>
-            <div class="stat-value" id="statPgCount">10</div>
+            <div class="stat-value" id="statPgCount">8</div>
             <div class="stat-label">PG Hỗ Trợ Hãng</div>
           </div>
         </div>
@@ -2400,7 +2400,7 @@
               </div>
               <div>
                 <span class="emp-column-title">NHÂN VIÊN SIÊU THỊ</span>
-                <span class="emp-column-badge" id="badgeColumnStaffCount">0 NV</span>
+                <span class="emp-column-badge" id="badgeColumnStaffCount">13 NV</span>
               </div>
             </div>
             <button class="btn-quick-add-column staff" onclick="openAddEmployeeModal('nv')" title="Thêm Nhân Viên Siêu Thị Mới">
@@ -2421,7 +2421,7 @@
               </div>
               <div>
                 <span class="emp-column-title">PG HỖ TRỢ HÃNG</span>
-                <span class="emp-column-badge" id="badgeColumnPgCount">0 PG</span>
+                <span class="emp-column-badge" id="badgeColumnPgCount">8 PG</span>
               </div>
             </div>
             <button class="btn-quick-add-column pg" onclick="openAddEmployeeModal('pg')" title="Thêm PG Hỗ Trợ Hãng Mới">
@@ -2752,6 +2752,11 @@
     </div>
   </div>
 
+  <!-- NÚT CUỘN LÊN ĐẦU TRANG TRÊN MOBILE -->
+  <button class="btn-scroll-top" id="btnScrollTop" title="Lên đầu trang">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
+
   <!-- JAVASCRIPT LOGIC & REALTIME SYNC -->
   <script>
     const DEFAULT_CONFIG = {
@@ -2804,35 +2809,36 @@
     ];
 
     const DEFAULT_EMPLOYEES = [
-      { stt: 1, name: "Huỳnh Hoàng Phúc", marked: false },
-      { stt: 2, name: "Thanh Nhi", marked: true },
-      { stt: 3, name: "Lâm Thị Như Ý", marked: true },
-      { stt: 4, name: "Lê Kim Mỹ", marked: true },
-      { stt: 5, name: "Lê Văn Kỳ", marked: true },
-      { stt: 6, name: "Ngô Thị Bé Thắm", marked: true },
-      { stt: 7, name: "Nguyễn Diễm My", marked: true },
-      { stt: 8, name: "Nguyễn Hùng Mạnh", marked: true },
-      { stt: 9, name: "Thạch Vũ", marked: true },
-      { stt: 10, name: "Nguyễn Tuấn Mi", marked: true },
-      { stt: 11, name: "Nguyễn Thị Nhạn", marked: true },
-      { stt: 12, name: "Phạm Ngọc Anh", marked: true },
-      { stt: 13, name: "Phạm Văn Đại", marked: true },
-      { stt: 14, name: "Trần Văn Duy", marked: true },
-      { stt: 15, name: "Trang Toshiba", marked: true },
-      { stt: 16, name: "Tuấn Aqua", marked: true },
-      { stt: 17, name: "Thanh Xiaomi", marked: true },
-      { stt: 18, name: "Trinh - Sunhouse", marked: true },
-      { stt: 19, name: "Oanh LG", marked: true },
-      { stt: 20, name: "Băng Bluestone", marked: true },
-      { stt: 21, name: "Ái Vivo", marked: true },
-      { stt: 22, name: "Tín TCL", marked: true },
-      { stt: 23, name: "Trâm Realme", marked: true },
-      { stt: 24, name: "Khang Hi Mutosi", marked: true },
-      { stt: 25, name: "Anh Thư - Oppo", marked: true },
-      { stt: 26, name: "Lam Karofi", marked: true }
+      { stt: 1, name: "Huỳnh Hoàng Phúc", role: "nv", marked: true },
+      { stt: 2, name: "Lâm Thị Như Ý", role: "nv", marked: true },
+      { stt: 3, name: "Lê Kim Mỹ", role: "nv", marked: true },
+      { stt: 4, name: "Ngô Thị Bé Thắm", role: "nv", marked: true },
+      { stt: 5, name: "Nguyễn Diễm My", role: "nv", marked: true },
+      { stt: 6, name: "Nguyễn Hùng Mạnh", role: "nv", marked: true },
+      { stt: 7, name: "Nguyễn Tuấn Mi", role: "nv", marked: true },
+      { stt: 8, name: "Nguyễn Thị Nhạn", role: "nv", marked: true },
+      { stt: 9, name: "Phạm Ngọc Anh", role: "nv", marked: true },
+      { stt: 10, name: "Phạm Văn Đại", role: "nv", marked: true },
+      { stt: 11, name: "Trang - Toshiba", role: "pg", marked: true },
+      { stt: 12, name: "Thanh - Xiaomi", role: "pg", marked: true },
+      { stt: 13, name: "Trinh - Sunhouse", role: "pg", marked: true },
+      { stt: 14, name: "Trung Tín - LG", role: "pg", marked: true },
+      { stt: 15, name: "Ngọc Trâm - Realme", role: "pg", marked: true },
+      { stt: 16, name: "Anh Thư - Oppo", role: "pg", marked: true },
+      { stt: 17, name: "Lam - Karofi", role: "pg", marked: true },
+      { stt: 18, name: "Giang Như Ý", role: "nv", marked: true },
+      { stt: 19, name: "Xuyên - Aqua", role: "pg", marked: true },
+      { stt: 20, name: "Khang Hi", role: "nv", marked: true },
+      { stt: 21, name: "Thành Được", role: "nv", marked: true }
     ];
 
-    state.shifts = JSON.parse(localStorage.getItem('st1841_shifts')) || DEFAULT_SHIFTS;
+    try {
+      const storedShifts = JSON.parse(localStorage.getItem('st1841_shifts'));
+      state.shifts = (Array.isArray(storedShifts) && storedShifts.length > 0) ? storedShifts : DEFAULT_SHIFTS;
+    } catch(e) {
+      state.shifts = DEFAULT_SHIFTS;
+    }
+
     // Tự động làm sạch ca trực nếu bộ nhớ đệm cũ từng lưu nhầm dòng tiêu đề
     if (Array.isArray(state.shifts) && state.shifts.length > 0) {
       if (state.shifts[0].nv === 'NHÂN VIÊN TRỰC' || state.shifts[0].kv === 'KHU VỰC PHỤ TRÁCH') {
@@ -2842,7 +2848,13 @@
         state.shifts = DEFAULT_SHIFTS;
       }
     }
-    state.employees = JSON.parse(localStorage.getItem('st1841_employees')) || DEFAULT_EMPLOYEES;
+
+    try {
+      const storedEmps = JSON.parse(localStorage.getItem('st1841_employees'));
+      state.employees = (Array.isArray(storedEmps) && storedEmps.length > 0) ? storedEmps : DEFAULT_EMPLOYEES;
+    } catch(e) {
+      state.employees = DEFAULT_EMPLOYEES;
+    }
 
     function showToast(msg) {
       const container = document.getElementById('toastContainer');
@@ -2860,7 +2872,7 @@
 
     // RENDER 15 CA TRỰC (NẾU CÓ CONTAINER)
     function renderShifts() {
-      const assignedCount = state.shifts.filter(s => s.nv && s.nv.trim() !== '').length;
+      const assignedCount = state.shifts.filter(s => s && s.nv && s.nv.trim() !== '').length;
       const badgeShift = document.getElementById('badgeShiftCount');
       if (badgeShift) {
         badgeShift.textContent = `${assignedCount}/15 Vị trí`;
@@ -2873,10 +2885,10 @@
       state.shifts.forEach((s, idx) => {
         const isAssigned = s.nv && s.nv.trim() !== '';
         const card = document.createElement('div');
-        card.className = 'shift-card';
+        card.className = 'shift-card ' + (isAssigned ? 'assigned' : 'empty');
         card.innerHTML = `
           <div class="shift-card-header">
-            <span class="shift-stt-badge"><i class="fa-solid fa-hashtag"></i> Vị trí ${s.stt}</span>
+            <span class="shift-num">#${s.stt || (idx + 1)}</span>
             <span class="shift-status-tag ${isAssigned ? 'assigned' : 'empty'}">
               ${isAssigned ? '✓ Đã phân công' : 'Chưa phân công'}
             </span>
@@ -2914,33 +2926,37 @@
 
     // HELPER TẠO CARD HTML CHO NHÂN SỰ
     function createEmployeeCardElement(emp) {
+      if (!emp) return document.createElement('div');
       const originalIdx = state.employees.indexOf(emp);
       const isPg = isPgStaff(emp);
+      const isMarked = (emp.marked === true || emp.marked === 'X' || emp.marked === '1' || emp.marked === 'TRUE');
       const card = document.createElement('div');
-      card.className = 'employee-card ' + (emp.marked ? 'present' : '');
+      card.className = 'employee-card ' + (isMarked ? 'present' : '');
+      const stt = (emp.stt != null && !isNaN(emp.stt)) ? emp.stt : (originalIdx + 1);
+      const name = emp.name || 'Chưa đặt tên';
       card.innerHTML = `
         <div class="emp-info">
-          <div class="emp-stt">${emp.stt}</div>
+          <div class="emp-stt">${stt}</div>
           <div>
-            <div class="emp-name">${emp.name}</div>
+            <div class="emp-name">${name}</div>
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:2px;">
               <span class="emp-role-badge ${isPg ? 'role-pg' : 'role-nv'}">
                 ${isPg ? '<i class="fa-solid fa-handshake"></i> PG Hãng' : '<i class="fa-solid fa-user"></i> NV Siêu Thị'}
               </span>
               <span style="font-size:11px; color:var(--text-muted);">
-                ${emp.marked ? '<span style="color:#059669; font-weight:700;">✓ Có mặt</span>' : 'Vắng mặt'}
+                ${isMarked ? '<span style="color:#059669; font-weight:700;">✓ Có mặt</span>' : 'Vắng mặt'}
               </span>
             </div>
           </div>
         </div>
         <div class="emp-actions-group">
-          <button class="btn-toggle-attend ${emp.marked ? 'checked' : 'unchecked'}" onclick="toggleEmployeeAttendance(${originalIdx})" title="Điểm danh có mặt / vắng">
-            ${emp.marked ? '✓ Có mặt' : '○ Vắng'}
+          <button class="btn-toggle-attend ${isMarked ? 'checked' : 'unchecked'}" onclick="toggleEmployeeAttendance(${originalIdx >= 0 ? originalIdx : 0})" title="Điểm danh có mặt / vắng">
+            ${isMarked ? '✓ Có mặt' : '○ Vắng'}
           </button>
-          <button class="btn-action-icon edit" onclick="openEditEmployeeModal(${originalIdx})" title="Sửa thông tin">
+          <button class="btn-action-icon edit" onclick="openEditEmployeeModal(${originalIdx >= 0 ? originalIdx : 0})" title="Sửa thông tin">
             <i class="fa-solid fa-pen-to-square"></i>
           </button>
-          <button class="btn-action-icon delete" onclick="confirmDeleteEmployee(${originalIdx})" title="Xoá khỏi danh sách">
+          <button class="btn-action-icon delete" onclick="confirmDeleteEmployee(${originalIdx >= 0 ? originalIdx : 0})" title="Xoá khỏi danh sách">
             <i class="fa-solid fa-trash-can"></i>
           </button>
         </div>
@@ -2950,94 +2966,104 @@
 
     // RENDER DANH SÁCH NV / PG CHIA LÀM 2 CỘT (NHÂN VIÊN BÊN TRÁI, PG BÊN PHẢI)
     function renderEmployees() {
-      const staffContainer = document.getElementById('staffNvGridContainer');
-      const pgContainer = document.getElementById('staffPgGridContainer');
-      if (!staffContainer || !pgContainer) return;
+      try {
+        const staffContainer = document.getElementById('staffNvGridContainer');
+        const pgContainer = document.getElementById('staffPgGridContainer');
+        if (!staffContainer || !pgContainer) return;
 
-      staffContainer.innerHTML = '';
-      pgContainer.innerHTML = '';
+        staffContainer.innerHTML = '';
+        pgContainer.innerHTML = '';
 
-      let presentCount = 0;
-      let pgCount = 0;
-      let staffNvPresent = 0;
-      let staffPgPresent = 0;
-
-      state.employees.forEach((emp) => {
-        const isPg = isPgStaff(emp);
-        if (isPg) {
-          pgCount++;
-          if (emp.marked) staffPgPresent++;
-        } else {
-          if (emp.marked) staffNvPresent++;
+        if (!Array.isArray(state.employees) || state.employees.length === 0) {
+          state.employees = DEFAULT_EMPLOYEES;
         }
-        if (emp.marked) presentCount++;
-      });
 
-      const totalEmployees = state.employees.length;
-      const staffNvCount = totalEmployees - pgCount;
-      const absentCount = Math.max(0, totalEmployees - presentCount);
+        let presentCount = 0;
+        let pgCount = 0;
+        let staffNvPresent = 0;
+        let staffPgPresent = 0;
 
-      // Lọc danh sách theo từ khóa tìm kiếm nếu có
-      const kw = (state.empSearchKeyword || '').trim().toLowerCase();
-      const displayList = kw 
-        ? state.employees.filter(emp => (emp.name || '').toLowerCase().includes(kw))
-        : state.employees;
-
-      const staffNvList = displayList.filter(emp => !isPgStaff(emp));
-      const staffPgList = displayList.filter(emp => isPgStaff(emp));
-
-      // 1. Render Cột Nhân Viên Siêu Thị (Bên Trái)
-      if (staffNvList.length === 0) {
-        staffContainer.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 24px 14px; color: #78716c; background: #f8fafc; border-radius: 10px; border: 1.5px dashed #cbd5e1;">
-            <i class="fa-solid fa-user-slash" style="font-size: 24px; color: #94a3b8; margin-bottom: 6px;"></i>
-            <div style="font-weight: 700; font-size: 13.5px; color: #475569;">Không có nhân viên siêu thị nào</div>
-            <div style="font-size: 11.5px; margin-top: 2px;">Bấm "Thêm NV" để thêm nhân sự vào cột này</div>
-          </div>
-        `;
-      } else {
-        staffNvList.forEach(emp => {
-          staffContainer.appendChild(createEmployeeCardElement(emp));
+        state.employees.forEach((emp) => {
+          if (!emp) return;
+          const isPg = isPgStaff(emp);
+          const isMarked = (emp.marked === true || emp.marked === 'X' || emp.marked === '1' || emp.marked === 'TRUE');
+          if (isPg) {
+            pgCount++;
+            if (isMarked) staffPgPresent++;
+          } else {
+            if (isMarked) staffNvPresent++;
+          }
+          if (isMarked) presentCount++;
         });
+
+        const totalEmployees = state.employees.length;
+        const staffNvCount = Math.max(0, totalEmployees - pgCount);
+        const absentCount = Math.max(0, totalEmployees - presentCount);
+
+        // Lọc danh sách theo từ khóa tìm kiếm nếu có
+        const kw = (state.empSearchKeyword || '').trim().toLowerCase();
+        const displayList = kw 
+          ? state.employees.filter(emp => (emp && emp.name || '').toLowerCase().includes(kw))
+          : state.employees;
+
+        const staffNvList = displayList.filter(emp => !isPgStaff(emp));
+        const staffPgList = displayList.filter(emp => isPgStaff(emp));
+
+        // 1. Render Cột Nhân Viên Siêu Thị (Bên Trái)
+        if (staffNvList.length === 0) {
+          staffContainer.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 24px 14px; color: #78716c; background: #f8fafc; border-radius: 10px; border: 1.5px dashed #cbd5e1;">
+              <i class="fa-solid fa-user-slash" style="font-size: 24px; color: #94a3b8; margin-bottom: 6px;"></i>
+              <div style="font-weight: 700; font-size: 13.5px; color: #475569;">Không có nhân viên siêu thị nào</div>
+              <div style="font-size: 11.5px; margin-top: 2px;">Bấm "Thêm NV" để thêm nhân sự vào cột này</div>
+            </div>
+          `;
+        } else {
+          staffNvList.forEach(emp => {
+            staffContainer.appendChild(createEmployeeCardElement(emp));
+          });
+        }
+
+        // 2. Render Cột PG Hỗ Trợ Hãng (Bên Phải)
+        if (staffPgList.length === 0) {
+          pgContainer.innerHTML = `
+            <div style="grid-column: 1 / -1; text-align: center; padding: 24px 14px; color: #78716c; background: #fff5f8; border-radius: 10px; border: 1.5px dashed #fbcfe8;">
+              <i class="fa-solid fa-handshake-slash" style="font-size: 24px; color: #f472b6; margin-bottom: 6px;"></i>
+              <div style="font-weight: 700; font-size: 13.5px; color: #9d174d;">Không có PG hãng nào</div>
+              <div style="font-size: 11.5px; margin-top: 2px;">Bấm "Thêm PG" để thêm PG vào cột này</div>
+            </div>
+          `;
+        } else {
+          staffPgList.forEach(emp => {
+            pgContainer.appendChild(createEmployeeCardElement(emp));
+          });
+        }
+
+        // 3. Cập nhật Badge số lượng từng cột
+        const badgeStaff = document.getElementById('badgeColumnStaffCount');
+        if (badgeStaff) badgeStaff.textContent = `${staffNvCount} NV (${staffNvPresent} có mặt)`;
+
+        const badgePg = document.getElementById('badgeColumnPgCount');
+        if (badgePg) badgePg.textContent = `${pgCount} PG (${staffPgPresent} có mặt)`;
+
+        // 4. Cập nhật các thẻ thống kê tổng
+        const totalEl = document.getElementById('statTotalEmployees');
+        if (totalEl) totalEl.textContent = totalEmployees;
+
+        const presentEl = document.getElementById('statPresentCount');
+        if (presentEl) presentEl.textContent = presentCount;
+
+        const pgEl = document.getElementById('statPgCount');
+        if (pgEl) pgEl.textContent = pgCount;
+
+        const absentEl = document.getElementById('statAbsentCount');
+        if (absentEl) absentEl.textContent = absentCount;
+
+        const badgeEl = document.getElementById('badgeEmpCount');
+        if (badgeEl) badgeEl.textContent = `${totalEmployees} NV/PG`;
+      } catch (err) {
+        console.error('Lỗi khi render danh sách nhân sự:', err);
       }
-
-      // 2. Render Cột PG Hỗ Trợ Hãng (Bên Phải)
-      if (staffPgList.length === 0) {
-        pgContainer.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 24px 14px; color: #78716c; background: #fff5f8; border-radius: 10px; border: 1.5px dashed #fbcfe8;">
-            <i class="fa-solid fa-handshake-slash" style="font-size: 24px; color: #f472b6; margin-bottom: 6px;"></i>
-            <div style="font-weight: 700; font-size: 13.5px; color: #9d174d;">Không có PG hãng nào</div>
-            <div style="font-size: 11.5px; margin-top: 2px;">Bấm "Thêm PG" để thêm PG vào cột này</div>
-          </div>
-        `;
-      } else {
-        staffPgList.forEach(emp => {
-          pgContainer.appendChild(createEmployeeCardElement(emp));
-        });
-      }
-
-      // 3. Cập nhật Badge số lượng từng cột
-      const badgeStaff = document.getElementById('badgeColumnStaffCount');
-      if (badgeStaff) badgeStaff.textContent = `${staffNvCount} NV (${staffNvPresent} có mặt)`;
-
-      const badgePg = document.getElementById('badgeColumnPgCount');
-      if (badgePg) badgePg.textContent = `${pgCount} PG (${staffPgPresent} có mặt)`;
-
-      // 4. Cập nhật các thẻ thống kê tổng
-      const totalEl = document.getElementById('statTotalEmployees');
-      if (totalEl) totalEl.textContent = totalEmployees;
-
-      const presentEl = document.getElementById('statPresentCount');
-      if (presentEl) presentEl.textContent = presentCount;
-
-      const pgEl = document.getElementById('statPgCount');
-      if (pgEl) pgEl.textContent = pgCount;
-
-      const absentEl = document.getElementById('statAbsentCount');
-      if (absentEl) absentEl.textContent = absentCount;
-
-      const badgeEl = document.getElementById('badgeEmpCount');
-      if (badgeEl) badgeEl.textContent = `${totalEmployees} NV/PG`;
     }
 
     // CẬP NHẬT 1 TRƯỜNG CA TRỰC
@@ -3823,8 +3849,16 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         const tabId = btn.getAttribute('data-tab');
-        document.getElementById(tabId).classList.add('active');
+        const tabEl = document.getElementById(tabId);
+        if (tabEl) tabEl.classList.add('active');
         state.activeTab = tabId;
+        if (tabId === 'employeesTab') {
+          renderEmployees();
+          if (typeof applyMobileEmpFilter === 'function') applyMobileEmpFilter();
+        } else if (tabId === 'floorMapTab') {
+          renderShifts();
+          if (typeof syncMapCellsFromShifts === 'function') syncMapCellsFromShifts();
+        }
       });
     });
 
@@ -4030,24 +4064,31 @@
       // 2. Cập nhật danh sách NV/PG nếu có
       if (Array.isArray(data.employees) && data.employees.length > 0) {
         const validEmps = data.employees.filter(e => {
-          const name = (e.name || '').trim().toUpperCase();
-          return name !== 'HỌ VÀ TÊN' && name !== 'NHÂN SỰ' && name !== 'NHÂN VIÊN' && name !== 'STT';
+          const name = (e && e.name || '').trim().toUpperCase();
+          return name && name !== 'HỌ VÀ TÊN' && name !== 'NHÂN SỰ' && name !== 'NHÂN VIÊN' && name !== 'DANH SÁCH NHÂN SỰ' && name !== 'STT';
         }).map((emp, idx) => ({
           stt: emp.stt || (idx + 1),
           name: (emp.name || '').trim(),
-          role: emp.role || (/pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(emp.name) ? 'pg' : 'nv'),
+          role: emp.role || (isPgStaff(emp) ? 'pg' : 'nv'),
           marked: (emp.marked === true || emp.marked === 'X' || emp.marked === '1' || emp.marked === 'TRUE')
         }));
 
-        const currentEmpsSig = JSON.stringify(state.employees.map(e => [e.name, e.role, e.marked]));
-        const newEmpsSig = JSON.stringify(validEmps.map(e => [e.name, e.role, e.marked]));
+        if (validEmps.length > 0) {
+          const currentEmpsSig = JSON.stringify(state.employees.map(e => [e.name, e.role, e.marked]));
+          const newEmpsSig = JSON.stringify(validEmps.map(e => [e.name, e.role, e.marked]));
 
-        if (currentEmpsSig !== newEmpsSig) {
-          state.employees = validEmps;
-          localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
-          renderEmployees();
-          if (typeof initModalDropdowns === 'function') initModalDropdowns();
-          empsChanged = true;
+          if (currentEmpsSig !== newEmpsSig) {
+            state.employees = validEmps;
+            localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
+            renderEmployees();
+            if (typeof initModalDropdowns === 'function') initModalDropdowns();
+            empsChanged = true;
+          } else {
+            const staffContainer = document.getElementById('staffNvGridContainer');
+            if (staffContainer && staffContainer.children.length === 0) {
+              renderEmployees();
+            }
+          }
         }
       }
 
@@ -4158,25 +4199,15 @@
         }
       }
 
-      // Tìm vị trí nhân sự STT 1 (cột 5 có giá trị 1)
-      let empStart = -1;
-      for (let r = 0; r < Math.min(rows.length, 10); r++) {
-        const row = rows[r];
-        if (row && row.c && row.c[5] && (row.c[5].v === 1 || row.c[5].v === '1' || row.c[5].f === '1')) {
-          empStart = r;
-          break;
-        }
-      }
-      if (empStart === -1) empStart = shiftStart;
-
+      // Đọc toàn bộ danh sách nhân sự từ tab 'save data' (cột F..I tức c[5]..c[8])
       const employees = [];
-      for (let r = empStart; r < rows.length; r++) {
+      for (let r = 0; r < rows.length; r++) {
         const row = rows[r];
         if (!row || !row.c) continue;
         const c = row.c;
         const name = (c[6] && c[6].v != null) ? String(c[6].v).trim() : '';
-        if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ' || name === 'DANH SÁCH NHÂN SỰ') continue;
-        const stt = (c[5] && c[5].v != null) ? Number(c[5].v) : (employees.length + 1);
+        if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ' || name === 'DANH SÁCH NHÂN SỰ' || name === 'STT' || name === 'NHÂN VIÊN') continue;
+        const stt = (c[5] && c[5].v != null && !isNaN(Number(c[5].v))) ? Number(c[5].v) : (employees.length + 1);
         const roleStr = (c[7] && c[7].v != null) ? String(c[7].v).trim() : '';
         const mark = (c[8] && c[8].v != null) ? String(c[8].v).trim().toUpperCase() : '';
         const isPg = /pg/i.test(roleStr) || /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
@@ -4220,16 +4251,48 @@
         }
       }
 
-      // 2. Tìm nhân sự: Trong sheet gốc, nhân sự ở cột 28 (STT), 29 (Tên), 30 (X)
+      // 2. Tìm nhân sự: Trong sheet gốc, nhân sự ở cột AC=28 (STT), AD=29 (Tên), AE=30 (X)
+      let nameCol = 29;
+      let sttCol = 28;
+      let markCol = 30;
+
+      // Kiểm tra xem cột 29 có dữ liệu tên hay không, nếu không quét các cột lân cận
+      let foundNameInCol29 = false;
+      for (let r = 0; r < Math.min(rows.length, 10); r++) {
+        const row = rows[r];
+        if (row && row.c && row.c[29] && row.c[29].v != null && String(row.c[29].v).trim().length > 2) {
+          foundNameInCol29 = true;
+          break;
+        }
+      }
+
+      if (!foundNameInCol29) {
+        for (let col = 26; col <= 34; col++) {
+          let count = 0;
+          for (let r = 0; r < Math.min(rows.length, 10); r++) {
+            const row = rows[r];
+            if (row && row.c && row.c[col] && row.c[col].v != null && String(row.c[col].v).trim().length > 2) {
+              count++;
+            }
+          }
+          if (count >= 2) {
+            nameCol = col;
+            sttCol = col - 1;
+            markCol = col + 1;
+            break;
+          }
+        }
+      }
+
       const employees = [];
-      for (let r = 0; r < Math.min(rows.length, 65); r++) {
+      for (let r = 0; r < rows.length; r++) {
         const row = rows[r];
         if (!row || !row.c) continue;
         const c = row.c;
-        const name = (c[29] && c[29].v != null) ? String(c[29].v).trim() : '';
-        if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ' || name === 'NHÂN VIÊN') continue;
-        const stt = (c[28] && c[28].v != null) ? Number(c[28].v) : (employees.length + 1);
-        const mark = (c[30] && c[30].v != null) ? String(c[30].v).trim().toUpperCase() : '';
+        const name = (c[nameCol] && c[nameCol].v != null) ? String(c[nameCol].v).trim() : '';
+        if (!name || name === 'HỌ VÀ TÊN' || name === 'NHÂN SỰ' || name === 'NHÂN VIÊN' || name === 'DANH SÁCH NHÂN SỰ' || name === 'STT') continue;
+        const stt = (c[sttCol] && c[sttCol].v != null && !isNaN(Number(c[sttCol].v))) ? Number(c[sttCol].v) : (employees.length + 1);
+        const mark = (c[markCol] && c[markCol].v != null) ? String(c[markCol].v).trim().toUpperCase() : '';
         const isPg = /pg|tcl|lg|oppo|vivo|realme|xiaomi|aqua|toshiba|sunhouse|bluestone|karofi|mutosi/i.test(name);
         employees.push({
           stt,
@@ -4295,14 +4358,14 @@
           emps: state.employees.map(e => [e.name, e.marked])
         });
 
-        const saveSig = (dataSave && dataSave.shifts.length > 0) ? JSON.stringify({
-          shifts: dataSave.shifts.map(s => [s.nv, s.kv, s.pg]),
-          emps: dataSave.employees.map(e => [e.name, e.marked])
+        const saveSig = (dataSave && ((dataSave.shifts && dataSave.shifts.length > 0) || (dataSave.employees && dataSave.employees.length > 0))) ? JSON.stringify({
+          shifts: (dataSave.shifts || []).map(s => [s.nv, s.kv, s.pg]),
+          emps: (dataSave.employees || []).map(e => [e.name, e.marked])
         }) : null;
 
-        const defSig = (dataDefault && dataDefault.shifts.length > 0) ? JSON.stringify({
-          shifts: dataDefault.shifts.map(s => [s.nv, s.kv, s.pg]),
-          emps: dataDefault.employees.map(e => [e.name, e.marked])
+        const defSig = (dataDefault && ((dataDefault.shifts && dataDefault.shifts.length > 0) || (dataDefault.employees && dataDefault.employees.length > 0))) ? JSON.stringify({
+          shifts: (dataDefault.shifts || []).map(s => [s.nv, s.kv, s.pg]),
+          emps: (dataDefault.employees || []).map(e => [e.name, e.marked])
         }) : null;
 
         let chosenData = null;
@@ -4316,10 +4379,10 @@
           } else if (defSig && defSig !== curAppSig) {
             chosenData = dataDefault;
             chosenSource = 'Google Sheet (VS Cũ)';
-          } else if (dataSave && dataSave.shifts.length > 0) {
+          } else if (dataSave && (dataSave.shifts.length > 0 || dataSave.employees.length > 0)) {
             chosenData = dataSave;
             chosenSource = 'Google Sheet (save data)';
-          } else if (dataDefault && dataDefault.shifts.length > 0) {
+          } else if (dataDefault && (dataDefault.shifts.length > 0 || dataDefault.employees.length > 0)) {
             chosenData = dataDefault;
             chosenSource = 'Google Sheet (VS Cũ)';
           }
@@ -4362,6 +4425,17 @@
             : (dataSave && dataSave.employees && dataSave.employees.length > 0 ? dataSave.employees : (dataDefault ? dataDefault.employees : []));
           applyReceivedSheetData({ success: true, shifts, employees }, chosenSource, silent);
         } else {
+          // Luôn kiểm tra nếu DOM đang trống hoặc bấm làm mới thủ công (!silent), áp dụng dữ liệu mới nhất
+          const fallbackEmps = (dataSave && dataSave.employees && dataSave.employees.length > 0)
+            ? dataSave.employees
+            : (dataDefault && dataDefault.employees && dataDefault.employees.length > 0 ? dataDefault.employees : state.employees);
+          const fallbackShifts = (dataSave && dataSave.shifts && dataSave.shifts.length > 0)
+            ? dataSave.shifts
+            : (dataDefault && dataDefault.shifts && dataDefault.shifts.length > 0 ? dataDefault.shifts : state.shifts);
+          
+          if (fallbackEmps && fallbackEmps.length > 0) {
+            applyReceivedSheetData({ success: true, shifts: fallbackShifts, employees: fallbackEmps }, 'Google Sheet Realtime', silent);
+          }
           stopReloadButtonSpin();
         }
       }).catch(err => {
@@ -4651,16 +4725,14 @@
 
     // NÚT CUỘN LÊN ĐẦU TRANG (MOBILE BACK TO TOP)
     const btnScrollTopEl = document.getElementById('btnScrollTop');
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 300) {
-        btnScrollTopEl.style.display = 'flex';
-      } else {
-        btnScrollTopEl.style.display = 'none';
-      }
-    });
-    btnScrollTopEl.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
+    if (btnScrollTopEl) {
+      window.addEventListener('scroll', () => {
+        btnScrollTopEl.style.display = (window.scrollY > 300) ? 'flex' : 'none';
+      });
+      btnScrollTopEl.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
 
     // KHỞI ĐỘNG
     renderShifts();
@@ -4710,9 +4782,5 @@
       });
     }
   </script>
-  <!-- NÚT CUỘN LÊN ĐẦU TRANG TRÊN MOBILE -->
-  <button class="btn-scroll-top" id="btnScrollTop" title="Lên đầu trang">
-    <i class="fa-solid fa-arrow-up"></i>
-  </button>
 </body>
 </html>
