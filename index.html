@@ -510,6 +510,101 @@
       background: #fefce8;
       box-sizing: border-box;
       padding: 2px;
+      position: relative;
+      touch-action: pan-x pan-y pinch-zoom;
+    }
+
+    /* KHUNG BỌC THU PHÓNG (ZOOM WRAPPER) ĐỂ AUTO ZOOM VỪA MÀN HÌNH MOBILE */
+    .floorplan-zoom-wrapper {
+      transform-origin: 0 0;
+      transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.4, 1), width 0.22s ease, height 0.22s ease;
+      display: inline-block;
+      vertical-align: top;
+      will-change: transform;
+    }
+
+    /* THANH ĐIỀU KHIỂN THU PHÓNG (ZOOM & FIT VIEWPORT) */
+    .floorplan-zoom-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
+      border-radius: var(--radius-md);
+      padding: 6px 12px;
+      margin-bottom: 8px;
+      gap: 10px;
+      flex-wrap: wrap;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .zoom-toolbar-left, .zoom-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .zoom-mode-badge {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #92400e;
+      margin-right: 2px;
+    }
+    .btn-zoom-mode {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 11px;
+      border-radius: 14px;
+      border: 1px solid #fcd34d;
+      background: #ffffff;
+      font-family: var(--font-sans);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #78350f;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+    .btn-zoom-mode:hover {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      color: #92400e;
+    }
+    .btn-zoom-mode.active {
+      background: var(--primary-gradient) !important;
+      color: #ffffff !important;
+      border-color: #d97706 !important;
+      box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25) !important;
+    }
+    .btn-zoom-mode.active i {
+      color: #ffffff !important;
+    }
+    .btn-zoom-step {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid #fde68a;
+      background: #ffffff;
+      color: #92400e;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+    .btn-zoom-step:hover {
+      background: #fef3c7;
+      border-color: #f59e0b;
+      transform: scale(1.06);
+    }
+    .zoom-level-text {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #b45309;
+      min-width: 62px;
+      text-align: center;
+      font-family: var(--font-mono, monospace);
     }
 
     /* GRID MẶT BẰNG */
@@ -2246,6 +2341,21 @@
       .spotlight-summary-actions {
         justify-content: flex-end !important;
       }
+      .floorplan-zoom-toolbar {
+        padding: 6px 8px !important;
+        gap: 6px !important;
+      }
+      .zoom-mode-badge {
+        display: none !important; /* Tiết kiệm không gian trên màn hình nhỏ */
+      }
+      .btn-zoom-mode {
+        padding: 5px 9px !important;
+        font-size: 11px !important;
+      }
+      .zoom-level-text {
+        min-width: 48px !important;
+        font-size: 10.5px !important;
+      }
 
       /* PHÂN CA 15 VỊ TRÍ */
       .shifts-grid {
@@ -2446,8 +2556,14 @@
     }
     body.exporting-full-map #btnQuickAllocationMode,
     body.exporting-full-map .mobile-scroll-tip,
-    body.exporting-full-map #allocationActiveBanner {
+    body.exporting-full-map #allocationActiveBanner,
+    body.exporting-full-map .floorplan-zoom-toolbar {
       display: none !important;
+    }
+    body.exporting-full-map .floorplan-zoom-wrapper {
+      transform: none !important;
+      width: 100% !important;
+      height: auto !important;
     }
     body.exporting-full-map .export-time-badge {
       display: inline-flex !important;
@@ -2645,9 +2761,32 @@
           </div>
         </div>
 
-        <!-- BẢN ĐỒ MẶT BẰNG CHUẨN HÌNH MẪU (BỌC TRONG KHUNG CUỘN NỘI BỘ) -->
-        <div class="floorplan-scroll-viewport">
-          <div class="store-layout-grid" id="storeLayoutGridEl">
+        <!-- THANH ĐIỀU KHIỂN THU PHÓNG (ZOOM & FIT VIEWPORT) -->
+        <div class="floorplan-zoom-toolbar" id="floorplanZoomToolbar">
+          <div class="zoom-toolbar-left">
+            <span class="zoom-mode-badge"><i class="fa-solid fa-expand"></i> Chế độ xem:</span>
+            <button type="button" class="btn-zoom-mode active" id="btnZoomFitMobile" title="Thu phóng vừa vặn toàn bộ sơ đồ trong màn hình điện thoại">
+              <i class="fa-solid fa-mobile-screen-button"></i> <span>Vừa Màn Hình</span>
+            </button>
+            <button type="button" class="btn-zoom-mode" id="btnZoomActual" title="Phóng to 100% để đọc chữ to rõ">
+              <i class="fa-solid fa-magnifying-glass-plus"></i> <span>Chuẩn 100%</span>
+            </button>
+          </div>
+          <div class="zoom-toolbar-right">
+            <button type="button" class="btn-zoom-step" id="btnZoomOut" title="Thu nhỏ (-)">
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <span class="zoom-level-text" id="zoomLevelDisplay">100%</span>
+            <button type="button" class="btn-zoom-step" id="btnZoomIn" title="Phóng to (+)">
+              <i class="fa-solid fa-plus"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- BẢN ĐỒ MẶT BẰNG CHUẨN HÌNH MẪU (BỌC TRONG KHUNG CUỘN NỘI BỘ VÀ KHUNG AUTO ZOOM) -->
+        <div class="floorplan-scroll-viewport" id="floorPlanScrollViewport">
+          <div class="floorplan-zoom-wrapper" id="floorplanZoomWrapper">
+            <div class="store-layout-grid" id="storeLayoutGridEl">
           <!-- HÀNG ĐỈNH (TOP BARRIER) -->
           <div class="top-barrier-row">
             <div class="map-cell bg-door-red">
@@ -2848,9 +2987,10 @@
             </div>
           </div>
         </div>
-        </div>
-      </div>
-    </div>
+        </div> <!-- đóng floorplan-zoom-wrapper -->
+        </div> <!-- đóng floorplan-scroll-viewport -->
+      </div>   <!-- đóng floorplan-card -->
+    </div>     <!-- đóng floorMapTab -->
 
 
         <!-- TAB 3: DANH SÁCH NV/PG (CỘT AC1:AE...) -->
@@ -3338,7 +3478,9 @@
       spotlightStaff: null,
       colorByStaffMode: false,
       showShiftTagsMode: false,
-      mySavedStaff: localStorage.getItem('st1841_my_staff') || ''
+      mySavedStaff: localStorage.getItem('st1841_my_staff') || '',
+      zoomMode: (window.innerWidth < 1200) ? 'fit' : 'actual',
+      currentZoom: 1
     };
 
     // Bảng 14 hệ màu pastel hài hòa, tương phản cao để phân biệt các nhân sự
@@ -4400,6 +4542,84 @@
       });
     }
 
+    // Tự động thu phóng sơ đồ vừa vặn 100% màn hình điện thoại hoặc phóng to tùy chỉnh
+    function updateFloorplanZoom(forceMode) {
+      const viewport = document.getElementById('floorPlanScrollViewport');
+      const grid = document.getElementById('storeLayoutGridEl');
+      const wrapper = document.getElementById('floorplanZoomWrapper');
+      const levelText = document.getElementById('zoomLevelDisplay');
+      const btnFit = document.getElementById('btnZoomFitMobile');
+      const btnActual = document.getElementById('btnZoomActual');
+      const mobileTip = document.querySelector('.mobile-scroll-tip span');
+
+      if (!viewport || !grid || !wrapper) return;
+
+      if (forceMode) {
+        state.zoomMode = forceMode;
+      } else if (!state.zoomMode) {
+        state.zoomMode = (window.innerWidth < 1200) ? 'fit' : 'actual';
+      }
+
+      // Đưa wrapper về trạng thái chuẩn để đo đạc kích thước thực của grid
+      wrapper.style.transform = 'none';
+      wrapper.style.width = 'auto';
+      wrapper.style.height = 'auto';
+
+      const gridW = grid.offsetWidth || grid.scrollWidth || 1140;
+      const gridH = grid.offsetHeight || grid.scrollHeight || 750;
+      const availableW = Math.max(260, viewport.clientWidth - 4);
+
+      if (state.zoomMode === 'fit') {
+        const fitScale = Math.min(1.0, Math.max(0.20, availableW / gridW));
+        state.currentZoom = fitScale;
+
+        wrapper.style.transformOrigin = '0 0';
+        wrapper.style.transform = `scale(${fitScale})`;
+        wrapper.style.width = Math.ceil(gridW * fitScale) + 'px';
+        wrapper.style.height = Math.ceil(gridH * fitScale) + 'px';
+
+        viewport.style.overflowX = 'hidden';
+        viewport.style.overflowY = 'hidden';
+
+        if (btnFit) btnFit.classList.add('active');
+        if (btnActual) btnActual.classList.remove('active');
+        if (levelText) levelText.textContent = Math.round(fitScale * 100) + '% (Fit)';
+        if (mobileTip) {
+          mobileTip.innerHTML = '✨ <strong>Đang xem toàn cảnh vừa màn hình</strong> (bấm <strong>Chuẩn 100%</strong> để đọc chữ to hơn)';
+        }
+      } else {
+        const zoom = Math.max(0.25, Math.min(2.0, state.currentZoom || 1));
+        state.currentZoom = zoom;
+
+        wrapper.style.transformOrigin = '0 0';
+        if (Math.abs(zoom - 1) < 0.01) {
+          wrapper.style.transform = 'none';
+          wrapper.style.width = 'auto';
+          wrapper.style.height = 'auto';
+        } else {
+          wrapper.style.transform = `scale(${zoom})`;
+          wrapper.style.width = Math.ceil(gridW * zoom) + 'px';
+          wrapper.style.height = Math.ceil(gridH * zoom) + 'px';
+        }
+
+        viewport.style.overflowX = 'auto';
+        viewport.style.overflowY = 'hidden';
+
+        if (btnFit) btnFit.classList.remove('active');
+        if (btnActual) {
+          if (Math.abs(zoom - 1) < 0.02) {
+            btnActual.classList.add('active');
+          } else {
+            btnActual.classList.remove('active');
+          }
+        }
+        if (levelText) levelText.textContent = Math.round(zoom * 100) + '%';
+        if (mobileTip) {
+          mobileTip.innerHTML = '👈 👉 <strong>Vuốt ngang</strong> để xem chi tiết từng khu vực';
+        }
+      }
+    }
+
     // Gắn sự kiện các nút điều khiển sơ đồ
     function initFloorplanControlListeners() {
       const selectEl = document.getElementById('spotlightStaffSelect');
@@ -4477,6 +4697,104 @@
         shiftToggleBtn._hasInitListener = true;
         shiftToggleBtn.addEventListener('click', toggleShiftBadges);
       }
+
+      // Các nút điều khiển thu phóng
+      const btnFit = document.getElementById('btnZoomFitMobile');
+      if (btnFit && !btnFit._hasInitListener) {
+        btnFit._hasInitListener = true;
+        btnFit.addEventListener('click', () => {
+          updateFloorplanZoom('fit');
+          showToast('📱 Đã bật chế độ Vừa Màn Hình (Xem toàn cảnh)');
+        });
+      }
+
+      const btnActual = document.getElementById('btnZoomActual');
+      if (btnActual && !btnActual._hasInitListener) {
+        btnActual._hasInitListener = true;
+        btnActual.addEventListener('click', () => {
+          state.currentZoom = 1;
+          updateFloorplanZoom('actual');
+          showToast('🔍 Đã chuyển sang kích thước Chuẩn 100%');
+        });
+      }
+
+      const btnZoomIn = document.getElementById('btnZoomIn');
+      if (btnZoomIn && !btnZoomIn._hasInitListener) {
+        btnZoomIn._hasInitListener = true;
+        btnZoomIn.addEventListener('click', () => {
+          state.zoomMode = 'actual';
+          state.currentZoom = Math.min(2.0, (state.currentZoom || 1) + 0.15);
+          updateFloorplanZoom('actual');
+        });
+      }
+
+      const btnZoomOut = document.getElementById('btnZoomOut');
+      if (btnZoomOut && !btnZoomOut._hasInitListener) {
+        btnZoomOut._hasInitListener = true;
+        btnZoomOut.addEventListener('click', () => {
+          state.zoomMode = 'actual';
+          state.currentZoom = Math.max(0.25, (state.currentZoom || 1) - 0.15);
+          updateFloorplanZoom('actual');
+        });
+      }
+
+      // Hỗ trợ cảm ứng pinch-to-zoom (chụm 2 ngón tay thu phóng) trên điện thoại
+      const viewport = document.getElementById('floorPlanScrollViewport');
+      if (viewport && !viewport._hasInitTouchPinch) {
+        viewport._hasInitTouchPinch = true;
+        let initialPinchDist = 0;
+        let initialZoom = 1;
+
+        viewport.addEventListener('touchstart', (e) => {
+          if (e.touches.length === 2) {
+            initialPinchDist = Math.hypot(
+              e.touches[0].pageX - e.touches[1].pageX,
+              e.touches[0].pageY - e.touches[1].pageY
+            );
+            initialZoom = state.currentZoom || 1;
+          }
+        }, { passive: true });
+
+        viewport.addEventListener('touchmove', (e) => {
+          if (e.touches.length === 2 && initialPinchDist > 0) {
+            const currentDist = Math.hypot(
+              e.touches[0].pageX - e.touches[1].pageX,
+              e.touches[0].pageY - e.touches[1].pageY
+            );
+            const ratio = currentDist / initialPinchDist;
+            const newZoom = Math.max(0.25, Math.min(2.0, initialZoom * ratio));
+            state.zoomMode = 'actual';
+            state.currentZoom = newZoom;
+            updateFloorplanZoom('actual');
+          }
+        }, { passive: true });
+
+        viewport.addEventListener('touchend', (e) => {
+          if (e.touches.length < 2) {
+            initialPinchDist = 0;
+          }
+        }, { passive: true });
+
+        // Hỗ trợ chạm đúp (double-tap) để chuyển đổi nhanh giữa Vừa màn hình và Chuẩn 100%
+        let lastTapTime = 0;
+        viewport.addEventListener('touchend', (e) => {
+          if (e.touches.length === 0 && e.changedTouches.length === 1) {
+            const currentTime = Date.now();
+            const tapGap = currentTime - lastTapTime;
+            if (tapGap < 320 && tapGap > 40) {
+              if (state.zoomMode === 'fit') {
+                state.currentZoom = 1;
+                updateFloorplanZoom('actual');
+                showToast('🔍 Đã phóng to Chuẩn 100%');
+              } else {
+                updateFloorplanZoom('fit');
+                showToast('📱 Đã thu vừa vặn toàn bộ màn hình');
+              }
+            }
+            lastTapTime = currentTime;
+          }
+        }, { passive: true });
+      }
     }
 
     // Khởi tạo các ô trên sơ đồ với ID duy nhất & nạp trạng thái đã lưu
@@ -4551,6 +4869,7 @@
       if (state.spotlightStaff) {
         setStaffSpotlight(state.spotlightStaff);
       }
+      updateFloorplanZoom();
     }
 
     // Xử lý khi click / double-click vào ô trên sơ đồ
@@ -5081,6 +5400,9 @@
         } else if (tabId === 'floorMapTab') {
           renderShifts();
           if (typeof syncMapCellsFromShifts === 'function') syncMapCellsFromShifts();
+          setTimeout(() => {
+            if (typeof updateFloorplanZoom === 'function') updateFloorplanZoom();
+          }, 50);
         }
       });
     });
@@ -5862,6 +6184,16 @@
                 clonedGrid.style.minWidth = (exportW - 40) + 'px';
               }
 
+              const clonedWrapper = clonedDoc.getElementById('floorplanZoomWrapper');
+              if (clonedWrapper) {
+                clonedWrapper.style.transform = 'none';
+                clonedWrapper.style.width = '100%';
+                clonedWrapper.style.height = 'auto';
+              }
+
+              const clonedZoomBar = clonedDoc.getElementById('floorplanZoomToolbar');
+              if (clonedZoomBar) clonedZoomBar.style.display = 'none';
+
               const btnQ = clonedDoc.getElementById('btnQuickAllocationMode');
               if (btnQ) btnQ.style.display = 'none';
               const tip = clonedDoc.querySelector('.mobile-scroll-tip');
@@ -6013,7 +6345,24 @@
       }
     }
 
-    window.addEventListener('resize', applyMobileEmpFilter);
+    let resizeZoomTimer = null;
+    window.addEventListener('resize', () => {
+      applyMobileEmpFilter();
+      clearTimeout(resizeZoomTimer);
+      resizeZoomTimer = setTimeout(() => {
+        if (typeof updateFloorplanZoom === 'function') {
+          updateFloorplanZoom();
+        }
+      }, 120);
+    });
+
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => {
+        if (typeof updateFloorplanZoom === 'function') {
+          updateFloorplanZoom();
+        }
+      }, 200);
+    });
 
     // NÚT CUỘN LÊN ĐẦU TRANG (MOBILE BACK TO TOP)
     const btnScrollTopEl = document.getElementById('btnScrollTop');
@@ -6064,6 +6413,11 @@
     // 5. Tự động đồng bộ khi vừa mở trang hoặc F5 xong
     window.addEventListener('load', () => {
       triggerReloadButton(true);
+      setTimeout(() => {
+        if (typeof updateFloorplanZoom === 'function') {
+          updateFloorplanZoom();
+        }
+      }, 100);
     });
 
     // 6. Bấm thủ công vào status pill nếu muốn làm mới chủ động (đồng bộ âm thầm)
