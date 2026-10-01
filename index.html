@@ -3907,7 +3907,6 @@
         localStorage.setItem('st1841_employees', JSON.stringify(state.employees));
         renderEmployees();
         if (typeof initModalDropdowns === 'function') initModalDropdowns();
-        showToast('👥 Danh sách NV/PG vừa được cập nhật từ thiết bị khác');
       } else if (msg.type === 'BATCH_RENAME_STAFF') {
         document.querySelectorAll('.map-cell').forEach(c => {
           const st = (c.getAttribute('data-staff') || '').trim();
@@ -4102,11 +4101,10 @@
         statusText.textContent = `🟢 Tự động đồng bộ (${timeStr})`;
       }
 
-      // 4. Nếu có thay đổi thật sự từ Google Sheet, tự động quay nhẹ nút làm mới báo hiệu
+      // 4. Nếu có thay đổi thật sự từ Google Sheet, tự động quay nhẹ nút làm mới báo hiệu (âm thầm)
       if (shiftsChanged || empsChanged) {
         startReloadButtonSpin();
         setTimeout(stopReloadButtonSpin, 850);
-        showToast(`⚡ Tự động đồng bộ: Đã cập nhật thay đổi mới nhất từ Google Sheet! (${sourceName})`);
         
         // Phát tín hiệu đồng bộ sang các tab khác trong cùng trình duyệt
         if (syncBroadcastChannel) {
@@ -4119,8 +4117,6 @@
             });
           } catch(e) {}
         }
-      } else if (!silent) {
-        showToast(`✓ Dữ liệu hiện tại đã khớp mới nhất với Google Sheet!`);
       }
       stopReloadButtonSpin();
     }
@@ -4140,7 +4136,7 @@
       }
     }
 
-    function triggerReloadButton(silent = false) {
+    function triggerReloadButton(silent = true) {
       startReloadButtonSpin();
       fetchDirectFromGoogleSheetGviz(silent);
     }
@@ -4148,10 +4144,7 @@
     // ==========================================================================
     // ĐỒNG BỘ ĐỌC DỮ LIỆU TỨC THÌ TỪ GOOGLE SHEET VỀ WEB APP (< 150ms)
     // ==========================================================================
-    function fetchDataFromGoogleSheet(silent = false) {
-      if (!silent) {
-        showToast('⚡ Đang đồng bộ tức thì từ Google Sheet...');
-      }
+    function fetchDataFromGoogleSheet(silent = true) {
       fetchDirectFromGoogleSheetGviz(silent);
       fetchFromAppsScriptBackground();
     }
@@ -4663,7 +4656,7 @@
 
     // LÀM MỚI & ĐỒNG BỘ TỪ GOOGLE SHEET
     document.getElementById('btnReloadPage').addEventListener('click', () => {
-      triggerReloadButton(false);
+      triggerReloadButton(true);
     });
 
     // NÚT LƯU VỀ SHEET (LƯU CẢ CA TRỰC VÀ DANH SÁCH NV/PG)
@@ -4774,11 +4767,11 @@
       triggerReloadButton(true);
     });
 
-    // 6. Bấm thủ công vào status pill nếu muốn làm mới chủ động
+    // 6. Bấm thủ công vào status pill nếu muốn làm mới chủ động (đồng bộ âm thầm)
     const pillEl = document.getElementById('realtimeStatusPill');
     if (pillEl) {
       pillEl.addEventListener('click', () => {
-        triggerReloadButton(false);
+        triggerReloadButton(true);
       });
     }
   </script>
